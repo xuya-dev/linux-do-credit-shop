@@ -13,10 +13,12 @@ WORKDIR /build/frontend
 
 COPY frontend/pnpm-lock.yaml frontend/package.json ./
 COPY frontend/pnpm-workspace.yaml ./
+COPY frontend/turbo.json ./
 COPY frontend/.npmrc ./
 
 COPY frontend/internal ./internal
 COPY frontend/packages ./packages
+COPY frontend/scripts ./scripts
 COPY frontend/apps/web-ldc-shop/package.json ./apps/web-ldc-shop/package.json
 COPY frontend/apps/web-ldc-shop ./apps/web-ldc-shop
 
