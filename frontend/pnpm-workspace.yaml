@@ -99,7 +99,7 @@ catalog:
   defu: ^6.1.7
   depcheck: ^1.4.7
   dotenv: ^17.4.2
-  echarts: ^6.0.0
+  echarts: ^5.5.1
   element-plus: ^2.13.7
   es-toolkit: ^1.45.1
   eslint: ^10.2.0
@@ -126,6 +126,7 @@ catalog:
   lefthook: ^2.1.5
   lodash.clonedeep: ^4.5.0
   lucide-vue-next: ^0.577.0
+  marked: ^15.0.0
   medium-zoom: ^1.1.0
   naive-ui: ^2.44.1
   nitropack: ^2.13.3
@@ -184,6 +185,7 @@ catalog:
   vitest: ^4.1.4
   vue: ^3.5.32
   vue-eslint-parser: ^10.4.0
+  vue-echarts: ^7.0.3
   vue-i18n: ^11.3.2
   vue-json-viewer: ^3.0.4
   vue-router: ^5.0.4
