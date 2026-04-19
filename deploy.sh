@@ -45,19 +45,21 @@ case "$ACTION" in
     standalone)
         info "独立模式 / Standalone: MySQL + Redis + App"
         ensure_env
-        docker compose -f docker-compose.standalone.yml --env-file .env up --build -d
+        docker compose -f docker-compose.standalone.yml --env-file .env build --no-cache
+        docker compose -f docker-compose.standalone.yml --env-file .env up -d
         echo ""; ok "部署成功! / Deploy successful!"; echo ""
-        info "访问地址: http://localhost"
-        info "管理后台: http://localhost/admin"
-        info "API 文档: http://localhost/api/doc.html"
+        info "访问地址: http://localhost:${APP_PORT:-3000}"
+        info "管理后台: http://localhost:${APP_PORT:-3000}/admin"
+        info "API 文档: http://localhost:${APP_PORT:-3000}/api/doc.html"
         echo ""; warn "首次启动需等待 MySQL 初始化 (约30秒)"
         ;;
     external)
         info "外部模式 / External: App only"
         ensure_env
-        docker compose -f docker-compose.external.yml --env-file .env up --build -d
+        docker compose -f docker-compose.external.yml --env-file .env build --no-cache
+        docker compose -f docker-compose.external.yml --env-file .env up -d
         echo ""; ok "部署成功! / Deploy successful!"
-        info "访问地址: http://localhost"
+        info "访问地址: http://localhost:${APP_PORT:-3000}"
         ;;
     stop)
         info "停止服务..."; docker compose -f docker-compose.standalone.yml --env-file .env down 2>/dev/null || true

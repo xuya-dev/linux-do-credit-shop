@@ -124,7 +124,7 @@ public class OrderServiceImpl implements OrderService {
         LdcShopProperties.Payment payment = properties.getPayment();
 
         // 构建支付参数 / Build payment params
-        Map<String, String> payParams = new LinkedHashMap<>();
+        Map<String, Object> payParams = new LinkedHashMap<>();
         payParams.put("client_id", payment.getClientId());
         payParams.put("type", "ldcpay");
         payParams.put("out_trade_no", order.getLdcOutTradeNo());

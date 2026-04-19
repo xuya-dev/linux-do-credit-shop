@@ -47,20 +47,22 @@ switch ($Action) {
     "standalone" {
         WI "独立模式 / Standalone: MySQL + Redis + App"
         Ensure-Env
-        docker compose -f docker-compose.standalone.yml --env-file .env up --build -d
+        docker compose -f docker-compose.standalone.yml --env-file .env build --no-cache
+        docker compose -f docker-compose.standalone.yml --env-file .env up -d
         if ($LASTEXITCODE -eq 0) {
             Write-Host ""; WO "部署成功!"; Write-Host ""
-            WI "访问地址: http://localhost"
-            WI "管理后台: http://localhost/admin"
-            WI "API 文档:  http://localhost/api/doc.html"
+            WI "访问地址: http://localhost:3000"
+            WI "管理后台: http://localhost:3000/admin"
+            WI "API 文档:  http://localhost:3000/api/doc.html"
             Write-Host ""; WW "首次启动需等待 MySQL 初始化 (约30秒)"
         }
     }
     "external" {
         WI "外部模式 / External: App only"
         Ensure-Env
-        docker compose -f docker-compose.external.yml --env-file .env up --build -d
-        if ($LASTEXITCODE -eq 0) { Write-Host ""; WO "部署成功!"; WI "访问地址: http://localhost" }
+        docker compose -f docker-compose.external.yml --env-file .env build --no-cache
+        docker compose -f docker-compose.external.yml --env-file .env up -d
+        if ($LASTEXITCODE -eq 0) { Write-Host ""; WO "部署成功!"; WI "访问地址: http://localhost:3000" }
     }
     "stop" {
         WI "停止服务..."; docker compose -f docker-compose.standalone.yml --env-file .env down 2>$null
