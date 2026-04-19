@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { darkTheme } from 'naive-ui'
+import type { GlobalTheme } from 'naive-ui'
 
 /**
  * 主题模式 / Theme Mode
@@ -51,5 +53,9 @@ export const useThemeStore = defineStore('theme', () => {
   // 初始化时应用主题 / Apply theme on init
   applyTheme()
 
-  return { mode, toggleTheme, setTheme }
+  const naiveTheme = computed<GlobalTheme | null>(() =>
+    mode.value === 'dark' ? darkTheme : null
+  )
+
+  return { mode, naiveTheme, toggleTheme, setTheme }
 })
