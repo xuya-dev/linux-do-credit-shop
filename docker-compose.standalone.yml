@@ -88,7 +88,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "${APP_PORT:-3000}:8080"
+      - "${APP_PORT:-3000}:3000"
     environment:
       # ---- MySQL ----
       MYSQL_HOST: mysql

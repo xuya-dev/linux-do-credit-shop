@@ -80,11 +80,11 @@ USER ldcshop
 
 # 健康检查 / Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/api/auth/authorize-url || exit 1
+    CMD curl -f http://localhost:3000/api/auth/authorize-url || exit 1
 
 # JVM 参数 (可通过环境变量覆盖) / JVM options (overridable via env)
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
 
-EXPOSE 8080
+EXPOSE 3000
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]
