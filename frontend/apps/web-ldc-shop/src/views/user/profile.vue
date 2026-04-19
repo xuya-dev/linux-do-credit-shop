@@ -88,7 +88,7 @@ const isAdmin = role === 'admin' || userInfo.roles?.includes('admin');
           border-top: 1px solid rgba(128, 128, 128, 0.1);
         "
       >
-        <n-button type="primary" @click="router.push('/admin')">
+        <n-button type="primary" @click="router.push('/admin/dashboard')">
           Admin Panel &rarr;
         </n-button>
       </div>

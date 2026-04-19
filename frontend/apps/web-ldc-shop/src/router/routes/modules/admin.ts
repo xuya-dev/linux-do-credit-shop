@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
+    component: () => import('#/layouts/basic.vue'),
     meta: {
       icon: 'lucide:settings',
       title: '管理后台',
@@ -10,10 +11,11 @@ const routes: RouteRecordRaw[] = [
     },
     name: 'Admin',
     path: '/admin',
+    redirect: '/admin/dashboard',
     children: [
       {
         name: 'AdminDashboard',
-        path: '/admin',
+        path: 'dashboard',
         component: () => import('#/views/admin/dashboard.vue'),
         meta: {
           title: '数据看板',
@@ -24,7 +26,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminProducts',
-        path: '/admin/products',
+        path: 'products',
         component: () => import('#/views/admin/product-manage.vue'),
         meta: {
           title: '商品管理',
@@ -35,7 +37,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminCategories',
-        path: '/admin/categories',
+        path: 'categories',
         component: () => import('#/views/admin/category-manage.vue'),
         meta: {
           title: '分类管理',
@@ -46,7 +48,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminCards',
-        path: '/admin/cards',
+        path: 'cards',
         component: () => import('#/views/admin/card-manage.vue'),
         meta: {
           title: '卡密管理',
@@ -57,7 +59,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminOrders',
-        path: '/admin/orders',
+        path: 'orders',
         component: () => import('#/views/admin/order-manage.vue'),
         meta: {
           title: '订单管理',
@@ -68,7 +70,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminDisputes',
-        path: '/admin/disputes',
+        path: 'disputes',
         component: () => import('#/views/admin/dispute-manage.vue'),
         meta: {
           title: '争议管理',
@@ -79,7 +81,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminAnnouncements',
-        path: '/admin/announcements',
+        path: 'announcements',
         component: () => import('#/views/admin/announcement-manage.vue'),
         meta: {
           title: '公告管理',
@@ -90,7 +92,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminUsers',
-        path: '/admin/users',
+        path: 'users',
         component: () => import('#/views/admin/user-manage.vue'),
         meta: {
           title: '用户管理',
@@ -101,7 +103,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'AdminSettings',
-        path: '/admin/settings',
+        path: 'settings',
         component: () => import('#/views/admin/settings.vue'),
         meta: {
           title: '系统设置',
