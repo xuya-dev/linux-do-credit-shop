@@ -94,20 +94,17 @@ public class Ed25519Util {
      * @param clientSecret 应用密钥 / Client Secret
      * @return 待签名字符串 / String to be signed
      */
-    public static String buildSignString(Map<String, String> params, String clientSecret) {
-        // 过滤空值和sign/sign_type字段 / Filter empty values and sign/sign_type
+    public static String buildSignString(Map<String, ?> params, String clientSecret) {
         List<String> keys = new ArrayList<>();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
+        for (Map.Entry<String, ?> entry : params.entrySet()) {
             String key = entry.getKey();
-            String value = entry.getValue();
-            if (StrUtil.isNotBlank(value) && !"sign".equals(key) && !"sign_type".equals(key)) {
+            Object val = entry.getValue();
+            if (val != null && StrUtil.isNotBlank(val.toString()) && !"sign".equals(key) && !"sign_type".equals(key)) {
                 keys.add(key);
             }
         }
-        // 按ASCII字典序排列 / Sort by ASCII dictionary order
         Collections.sort(keys);
 
-        // 拼接 / Concatenate
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < keys.size(); i++) {
             if (i > 0) {
@@ -115,7 +112,6 @@ public class Ed25519Util {
             }
             sb.append(keys.get(i)).append("=").append(params.get(keys.get(i)));
         }
-        // 追加密钥 / Append secret
         sb.append(clientSecret);
         return sb.toString();
     }

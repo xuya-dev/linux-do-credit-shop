@@ -55,23 +55,20 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
 
         // 总用户数 / Total users
-        result.setTotalUserCount((int) userMapper.selectCount(
-                new LambdaQueryWrapper<User>()));
+        result.setTotalUserCount(Math.toIntExact(userMapper.selectCount(
+                new LambdaQueryWrapper<User>())));
 
-        // 总订单数（已支付） / Total orders (paid)
-        result.setTotalOrderCount((int) orderMapper.selectCount(
-                new LambdaQueryWrapper<Order>().eq(Order::getPaymentStatus, Order.PAYMENT_PAID)));
+        result.setTotalOrderCount(Math.toIntExact(orderMapper.selectCount(
+                new LambdaQueryWrapper<Order>().eq(Order::getPaymentStatus, Order.PAYMENT_PAID))));
 
-        // 待处理争议 / Pending disputes
-        result.setPendingDisputeCount((int) disputeMapper.selectCount(
-                new LambdaQueryWrapper<Dispute>().eq(Dispute::getStatus, Dispute.STATUS_PENDING)));
+        result.setPendingDisputeCount(Math.toIntExact(disputeMapper.selectCount(
+                new LambdaQueryWrapper<Dispute>().eq(Dispute::getStatus, Dispute.STATUS_PENDING))));
 
-        // 待发货订单 / Pending delivery
-        result.setPendingDeliveryCount((int) orderMapper.selectCount(
+        result.setPendingDeliveryCount(Math.toIntExact(orderMapper.selectCount(
                 new LambdaQueryWrapper<Order>()
                         .eq(Order::getPaymentStatus, Order.PAYMENT_PAID)
                         .eq(Order::getDeliveryStatus, Order.DELIVERY_PENDING)
-                        .eq(Order::getProductType, 2)));
+                        .eq(Order::getProductType, 2))));
 
         // 近30天销售趋势 / Last 30 days sales trend
         LocalDateTime startDate = LocalDate.now().minusDays(29).atStartOfDay();
