@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * @author xuya
  */
 @RestController
-@RequestMapping("/user/disputes")
+@RequestMapping("/api/user/disputes")
 @RequiredArgsConstructor
 @Tag(name = "用户端-争议 / User Disputes")
 public class UserDisputeController {

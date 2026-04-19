@@ -19,7 +19,7 @@ import java.util.List;
  * @author xuya
  */
 @RestController
-@RequestMapping("/admin/categories")
+@RequestMapping("/api/admin/categories")
 @RequiredArgsConstructor
 @SaCheckRole("admin")
 @Tag(name = "管理端-分类 / Admin Categories")

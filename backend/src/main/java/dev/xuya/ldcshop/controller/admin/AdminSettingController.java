@@ -15,7 +15,7 @@ import java.util.Map;
  * @author xuya
  */
 @RestController
-@RequestMapping("/admin/settings")
+@RequestMapping("/api/admin/settings")
 @RequiredArgsConstructor
 @SaCheckRole("admin")
 @Tag(name = "管理端-设置 / Admin Settings")

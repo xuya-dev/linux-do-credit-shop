@@ -16,7 +16,7 @@ import java.util.List;
  * @author xuya
  */
 @RestController
-@RequestMapping("/user/categories")
+@RequestMapping("/api/user/categories")
 @RequiredArgsConstructor
 @Tag(name = "用户端-分类 / User Categories")
 public class UserCategoryController {

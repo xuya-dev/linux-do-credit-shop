@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * @author xuya
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "认证 / Authentication", description = "OAuth登录、用户信息、退出 / OAuth login, user info, logout")
 public class AuthController {

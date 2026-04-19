@@ -5,8 +5,6 @@
 
 server:
   port: 3000
-  servlet:
-    context-path: /api
 
 # Spring 配置 / Spring Configuration
 spring:
@@ -75,9 +73,9 @@ springdoc:
     path: /v3/api-docs
   group-configs:
     - group: user
-      paths-to-match: /user/**
+      paths-to-match: /api/user/**
     - group: admin
-      paths-to-match: /admin/**
+      paths-to-match: /api/admin/**
 
 # ============================================================
 # LDC Shop 自定义配置 / LDC Shop Custom Configuration

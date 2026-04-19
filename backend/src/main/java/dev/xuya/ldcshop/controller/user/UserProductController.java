@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * @author xuya
  */
 @RestController
-@RequestMapping("/user/products")
+@RequestMapping("/api/user/products")
 @RequiredArgsConstructor
 @Tag(name = "用户端-商品 / User Products")
 public class UserProductController {

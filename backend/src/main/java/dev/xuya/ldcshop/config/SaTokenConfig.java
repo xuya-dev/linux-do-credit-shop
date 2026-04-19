@@ -37,11 +37,11 @@ public class SaTokenConfig implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handle -> {
             StpUtil.checkLogin();
         }))
-        .addPathPatterns("/admin/**", "/user/**")
+        .addPathPatterns("/api/admin/**", "/api/user/**")
         .excludePathPatterns(
-                "/auth/**",
-                "/public/**",
-                "/order/notify",
+                "/api/auth/**",
+                "/api/public/**",
+                "/api/order/notify",
                 "/doc.html",
                 "/swagger-resources/**",
                 "/v3/api-docs/**",
@@ -50,11 +50,11 @@ public class SaTokenConfig implements WebMvcConfigurer {
 
         // 登录检查拦截器 / Login check interceptor
         registry.addInterceptor(loginCheckInterceptor)
-                .addPathPatterns("/user/**", "/admin/**")
+                .addPathPatterns("/api/user/**", "/api/admin/**")
                 .excludePathPatterns(
-                        "/auth/**",
-                        "/public/**",
-                        "/order/notify"
+                        "/api/auth/**",
+                        "/api/public/**",
+                        "/api/order/notify"
                 );
     }
 

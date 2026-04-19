@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  * @author xuya
  */
 @RestController
-@RequestMapping("/admin/products")
+@RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
 @SaCheckRole("admin")
 @Tag(name = "管理端-商品 / Admin Products")

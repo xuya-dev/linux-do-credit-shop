@@ -19,7 +19,7 @@ import java.util.Map;
  * @author xuya
  */
 @RestController
-@RequestMapping("/user/orders")
+@RequestMapping("/api/user/orders")
 @RequiredArgsConstructor
 @Tag(name = "用户端-订单 / User Orders")
 public class UserOrderController {

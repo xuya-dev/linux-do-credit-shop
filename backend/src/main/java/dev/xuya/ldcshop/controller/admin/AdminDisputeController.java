@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * @author xuya
  */
 @RestController
-@RequestMapping("/admin/disputes")
+@RequestMapping("/api/admin/disputes")
 @RequiredArgsConstructor
 @SaCheckRole("admin")
 @Tag(name = "管理端-争议 / Admin Disputes")

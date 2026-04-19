@@ -16,7 +16,7 @@ import java.util.List;
  * @author xuya
  */
 @RestController
-@RequestMapping("/user/announcements")
+@RequestMapping("/api/user/announcements")
 @RequiredArgsConstructor
 @Tag(name = "用户端-公告 / User Announcements")
 public class UserAnnouncementController {
