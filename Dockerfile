@@ -39,20 +39,13 @@ COPY backend/src ./src
 RUN mvn package -DskipTests -B \
     && mv target/ldc-shop-*.jar target/app.jar
 
-# 解压 jar 以便注入前端文件 / Extract jar to inject frontend files
-RUN mkdir -p target/extracted \
-    && cd target/extracted \
-    && jar xf ../app.jar
+# 将前端构建产物注入 jar 的静态资源目录 (原地更新, 保留 MANIFEST.MF)
+# Inject frontend build into jar's static resources (in-place update, preserves MANIFEST.MF)
+COPY --from=frontend-builder /build/frontend/dist target/static-inject/BOOT-INF/classes/static
 
-# 将前端构建产物复制到 Spring Boot 静态资源目录
-# Copy frontend build output to Spring Boot static resources directory
-COPY --from=frontend-builder /build/frontend/dist target/extracted/BOOT-INF/classes/static
-
-# 重新打包 jar / Re-package jar
-RUN cd target/extracted \
-    && jar cfM ../app.jar . \
-    && cd .. \
-    && rm -rf extracted
+RUN cd target \
+    && jar uf app.jar -C static-inject BOOT-INF \
+    && rm -rf static-inject
 
 # ---- 阶段3: 运行 / Stage 3: Runtime ----
 FROM eclipse-temurin:17-jre-alpine
