@@ -1,0 +1,187 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue';
+
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { LineChart, PieChart, BarChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+} from 'echarts/components';
+import VChart from 'vue-echarts';
+
+import { dashboardApi } from '#/api/modules';
+
+use([
+  CanvasRenderer,
+  LineChart,
+  PieChart,
+  BarChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+]);
+
+const dashboard = ref<any>(null);
+const loading = ref(true);
+
+onMounted(async () => {
+  try {
+    dashboard.value = await dashboardApi.getData();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
+});
+
+const statCards = computed(() => {
+  const d = dashboard.value;
+  if (!d) return [];
+  return [
+    { label: '今日订单', value: d.todayOrderCount, color: '#3b82f6' },
+    { label: '今日销售额', value: `${d.todaySalesAmount} 积分`, color: '#2563eb' },
+    { label: '总用户数', value: d.totalUserCount, color: '#059669' },
+    { label: '总订单数', value: d.totalOrderCount, color: '#7c3aed' },
+    { label: '待处理纠纷', value: d.pendingDisputeCount, color: '#d97706' },
+    { label: '待发货', value: d.pendingDeliveryCount, color: '#dc2626' },
+  ];
+});
+
+const salesTrendOption = computed(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+  xAxis: {
+    type: 'category',
+    data: dashboard.value?.salesTrend?.map((i: any) => i.date) || [],
+  },
+  yAxis: { type: 'value' },
+  series: [
+    {
+      data: dashboard.value?.salesTrend?.map((i: any) => i.amount) || [],
+      type: 'line',
+      smooth: true,
+      areaStyle: { opacity: 0.1 },
+      lineStyle: { color: '#3b82f6' },
+      itemStyle: { color: '#3b82f6' },
+    },
+  ],
+}));
+
+const statusPieOption = computed(() => ({
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0 },
+  series: [
+    {
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data:
+        dashboard.value?.paymentStatusDistribution?.map((i: any) => ({
+          name: i.statusName,
+          value: i.count,
+        })) || [],
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0,0,0,0.3)',
+        },
+      },
+    },
+  ],
+}));
+
+const productRankOption = computed(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+  xAxis: { type: 'value' },
+  yAxis: {
+    type: 'category',
+    data:
+      dashboard.value?.productSalesRank?.map((i: any) => i.productName).reverse() ||
+      [],
+  },
+  series: [
+    {
+      type: 'bar',
+      data:
+        dashboard.value?.productSalesRank?.map((i: any) => i.totalQuantity).reverse() ||
+        [],
+      itemStyle: { color: '#3b82f6', borderRadius: [0, 4, 4, 0] },
+    },
+  ],
+}));
+</script>
+
+<template>
+  <div>
+    <n-spin :show="loading">
+      <template v-if="dashboard">
+        <n-grid :cols="6" :x-gap="16" :y-gap="16" style="margin-bottom: 24px">
+          <n-gi v-for="item in statCards" :key="item.label">
+            <n-card size="small" style="text-align: center">
+              <p
+                style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 0.08em;
+                  color: #6b7280;
+                  margin-bottom: 8px;
+                "
+              >
+                {{ item.label }}
+              </p>
+              <p :style="{ fontSize: '24px', fontWeight: 700, color: item.color }">
+                {{ item.value }}
+              </p>
+            </n-card>
+          </n-gi>
+        </n-grid>
+
+        <n-grid :cols="24" :x-gap="24" :y-gap="24" style="margin-bottom: 24px">
+          <n-gi :span="16">
+            <n-card title="销售趋势 (30天)">
+              <v-chart :option="salesTrendOption" style="height: 300px" autoresize />
+            </n-card>
+          </n-gi>
+          <n-gi :span="8">
+            <n-card title="支付状态分布">
+              <v-chart :option="statusPieOption" style="height: 300px" autoresize />
+            </n-card>
+          </n-gi>
+        </n-grid>
+
+        <n-grid :cols="24" :x-gap="24" :y-gap="24">
+          <n-gi :span="12">
+            <n-card title="商品销量排行">
+              <v-chart :option="productRankOption" style="height: 300px" autoresize />
+            </n-card>
+          </n-gi>
+          <n-gi :span="12">
+            <n-card title="分类销售分布">
+              <div
+                v-for="cat in dashboard.categorySalesDistribution"
+                :key="cat.categoryName"
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  padding: 10px 0;
+                  border-bottom: 1px solid #f0f0f0;
+                "
+              >
+                <span style="font-size: 14px">{{ cat.categoryName }}</span>
+                <span style="font-size: 14px; font-weight: 600; color: #3b82f6">
+                  {{ cat.totalAmount }} 积分
+                </span>
+              </div>
+            </n-card>
+          </n-gi>
+        </n-grid>
+      </template>
+    </n-spin>
+  </div>
+</template>

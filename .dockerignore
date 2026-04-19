@@ -4,3 +4,8 @@
 *.md
 deploy.ps1
 deploy.sh
+frontend-old
+frontend/.git
+frontend/docs
+frontend/playground
+frontend/**/node_modules
