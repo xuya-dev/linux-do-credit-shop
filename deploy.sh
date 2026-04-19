@@ -36,6 +36,8 @@ check_docker() {
 }
 
 ACTION="${1:-standalone}"
+shift 2>/dev/null || true
+EXTRA_ARGS="$@"
 echo -e "\n${CYAN}========================================${NC}"
 echo -e "${CYAN}  LDC Shop 部署工具 / Deploy Tool${NC}"
 echo -e "${CYAN}========================================${NC}\n"
@@ -46,7 +48,7 @@ case "$ACTION" in
         info "独立模式 / Standalone: MySQL + Redis + App"
         ensure_env
         docker compose -f docker-compose.standalone.yml --env-file .env build --no-cache
-        docker compose -f docker-compose.standalone.yml --env-file .env up -d
+        docker compose -f docker-compose.standalone.yml --env-file .env up -d $EXTRA_ARGS
         echo ""; ok "部署成功! / Deploy successful!"; echo ""
         info "访问地址: http://localhost:${APP_PORT:-3000}"
         info "管理后台: http://localhost:${APP_PORT:-3000}/admin"
@@ -57,7 +59,7 @@ case "$ACTION" in
         info "外部模式 / External: App only"
         ensure_env
         docker compose -f docker-compose.external.yml --env-file .env build --no-cache
-        docker compose -f docker-compose.external.yml --env-file .env up -d
+        docker compose -f docker-compose.external.yml --env-file .env up -d $EXTRA_ARGS
         echo ""; ok "部署成功! / Deploy successful!"
         info "访问地址: http://localhost:${APP_PORT:-3000}"
         ;;
