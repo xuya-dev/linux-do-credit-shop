@@ -155,19 +155,20 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  // 需要认证的页面 / Pages requiring auth
+  if (authStore.isLoggedIn && !authStore.userFetched) {
+    await authStore.fetchUser()
+  }
+
   if (to.meta.requiresAuth !== false && !authStore.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
 
-  // 需要管理员权限 / Pages requiring admin
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next({ name: 'Home' })
     return
   }
 
-  // 已登录时访问登录页 / Redirect if already logged in
   if (to.name === 'Login' && authStore.isLoggedIn) {
     next({ name: 'Home' })
     return
