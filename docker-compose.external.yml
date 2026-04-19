@@ -1,0 +1,69 @@
+# ============================================================
+# LDC Shop - 外部服务模式
+# External Mode - 连接已有的 MySQL 和 Redis
+#
+# 使用方法 / Usage:
+#   docker compose -f docker-compose.external.yml up -d
+#
+# 请确保 .env 中已正确配置外部 MySQL/Redis 地址
+# Make sure external MySQL/Redis addresses are configured in .env
+# ============================================================
+
+services:
+  # ============================================================
+  # LDC Shop 应用 (前端+后端 单容器) / Application
+  # ============================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: ldc-shop-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:8080"
+    environment:
+      # ---- MySQL (外部) / MySQL (external) ----
+      MYSQL_HOST: ${MYSQL_HOST:?请配置 MYSQL_HOST / Please set MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ldc_shop}
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请配置 MYSQL_PASSWORD / Please set MYSQL_PASSWORD}
+      # ---- Redis (外部) / Redis (external) ----
+      REDIS_HOST: ${REDIS_HOST:?请配置 REDIS_HOST / Please set REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      # ---- Sa-Token ----
+      SA_TOKEN_JWT_SECRET: ${SA_TOKEN_JWT_SECRET:-please-change-this-secret-in-production}
+      # ---- OAuth ----
+      LDC_OAUTH_CLIENT_ID: ${LDC_OAUTH_CLIENT_ID:-}
+      LDC_OAUTH_CLIENT_SECRET: ${LDC_OAUTH_CLIENT_SECRET:-}
+      LDC_OAUTH_REDIRECT_URI: ${LDC_OAUTH_REDIRECT_URI:-http://localhost/auth/callback}
+      LDC_OAUTH_AUTHORIZE_URL: ${LDC_OAUTH_AUTHORIZE_URL:-https://connect.linux.do/oauth2/authorize}
+      LDC_OAUTH_TOKEN_URL: ${LDC_OAUTH_TOKEN_URL:-https://connect.linux.do/oauth2/token}
+      LDC_OAUTH_USER_INFO_URL: ${LDC_OAUTH_USER_INFO_URL:-https://connect.linux.do/api/user}
+      # ---- 支付 ----
+      LDC_PAYMENT_CLIENT_ID: ${LDC_PAYMENT_CLIENT_ID:-}
+      LDC_PAYMENT_CLIENT_SECRET: ${LDC_PAYMENT_CLIENT_SECRET:-}
+      LDC_PAYMENT_GATEWAY_URL: ${LDC_PAYMENT_GATEWAY_URL:-https://credit.linux.do/epay}
+      LDC_PAYMENT_NOTIFY_URL: ${LDC_PAYMENT_NOTIFY_URL:-http://localhost/api/order/notify}
+      LDC_PAYMENT_RETURN_URL: ${LDC_PAYMENT_RETURN_URL:-http://localhost/order/result}
+      # ---- 管理员 ----
+      LDC_ADMIN_USERNAMES: ${LDC_ADMIN_USERNAMES:-admin,root}
+      # ---- JVM ----
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
+      TZ: Asia/Shanghai
+    volumes:
+      - app_logs:/app/logs
+    networks:
+      - ldc-net
+
+volumes:
+  app_logs:
+    driver: local
+
+networks:
+  ldc-net:
+    driver: bridge

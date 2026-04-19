@@ -1,0 +1,105 @@
+# ============================================================
+# LDC Shop 应用配置 / LDC Shop Application Configuration
+# 支持环境变量覆盖 / Supports environment variable override
+# ============================================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Spring 配置 / Spring Configuration
+spring:
+  application:
+    name: ldc-shop
+
+  # 数据源配置 / DataSource Configuration
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:ldc_shop}?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+
+  # Redis 配置 / Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
+
+  # Jackson 配置 / JSON Configuration
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+# MyBatis-Plus 配置 / MyBatis-Plus Configuration
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: dev.xuya.ldcshop.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Sa-Token 配置 / Sa-Token Configuration
+sa-token:
+  token-name: ${SA_TOKEN_NAME:Authorization}
+  timeout: ${SA_TOKEN_TIMEOUT:86400}
+  active-timeout: -1
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+  is-log: false
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:ldc-shop-jwt-secret-key-please-change-in-production}
+
+# Knife4j 配置 / API Documentation Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: user
+      paths-to-match: /user/**
+    - group: admin
+      paths-to-match: /admin/**
+
+# ============================================================
+# LDC Shop 自定义配置 / LDC Shop Custom Configuration
+# ============================================================
+ldc-shop:
+  # LINUX DO OAuth 配置 / LINUX DO OAuth Configuration
+  oauth:
+    client-id: ${LDC_OAUTH_CLIENT_ID:your-client-id}
+    client-secret: ${LDC_OAUTH_CLIENT_SECRET:your-client-secret}
+    redirect-uri: ${LDC_OAUTH_REDIRECT_URI:http://localhost:5173/auth/callback}
+    authorize-url: ${LDC_OAUTH_AUTHORIZE_URL:https://connect.linux.do/oauth2/authorize}
+    token-url: ${LDC_OAUTH_TOKEN_URL:https://connect.linux.do/oauth2/token}
+    user-info-url: ${LDC_OAUTH_USER_INFO_URL:https://connect.linux.do/api/user}
+
+  # LDC Credit 支付配置 / LDC Credit Payment Configuration
+  payment:
+    client-id: ${LDC_PAYMENT_CLIENT_ID:your-ldc-client-id}
+    client-secret: ${LDC_PAYMENT_CLIENT_SECRET:your-ldc-client-secret}
+    gateway-url: ${LDC_PAYMENT_GATEWAY_URL:https://credit.linux.do/epay}
+    notify-url: ${LDC_PAYMENT_NOTIFY_URL:http://localhost:8080/api/order/notify}
+    return-url: ${LDC_PAYMENT_RETURN_URL:http://localhost:5173/order/result}
+
+  # 管理员配置 / Admin Configuration
+  admin:
+    initial-usernames: ${LDC_ADMIN_USERNAMES:admin,root}
