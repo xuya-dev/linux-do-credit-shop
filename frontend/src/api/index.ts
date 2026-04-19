@@ -6,7 +6,7 @@ import type { PageResult } from '@/utils/http'
  */
 export const authApi = {
   getAuthorizeUrl: (redirectUri?: string) =>
-    request.get<{ url: string }>('/auth/authorize-url', { redirectUri }),
+    request.get<string>('/auth/authorize-url', { redirectUri }),
 
   callback: (code: string, redirectUri?: string) =>
     request.post('/auth/callback', { code, redirectUri }),

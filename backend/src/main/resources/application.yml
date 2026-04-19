@@ -85,7 +85,7 @@ ldc-shop:
   oauth:
     client-id: ${LDC_OAUTH_CLIENT_ID:your-client-id}
     client-secret: ${LDC_OAUTH_CLIENT_SECRET:your-client-secret}
-    redirect-uri: ${LDC_OAUTH_REDIRECT_URI:http://localhost:5173/auth/callback}
+    redirect-uri: ${LDC_OAUTH_REDIRECT_URI:http://localhost:3000/auth/callback}
     authorize-url: ${LDC_OAUTH_AUTHORIZE_URL:https://connect.linux.do/oauth2/authorize}
     token-url: ${LDC_OAUTH_TOKEN_URL:https://connect.linux.do/oauth2/token}
     user-info-url: ${LDC_OAUTH_USER_INFO_URL:https://connect.linux.do/api/user}

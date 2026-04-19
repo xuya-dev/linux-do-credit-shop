@@ -14,11 +14,8 @@ const message = useMessage()
 async function handleLogin() {
   try {
     const res = await authApi.getAuthorizeUrl(window.location.origin + '/auth/callback')
-    if (res.data?.url) {
-      window.location.href = res.data.url
-    } else {
-      // 直接拼接 / Build URL directly
-      window.location.href = `/api/auth/authorize-url?redirectUri=${encodeURIComponent(window.location.origin + '/auth/callback')}`
+    if (res.data) {
+      window.location.href = res.data
     }
   } catch (e) {
     message.error(t('common.failed'))
