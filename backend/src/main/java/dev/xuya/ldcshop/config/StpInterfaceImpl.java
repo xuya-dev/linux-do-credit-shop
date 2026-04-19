@@ -1,0 +1,26 @@
+package dev.xuya.ldcshop.config;
+
+import cn.dev33.satoken.stp.StpInterface;
+import dev.xuya.ldcshop.util.UserContextUtil;
+import org.springframework.stereotype.Component;
+
+import java.util.Collections;
+import java.util.List;
+
+@Component
+public class StpInterfaceImpl implements StpInterface {
+
+    @Override
+    public List<String> getPermissionList(Object loginId, String loginType) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getRoleList(Object loginId, String loginType) {
+        String role = UserContextUtil.getCurrentUserRole();
+        if (role != null) {
+            return List.of(role);
+        }
+        return Collections.emptyList();
+    }
+}

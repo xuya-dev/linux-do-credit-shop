@@ -64,6 +64,7 @@ sa-token:
   token-style: uuid
   is-log: false
   jwt-secret-key: ${SA_TOKEN_JWT_SECRET:ldc-shop-jwt-secret-key-please-change-in-production}
+  is-read-cookie: false
 
 # Knife4j 配置 / API Documentation Configuration
 springdoc:
