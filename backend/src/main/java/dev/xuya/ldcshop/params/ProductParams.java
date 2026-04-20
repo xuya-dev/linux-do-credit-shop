@@ -42,6 +42,9 @@ public class ProductParams {
     @NotNull(message = "商品类型不能为空 / Product type is required")
     private Integer productType;
 
+    /** 库存数量 / Stock Count */
+    private Integer stock;
+
     /** 状态: 0=下架 1=上架 / Status: 0=off 1=on */
     private Integer status;
 

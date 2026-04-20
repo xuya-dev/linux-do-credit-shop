@@ -57,7 +57,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if (product == null) {
             throw new BusinessException(ResultCode.PRODUCT_NOT_FOUND);
         }
-        BeanUtil.copyProperties(params, product, "id", "createdBy", "soldCount", "stock");
+        BeanUtil.copyProperties(params, product, "id", "createdBy", "soldCount");
         if (params.getImages() != null) {
             product.setImages(JSONUtil.toJsonStr(params.getImages()));
         }
