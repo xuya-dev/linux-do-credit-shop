@@ -2,6 +2,8 @@ package dev.xuya.ldcshop.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -149,15 +151,34 @@ public class OrderServiceImpl implements OrderService {
         String signString = Ed25519Util.buildSignString(payParams, clientSecret);
         payParams.put("sign", Ed25519Util.sign(privateKey, signString));
 
-        // 提交支付请求 / Submit payment request
+        // 提交支付请求（不跟随重定向，捕获 LDC 返回的支付页面地址）
         try {
-            String response = HttpUtil.post(gatewayUrl + "/pay/submit.php", payParams);
-            log.info("支付请求已发送 / Payment request sent: orderNo={}", order.getOrderNo());
+            HttpResponse httpResponse = HttpRequest.post(gatewayUrl + "/pay/submit.php")
+                    .form(payParams)
+                    .setFollowRedirects(false)
+                    .execute();
+
+            int status = httpResponse.getStatus();
+            String body = httpResponse.body();
+            log.info("支付请求响应 / Payment response: status={}, body={}", status, body);
 
             PaymentSubmitResult result = new PaymentSubmitResult();
             result.setOrderNo(order.getOrderNo());
-            result.setPayUrl(gatewayUrl + "/paying?order_no=" + order.getLdcOutTradeNo());
+
+            if (status == 302 || status == 301) {
+                // LDC 验签成功，重定向到支付页面
+                result.setPayUrl(httpResponse.header("Location"));
+            } else if (status == 200 && StrUtil.isNotBlank(body) && body.contains("error_msg")) {
+                log.error("LDC支付失败 / LDC payment error: {}", body);
+                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
+            } else {
+                // 兜底：直接构造支付页面 URL（LDC 文档: https://credit.linux.do/paying?order_no=...）
+                String baseUrl = gatewayUrl.replaceAll("/epay$", "");
+                result.setPayUrl(baseUrl + "/paying?order_no=" + order.getLdcOutTradeNo());
+            }
             return result;
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("支付请求失败 / Payment request failed", e);
             throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
