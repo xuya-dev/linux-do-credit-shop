@@ -1,8 +1,9 @@
-<script setup lang="ts">
 import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { getAuthorizeUrlApi } from '#/api';
 
+const { t } = useI18n();
 const message = useMessage();
 
 async function handleLogin() {
@@ -14,7 +15,7 @@ async function handleLogin() {
       window.location.href = url;
     }
   } catch {
-    message.error('获取授权链接失败，请稍后重试');
+    message.error(t('page.shop.failedToGetAuthorizeUrl'));
   }
 }
 </script>
@@ -51,13 +52,9 @@ async function handleLogin() {
         @click="handleLogin"
       >
         <span class="btn-content">
-          <span>使用 LINUX DO 账号登录</span>
+          <span>{{ t('page.shop.loginWithLinuxDo') }}</span>
         </span>
       </n-button>
-
-      <p class="login-hint">
-        点击登录即表示您同意我们的服务条款
-      </p>
     </n-card>
   </div>
 </template>

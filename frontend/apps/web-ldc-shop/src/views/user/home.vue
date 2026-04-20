@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from '@vben/locales';
 import type { Announcement, Product } from '#/api/types';
 import { announcementApi, productApi, categoryApi } from '#/api/modules';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const products = ref<Product[]>([]);
@@ -68,10 +70,10 @@ function goProductDetail(id: number) {
       <!-- 搜索栏区 -->
       <div class="search-bar-wrapper">
         <div class="search-tags">
-          <span class="search-tag active">⚡ 全部商品({{ products.length }})</span>
+          <span class="search-tag active">{{ t('page.shop.allProducts') }}({{ products.length }})</span>
         </div>
         <div class="search-input">
-          <input type="text" v-model="searchQuery" placeholder="搜索商品" />
+          <input type="text" v-model="searchQuery" :placeholder="t('page.shop.searchPlaceholder')" />
           <div class="search-icon">🔍</div>
         </div>
       </div>
@@ -80,7 +82,7 @@ function goProductDetail(id: number) {
         <!-- 左侧分类菜单 -->
         <aside class="faka-sidebar">
           <div class="faka-card">
-            <div class="card-header">商品分类</div>
+            <div class="card-header">{{ t('page.shop.allCategories') }}</div>
             <ul class="category-list">
               <li
                 v-for="cat in categories"
@@ -98,7 +100,7 @@ function goProductDetail(id: number) {
         <div class="faka-content">
           <!-- 公告区 -->
           <div class="faka-card">
-            <div class="card-header">店铺公告</div>
+            <div class="card-header">{{ t('page.shop.announcements') }}</div>
             <div class="card-body ann-body">
               <n-skeleton v-if="loadingAnnouncements" text :repeat="2" />
               <div v-else-if="announcements.length" class="ann-list">
@@ -108,13 +110,13 @@ function goProductDetail(id: number) {
                   <span class="ann-date">{{ ann.publishedAt }}</span>
                 </div>
               </div>
-              <p v-else class="empty-text">欢迎来到 LDC Shop 兑换中心</p>
+              <p v-else class="empty-text">{{ t('page.shop.welcomeMessage') }}</p>
             </div>
           </div>
 
           <!-- 商品列表区 -->
           <div class="faka-card mt-24">
-            <div class="card-header">商品列表</div>
+            <div class="card-header">{{ t('page.shop.featuredProducts') }}</div>
             <div class="card-body">
               <n-skeleton v-if="loadingProducts" text :repeat="4" />
               
@@ -127,21 +129,21 @@ function goProductDetail(id: number) {
                 >
                   <div class="product-name">
                     {{ p.name }}
-                    <span v-if="p.isHot" class="hot-badge">热</span>
+                    <span v-if="p.isHot" class="hot-badge">HOT</span>
                   </div>
                   <div class="product-info-right">
-                    <span class="product-price">{{ p.price }} 积分</span>
-                    <span class="product-stock">库存 {{ p.stock || 0 }} 件</span>
+                    <span class="product-price">{{ p.price }} {{ t('page.shop.credits') }}</span>
+                    <span class="product-stock">{{ t('page.shop.stock') }}: {{ p.stock || 0 }}</span>
                   </div>
                 </div>
                 
                 <div class="load-more">
-                  <span>加载更多</span>
+                  <span>{{ t('page.shop.loadMore') }}</span>
                 </div>
               </div>
 
               <div v-else class="empty-state">
-                <p class="empty-text">暂时没有上架商品哦</p>
+                <p class="empty-text">{{ t('page.shop.noProducts') }}</p>
               </div>
             </div>
           </div>

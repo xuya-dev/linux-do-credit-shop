@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { LanguageToggle, ThemeToggle } from '@vben/layouts';
+import { useI18n } from '@vben/locales';
 import { useAuthStore } from '#/store';
+
+const { t } = useI18n();
 
 const router = useRouter();
 const route = useRoute();
@@ -16,12 +19,12 @@ const userInfo = computed(() => userStore.userInfo);
 
 const navItems = computed(() => {
   const items = [
-    { label: '网站首页', path: '/home' },
-    { label: '最新公告', path: '/announcements' },
+    { label: t('page.shop.home'), path: '/home' },
+    { label: t('page.shop.announcements'), path: '/announcements' },
   ];
   if (isLoggedIn.value) {
     items.push(
-      { label: '争议处理', path: '/disputes' },
+      { label: t('page.shop.disputes'), path: '/disputes' },
     );
   }
   return items;
@@ -42,16 +45,24 @@ function navigate(path: string) {
   router.push(path);
 }
 
-const userOptions = [
-  { label: '个人中心', key: 'profile' },
+const userOptions = computed(() => [
+  { label: t('page.shop.profile'), key: 'profile' },
   { type: 'divider', key: 'd1' },
-  { label: '退出登录', key: 'logout' },
-];
+  { label: t('page.shop.logout'), key: 'logout' },
+]);
 
 function handleUserSelect(key: string) {
   if (key === 'profile') router.push('/profile');
   else if (key === 'logout') handleLogout();
 }
+
+onMounted(() => {
+  if (accessStore.accessToken && !userStore.userInfo) {
+    authStore.fetchUserInfo().catch(() => {
+      accessStore.setAccessToken('');
+    });
+  }
+});
 </script>
 
 <template>
@@ -97,12 +108,12 @@ function handleUserSelect(key: string) {
             </n-dropdown>
           </template>
           <template v-else>
-            <span class="nav-link" style="margin-left: 16px; cursor: pointer;" @click="router.push('/auth/login')">登录</span>
+            <span class="nav-link" style="margin-left: 16px; cursor: pointer;" @click="handleLoginClick">{{ t('page.auth.login') }}</span>
           </template>
 
           <div class="primary-search-btn" @click="router.push('/orders')">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            订单查询
+            {{ t('page.shop.orders') }}
           </div>
         </div>
       </div>
