@@ -158,7 +158,7 @@ onMounted(loadAnnouncements);
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-h3 style="margin: 0">{{ t('page.admin.announcements') }}</n-h3>
       <n-button type="primary" @click="openCreate">{{ t('page.admin.create') }}</n-button>

@@ -120,7 +120,7 @@ const productRankOption = computed(() => ({
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <n-spin :show="loading">
       <template v-if="dashboard">
         <n-grid :cols="6" :x-gap="16" :y-gap="16" style="margin-bottom: 24px">

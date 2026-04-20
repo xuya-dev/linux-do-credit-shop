@@ -165,7 +165,7 @@ onMounted(loadOrders);
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-space align="center">
         <n-input

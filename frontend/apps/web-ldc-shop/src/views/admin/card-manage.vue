@@ -125,7 +125,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-space align="center">
         <n-h3 style="margin: 0">{{ t('page.admin.cards') }}</n-h3>

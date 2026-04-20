@@ -106,7 +106,7 @@ onMounted(loadDisputes);
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-h3 style="margin: 0">{{ t('page.admin.disputes') }}</n-h3>
       <n-space>

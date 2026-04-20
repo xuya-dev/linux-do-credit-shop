@@ -106,7 +106,7 @@ onMounted(loadCategories);
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-h3 style="margin: 0">{{ t('page.admin.categories') }}</n-h3>
       <n-button type="primary" @click="showCreate = true; form = { name: '', sortOrder: 0, status: 1 }">

@@ -73,7 +73,7 @@ onMounted(loadSettings);
 </script>
 
 <template>
-  <div>
+  <div class="p-5">
     <n-spin :show="loading">
       <n-space vertical :size="24">
         <n-card :title="t('page.admin.shopInfo')">
