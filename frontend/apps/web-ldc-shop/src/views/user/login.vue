@@ -11,12 +11,14 @@ const message = useMessage();
 
 const siteName = ref('LDC Shop');
 const siteLogo = ref('/logo.png');
+const siteDesc = ref('LINUX DO Credit Shop');
 
 onMounted(async () => {
   try {
     const res = await settingsApi.getPublic();
-    if (res && res.site_name) siteName.value = res.site_name;
-    if (res && res.site_logo) siteLogo.value = res.site_logo;
+    if (res && res.shop_name) siteName.value = res.shop_name;
+    if (res && res.shop_logo) siteLogo.value = res.shop_logo;
+    if (res && res.shop_description) siteDesc.value = res.shop_description;
   } catch {
     // Fallback to defaults
   }
@@ -44,7 +46,7 @@ async function handleLogin() {
           <img :src="siteLogo" alt="Logo" />
         </div>
         <h1 class="brand-title">{{ siteName }}</h1>
-        <p class="brand-subtitle">LINUX DO Credit Shop</p>
+        <p class="brand-subtitle">{{ siteDesc }}</p>
       </div>
 
       <div class="login-features">

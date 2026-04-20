@@ -34,7 +34,7 @@ public class PublicSettingController {
         Map<String, String> publicSettings = new HashMap<>();
         
         // 白名单过滤，只返回安全的公开设置
-        String[] allowedKeys = {"site_name", "site_logo", "site_announcement", "site_footer"};
+        String[] allowedKeys = {"shop_name", "shop_description", "shop_logo"};
         for (String key : allowedKeys) {
             if (allSettings.containsKey(key)) {
                 publicSettings.put(key, allSettings.get(key));

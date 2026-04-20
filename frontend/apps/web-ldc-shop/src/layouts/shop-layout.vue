@@ -77,8 +77,8 @@ onMounted(() => {
     });
   }
   settingsApi.getPublic().then((res) => {
-    if (res?.site_name) siteName.value = res.site_name;
-    if (res?.site_logo) siteLogo.value = res.site_logo;
+    if (res?.shop_name) siteName.value = res.shop_name;
+    if (res?.shop_logo) siteLogo.value = res.shop_logo;
   }).catch(() => {});
 });
 </script>
