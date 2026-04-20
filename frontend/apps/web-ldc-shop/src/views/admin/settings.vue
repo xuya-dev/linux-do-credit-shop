@@ -34,14 +34,6 @@ const oauthFields = [
   { key: 'oauth_token_url', label: 'Token地址' },
 ];
 
-function applySettings(data: Record<string, string>) {
-  for (const [key, value] of Object.entries(data)) {
-    if (key in shopInfo) shopInfo[key] = value;
-    else if (key in paymentConfig) paymentConfig[key] = value;
-    else if (key in oauthConfig) oauthConfig[key] = value;
-  }
-}
-
 async function loadSettings() {
   loading.value = true;
   try {

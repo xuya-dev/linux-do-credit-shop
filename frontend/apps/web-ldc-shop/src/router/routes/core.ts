@@ -78,6 +78,12 @@ const coreRoutes: RouteRecordRaw[] = [
         meta: { title: '争议', requiresAuth: true },
       },
       {
+        name: 'DisputeDetail',
+        path: '/dispute/:id',
+        component: () => import('#/views/user/dispute-detail.vue'),
+        meta: { title: '争议详情', requiresAuth: true },
+      },
+      {
         name: 'Profile',
         path: '/profile',
         component: () => import('#/views/user/profile.vue'),

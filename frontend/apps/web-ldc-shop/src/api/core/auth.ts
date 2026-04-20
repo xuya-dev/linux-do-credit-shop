@@ -1,3 +1,5 @@
+import type { LoginResult, UserInfo } from '#/api/types';
+
 import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
@@ -15,14 +17,14 @@ export async function getAuthorizeUrlApi(redirectUri: string) {
 }
 
 export async function callbackApi(code: string, redirectUri: string) {
-  return requestClient.post<AuthApi.CallbackResult>('/auth/callback', {
+  return requestClient.post<LoginResult>('/auth/callback', {
     code,
     redirectUri,
   });
 }
 
 export async function getUserInfoApi() {
-  return requestClient.get('/auth/userinfo');
+  return requestClient.get<UserInfo>('/auth/userinfo');
 }
 
 export async function logoutApi() {

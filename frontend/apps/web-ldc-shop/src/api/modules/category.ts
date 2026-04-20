@@ -1,7 +1,10 @@
+import type { Category } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export const categoryApi = {
-  userList: () => requestClient.get('/user/categories'),
+  userList: () => requestClient.get<Category[]>('/user/categories'),
+
   adminList: (params: any) =>
     requestClient.get('/admin/categories', { params }),
   adminCreate: (data: any) => requestClient.post('/admin/categories', data),

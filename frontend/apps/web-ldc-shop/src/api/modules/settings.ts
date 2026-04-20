@@ -1,6 +1,9 @@
+import type { ShopSettings } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export const settingsApi = {
-  getAll: () => requestClient.get('/admin/settings'),
-  batchUpdate: (data: any) => requestClient.put('/admin/settings', data),
+  getAll: () => requestClient.get<ShopSettings>('/admin/settings'),
+  batchUpdate: (data: ShopSettings) =>
+    requestClient.put('/admin/settings', data),
 };

@@ -8,7 +8,6 @@ const message = useMessage();
 const dialog = useDialog();
 
 const products = ref<any[]>([]);
-const categories = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);

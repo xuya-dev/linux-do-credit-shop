@@ -33,8 +33,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (result.token) {
         accessStore.setAccessToken(result.token);
 
-        userInfo = await fetchUserInfo();
-        userStore.setUserInfo(userInfo);
+        const info = await fetchUserInfo();
+        userInfo = info;
+        userStore.setUserInfo(info);
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -42,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
           onSuccess
             ? await onSuccess?.()
             : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
+                info.homePath || preferences.app.defaultHomePath,
               );
         }
 
@@ -81,7 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUserInfo() {
-    const userInfo = await getUserInfoApi();
+    const userInfo = (await getUserInfoApi()) as unknown as UserInfo;
     userStore.setUserInfo(userInfo);
     return userInfo;
   }

@@ -135,7 +135,7 @@ const columns = [
     key: 'actions',
     width: 160,
     render: (row: any) => {
-      const btns = [];
+      const btns: any[] = [];
       if (row.paymentStatus === 1 && row.productType === 2 && row.deliveryStatus === 0) {
         btns.push(
           h(

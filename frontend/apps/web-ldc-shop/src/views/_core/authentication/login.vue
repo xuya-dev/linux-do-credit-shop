@@ -13,6 +13,13 @@ defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
 
+function handleLogin(_formData: Record<string, any>) {
+  // 管理后台登录也使用 OAuth
+  authStore.oauthLogin('', '', () => {
+    // onSuccess 回调
+  });
+}
+
 const MOCK_USER_OPTIONS: BasicOption[] = [
   {
     label: 'Super',
@@ -93,6 +100,6 @@ const formSchema = computed((): VbenFormSchema[] => {
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
-    @submit="authStore.authLogin"
+    @submit="handleLogin"
   />
 </template>

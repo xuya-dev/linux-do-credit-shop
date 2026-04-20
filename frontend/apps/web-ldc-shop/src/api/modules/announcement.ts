@@ -1,12 +1,25 @@
+import type { Announcement, PaginatedResult } from '#/api/types';
+
 import { requestClient } from '#/api/request';
 
 export const announcementApi = {
-  userList: (params: any) =>
-    requestClient.get('/user/announcements', { params }),
+  userList: (params: {
+    page?: number;
+    size?: number;
+    type?: number;
+  }) =>
+    requestClient.get<PaginatedResult<Announcement>>('/user/announcements', {
+      params,
+    }),
+
   userDetail: (id: number) =>
-    requestClient.get(`/user/announcements/${id}`),
+    requestClient.get<Announcement>(`/user/announcements/${id}`),
+
   latest: (limit?: number) =>
-    requestClient.get('/user/announcements/latest', { params: { limit } }),
+    requestClient.get<Announcement[]>('/user/announcements/latest', {
+      params: { limit },
+    }),
+
   adminList: (params: any) =>
     requestClient.get('/admin/announcements', { params }),
   adminDetail: (id: number) =>
