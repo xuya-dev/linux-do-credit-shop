@@ -5,6 +5,16 @@ import { preferences } from '@vben/preferences';
 import { initStores } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/naive';
+import {
+  NDropdown,
+  NAvatar,
+  NSpin,
+  NPagination,
+  NSkeleton,
+  NModal,
+  NInputNumber,
+  NButton
+} from 'naive-ui';
 
 import { useTitle } from '@vueuse/core';
 
@@ -25,6 +35,16 @@ async function bootstrap(namespace: string) {
   // });
 
   const app = createApp(App);
+
+  // 注册前台用户端必须的轻量级 Naive UI 组件
+  app.component('NDropdown', NDropdown);
+  app.component('NAvatar', NAvatar);
+  app.component('NSpin', NSpin);
+  app.component('NPagination', NPagination);
+  app.component('NSkeleton', NSkeleton);
+  app.component('NModal', NModal);
+  app.component('NInputNumber', NInputNumber);
+  app.component('NButton', NButton);
 
   // 移除全局同步的 v-loading 注册（按需加载）
 
