@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { cardApi, productApi } from '#/api/modules';
 
+const { t } = useI18n();
 const message = useMessage();
 const dialog = useDialog();
 
 const cards = ref<any[]>([]);
-const products = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
@@ -36,7 +37,7 @@ async function loadCards() {
 
 async function handleImport() {
   if (!importForm.value.productId || !importForm.value.cards.trim()) {
-    message.error('请填写完整');
+    message.error(t('page.admin.pleaseComplete'));
     return;
   }
   try {
@@ -45,28 +46,28 @@ async function handleImport() {
       productId: importForm.value.productId,
       cards: cardsList,
     });
-    message.success(`成功导入 ${count} 张卡密`);
+    message.success(t('page.admin.importSuccess', { count }));
     showImport.value = false;
     importForm.value = { productId: null, cards: '' };
     loadCards();
   } catch (e: any) {
-    message.error(e.message || '导入失败');
+    message.error(e.message || t('page.admin.importFailed'));
   }
 }
 
 function confirmDelete(id: number) {
   dialog.warning({
-    title: '确认删除',
-    content: '确定要删除该卡密吗？',
-    positiveText: '确认',
-    negativeText: '取消',
+    title: t('page.admin.confirm'),
+    content: t('page.admin.confirmDeleteCard'),
+    positiveText: t('page.admin.confirm'),
+    negativeText: t('page.admin.cancel'),
     onPositiveClick: async () => {
       try {
         await cardApi.adminDelete(id);
-        message.success('删除成功');
+        message.success(t('page.admin.deleteSuccess'));
         loadCards();
       } catch (e: any) {
-        message.error(e.message || '删除失败');
+        message.error(e.message || t('page.admin.deleteFailed'));
       }
     },
   });
@@ -74,39 +75,32 @@ function confirmDelete(id: number) {
 
 const productOptions = ref<{ label: string; value: number }[]>([]);
 
-const columns = [
+const columns = computed(() => [
   { title: 'ID', key: 'id', width: 60 },
-  { title: '商品ID', key: 'productId', width: 80 },
+  { title: t('page.admin.selectProduct'), key: 'productId', width: 80 },
   {
-    title: '卡密内容',
+    title: t('page.admin.cardContent'),
     key: 'cardContent',
     ellipsis: { tooltip: true },
     render: (row: any) =>
-      h(
-        'span',
-        {
-          style:
-            'font-family: monospace; font-size: 13px;',
-        },
-        row.cardContent,
-      ),
+      h('span', { style: 'font-family: monospace; font-size: 13px;' }, row.cardContent),
   },
   {
-    title: '状态',
+    title: t('page.admin.cardStatus'),
     key: 'status',
     width: 100,
     render: (row: any) => {
       const map: Record<number, { label: string; type: 'success' | 'warning' | 'error' }> = {
-        0: { label: '可用', type: 'success' },
-        1: { label: '已售', type: 'warning' },
-        2: { label: '禁用', type: 'error' },
+        0: { label: t('page.admin.available'), type: 'success' },
+        1: { label: t('page.admin.used'), type: 'warning' },
+        2: { label: t('page.admin.disabled'), type: 'error' },
       };
-      const info = map[row.status] || { label: '未知', type: 'error' as const };
+      const info = map[row.status] || { label: String(row.status), type: 'error' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
-    title: '操作',
+    title: t('page.admin.actions'),
     key: 'actions',
     width: 80,
     render: (row: any) =>
@@ -114,16 +108,15 @@ const columns = [
         ? h(
             NButton,
             { size: 'small', type: 'error', onClick: () => confirmDelete(row.id) },
-            { default: () => '删除' },
+            { default: () => t('page.admin.delete') },
           )
         : null,
   },
-];
+]);
 
 onMounted(async () => {
   const prodRes = await productApi.adminList({ page: 1, size: 100 });
   const prodList = prodRes?.records || [];
-  products.value = prodList;
   productOptions.value = prodList
     .filter((p: any) => p.productType === 1)
     .map((p: any) => ({ label: p.name, value: p.id }));
@@ -135,17 +128,17 @@ onMounted(async () => {
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
       <n-space align="center">
-        <n-h3 style="margin: 0">卡密管理</n-h3>
+        <n-h3 style="margin: 0">{{ t('page.admin.cards') }}</n-h3>
         <n-select
           v-model:value="filterProductId"
-          :options="[{ label: '全部商品', value: null }, ...productOptions]"
-          placeholder="筛选商品"
+          :options="[{ label: t('page.admin.allProducts'), value: null }, ...productOptions]"
+          :placeholder="t('page.admin.selectProduct')"
           style="width: 200px"
           clearable
           @update:value="page = 1; loadCards()"
         />
       </n-space>
-      <n-button type="primary" @click="showImport = true">批量导入</n-button>
+      <n-button type="primary" @click="showImport = true">{{ t('page.admin.batchImport') }}</n-button>
     </div>
 
     <n-data-table
@@ -158,32 +151,32 @@ onMounted(async () => {
 
     <n-modal
       v-model:show="showImport"
-      title="批量导入卡密"
+      :title="t('page.admin.batchImport')"
       preset="card"
       style="width: 500px"
     >
       <n-form label-placement="left" label-width="80">
-        <n-form-item label="选择商品">
+        <n-form-item :label="t('page.admin.selectProduct')">
           <n-select
             v-model:value="importForm.productId"
             :options="productOptions"
-            placeholder="选择虚拟商品"
+            :placeholder="t('page.admin.selectProduct')"
           />
         </n-form-item>
-        <n-form-item label="卡密内容">
+        <n-form-item :label="t('page.admin.cardContent')">
           <n-input
             v-model:value="importForm.cards"
             type="textarea"
             :rows="8"
-            placeholder="每行一个卡密"
+            :placeholder="t('page.admin.cardContentPlaceholder')"
             style="font-family: monospace"
           />
         </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showImport = false">取消</n-button>
-          <n-button type="primary" @click="handleImport">导入</n-button>
+          <n-button @click="showImport = false">{{ t('page.admin.cancel') }}</n-button>
+          <n-button type="primary" @click="handleImport">{{ t('page.admin.batchImport') }}</n-button>
         </n-space>
       </template>
     </n-modal>

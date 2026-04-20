@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
-import { useMessage, NTag, NButton } from 'naive-ui';
+import { ref, onMounted, h, computed } from 'vue';
+import { useMessage, NTag, NButton, NSpace } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { disputeApi } from '#/api/modules';
 
+const { t } = useI18n();
 const message = useMessage();
 
 const disputes = ref<any[]>([]);
@@ -16,13 +18,13 @@ const showHandle = ref(false);
 const selectedDispute = ref<any>(null);
 const handleForm = ref({ status: 1, adminNote: '' });
 
-const statusTabs = [
-  { label: '全部', value: null },
-  { label: '待处理', value: 0 },
-  { label: '已接受', value: 1 },
-  { label: '已拒绝', value: 2 },
-  { label: '平台处理', value: 3 },
-];
+const statusTabs = computed(() => [
+  { label: t('page.admin.all'), value: null },
+  { label: t('page.admin.processing'), value: 0 },
+  { label: t('page.admin.accepted'), value: 1 },
+  { label: t('page.admin.rejected'), value: 2 },
+  { label: t('page.admin.platformIntervened'), value: 3 },
+]);
 
 async function loadDisputes() {
   loading.value = true;
@@ -50,61 +52,55 @@ function openHandle(row: any) {
 async function handleDispute() {
   try {
     await disputeApi.adminHandle(selectedDispute.value.id, handleForm.value);
-    message.success('处理成功');
+    message.success(t('page.admin.operationSuccess'));
     showHandle.value = false;
     loadDisputes();
   } catch (e: any) {
-    message.error(e.message || '处理失败');
+    message.error(e.message || t('page.admin.operationFailed'));
   }
 }
 
-const disputeStatusMap: Record<number, { label: string; type: 'warning' | 'success' | 'error' | 'info' }> = {
-  0: { label: '待处理', type: 'warning' },
-  1: { label: '已接受', type: 'success' },
-  2: { label: '已拒绝', type: 'error' },
-  3: { label: '平台处理', type: 'info' },
-};
+const disputeStatusMap = computed(() => ({
+  0: { label: t('page.admin.processing'), type: 'warning' as const },
+  1: { label: t('page.admin.accepted'), type: 'success' as const },
+  2: { label: t('page.admin.rejected'), type: 'error' as const },
+  3: { label: t('page.admin.platformIntervened'), type: 'info' as const },
+}));
 
-const columns = [
+const columns = computed(() => [
   {
-    title: '订单号',
+    title: t('page.admin.orderNo'),
     key: 'orderNo',
     width: 180,
     render: (row: any) =>
       h('span', { style: 'font-family: monospace; font-size: 13px' }, row.orderNo),
   },
-  { title: '商品名称', key: 'productName', ellipsis: { tooltip: true } },
+  { title: t('page.admin.productNameCol'), key: 'productName', ellipsis: { tooltip: true } },
+  { title: t('page.admin.disputeReason'), key: 'reason', ellipsis: { tooltip: true } },
   {
-    title: '原因',
-    key: 'reason',
-    ellipsis: { tooltip: true },
-  },
-  {
-    title: '状态',
+    title: t('page.admin.status'),
     key: 'status',
     width: 100,
     render: (row: any) => {
-      const info = disputeStatusMap[row.status] || {
-        label: '未知',
+      const info = disputeStatusMap.value[row.status as keyof typeof disputeStatusMap.value] || {
+        label: String(row.status),
         type: 'default' as const,
       };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
-    title: '操作',
+    title: t('page.admin.actions'),
     key: 'actions',
     width: 80,
     render: (row: any) =>
       row.status === 0
-        ? h(
-            NButton,
-            { size: 'small', type: 'primary', onClick: () => openHandle(row) },
-            { default: () => '处理' },
-          )
+        ? h(NButton, { size: 'small', type: 'primary', onClick: () => openHandle(row) }, {
+            default: () => t('page.admin.confirm'),
+          })
         : null,
   },
-];
+]);
 
 onMounted(loadDisputes);
 </script>
@@ -112,7 +108,7 @@ onMounted(loadDisputes);
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">纠纷管理</n-h3>
+      <n-h3 style="margin: 0">{{ t('page.admin.disputes') }}</n-h3>
       <n-space>
         <n-button
           v-for="tab in statusTabs"
@@ -136,37 +132,37 @@ onMounted(loadDisputes);
 
     <n-modal
       v-model:show="showHandle"
-      title="处理纠纷"
+      :title="t('page.admin.disputes')"
       preset="card"
       style="width: 480px"
     >
-      <n-form label-placement="left" label-width="80">
-        <n-form-item label="原因">
+      <n-form label-placement="left" label-width="100">
+        <n-form-item :label="t('page.admin.disputeReason')">
           <n-text>{{ selectedDispute?.reason }}</n-text>
         </n-form-item>
-        <n-form-item label="处理结果">
+        <n-form-item :label="t('page.admin.disputeStatus')">
           <n-select
             v-model:value="handleForm.status"
             :options="[
-              { label: '接受', value: 1 },
-              { label: '拒绝', value: 2 },
-              { label: '平台处理', value: 3 },
+              { label: t('page.admin.accept'), value: 1 },
+              { label: t('page.admin.reject'), value: 2 },
+              { label: t('page.admin.platformIntervene'), value: 3 },
             ]"
           />
         </n-form-item>
-        <n-form-item label="管理员备注">
+        <n-form-item :label="t('page.admin.disputeNote')">
           <n-input
             v-model:value="handleForm.adminNote"
             type="textarea"
             :rows="3"
-            placeholder="处理备注"
+            :placeholder="t('page.admin.disputeNote')"
           />
         </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showHandle = false">取消</n-button>
-          <n-button type="primary" @click="handleDispute">确认</n-button>
+          <n-button @click="showHandle = false">{{ t('page.admin.cancel') }}</n-button>
+          <n-button type="primary" @click="handleDispute">{{ t('page.admin.confirm') }}</n-button>
         </n-space>
       </template>
     </n-modal>

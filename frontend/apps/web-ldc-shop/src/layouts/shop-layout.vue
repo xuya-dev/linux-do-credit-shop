@@ -4,9 +4,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { LanguageToggle, ThemeToggle } from '@vben/layouts';
 import { useI18n } from '@vben/locales';
-import { useAuthStore } from '#/store';
-import { settingsApi } from '#/api/modules/settings';
-import { ref } from 'vue';
+import { useAuthStore, useShopSettingsStore } from '#/store';
 
 const { t } = useI18n();
 
@@ -15,9 +13,10 @@ const route = useRoute();
 const userStore = useUserStore();
 const accessStore = useAccessStore();
 const authStore = useAuthStore();
+const shopSettingsStore = useShopSettingsStore();
 
-const siteName = ref('LDC Shop');
-const siteLogo = ref('/logo.png');
+const siteName = computed(() => shopSettingsStore.shopName || 'LDC Shop');
+const siteLogo = computed(() => shopSettingsStore.shopLogo || '/logo.png');
 
 const isLoggedIn = computed(() => !!accessStore.accessToken);
 const userInfo = computed(() => userStore.userInfo);
@@ -70,16 +69,16 @@ function handleUserSelect(key: string) {
   else if (key === 'logout') handleLogout();
 }
 
+function handleLoginClick() {
+  router.push('/login');
+}
+
 onMounted(() => {
   if (accessStore.accessToken && !userStore.userInfo) {
     authStore.fetchUserInfo().catch(() => {
       accessStore.setAccessToken('');
     });
   }
-  settingsApi.getPublic().then((res) => {
-    if (res?.shop_name) siteName.value = res.shop_name;
-    if (res?.shop_logo) siteLogo.value = res.shop_logo;
-  }).catch(() => {});
 });
 </script>
 

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { settingsApi } from '#/api/modules';
 
+const { t } = useI18n();
 const message = useMessage();
 const loading = ref(true);
 const saving = ref(false);
@@ -12,27 +14,27 @@ const shopInfo = reactive<Record<string, string>>({});
 const paymentConfig = reactive<Record<string, string>>({});
 const oauthConfig = reactive<Record<string, string>>({});
 
-const shopInfoFields = [
-  { key: 'shop_name', label: '店铺名称' },
-  { key: 'shop_description', label: '店铺描述' },
-  { key: 'shop_logo', label: '店铺Logo URL' },
-  { key: 'shop_notice', label: '店铺公告' },
-];
+const shopInfoFields = computed(() => [
+  { key: 'shop_name', label: t('page.admin.shopName') },
+  { key: 'shop_description', label: t('page.admin.shopDescription') },
+  { key: 'shop_logo', label: t('page.admin.shopLogo') },
+  { key: 'shop_notice', label: t('page.admin.shopNotice') },
+]);
 
-const paymentFields = [
-  { key: 'payment_method', label: '支付方式' },
-  { key: 'payment_api_key', label: '支付API Key' },
-  { key: 'payment_api_url', label: '支付API地址' },
-  { key: 'payment_notify_url', label: '回调地址' },
-];
+const paymentFields = computed(() => [
+  { key: 'payment_method', label: t('page.admin.paymentMethod') },
+  { key: 'payment_api_key', label: t('page.admin.paymentApiKey') },
+  { key: 'payment_api_url', label: t('page.admin.paymentApiUrl') },
+  { key: 'payment_notify_url', label: t('page.admin.paymentNotifyUrl') },
+]);
 
-const oauthFields = [
-  { key: 'oauth_client_id', label: 'Client ID' },
-  { key: 'oauth_client_secret', label: 'Client Secret' },
-  { key: 'oauth_redirect_uri', label: '回调地址' },
-  { key: 'oauth_authorize_url', label: '授权地址' },
-  { key: 'oauth_token_url', label: 'Token地址' },
-];
+const oauthFields = computed(() => [
+  { key: 'oauth_client_id', label: t('page.admin.clientId') },
+  { key: 'oauth_client_secret', label: t('page.admin.clientSecret') },
+  { key: 'oauth_redirect_uri', label: t('page.admin.redirectUri') },
+  { key: 'oauth_authorize_url', label: t('page.admin.authorizeUrl') },
+  { key: 'oauth_token_url', label: t('page.admin.tokenUrl') },
+]);
 
 async function loadSettings() {
   loading.value = true;
@@ -40,21 +42,9 @@ async function loadSettings() {
     const data = await settingsApi.getAll();
     const settings: Record<string, string> = data || {};
 
-    shopInfoFields.forEach((f) => (shopInfo[f.key] = settings[f.key] || ''));
-    paymentFields.forEach((f) => (paymentConfig[f.key] = settings[f.key] || ''));
-    oauthFields.forEach((f) => (oauthConfig[f.key] = settings[f.key] || ''));
-
-    const knownKeys = new Set([
-      ...shopInfoFields.map((f) => f.key),
-      ...paymentFields.map((f) => f.key),
-      ...oauthFields.map((f) => f.key),
-    ]);
-
-    for (const [key, value] of Object.entries(settings)) {
-      if (!knownKeys.has(key)) {
-        shopInfo[key] = value;
-      }
-    }
+    shopInfoFields.value.forEach((f) => (shopInfo[f.key] = settings[f.key] || ''));
+    paymentFields.value.forEach((f) => (paymentConfig[f.key] = settings[f.key] || ''));
+    oauthFields.value.forEach((f) => (oauthConfig[f.key] = settings[f.key] || ''));
   } catch (e) {
     console.error(e);
   } finally {
@@ -71,9 +61,9 @@ async function handleSave() {
       ...oauthConfig,
     };
     await settingsApi.batchUpdate(data);
-    message.success('保存成功');
+    message.success(t('page.admin.saveSuccess'));
   } catch (e: any) {
-    message.error(e.message || '保存失败');
+    message.error(e.message || t('page.admin.saveFailed'));
   } finally {
     saving.value = false;
   }
@@ -86,7 +76,7 @@ onMounted(loadSettings);
   <div>
     <n-spin :show="loading">
       <n-space vertical :size="24">
-        <n-card title="店铺信息">
+        <n-card :title="t('page.admin.shopInfo')">
           <n-form label-placement="left" label-width="120">
             <n-form-item v-for="field in shopInfoFields" :key="field.key" :label="field.label">
               <n-input v-model:value="shopInfo[field.key]" :placeholder="field.label" />
@@ -94,7 +84,7 @@ onMounted(loadSettings);
           </n-form>
         </n-card>
 
-        <n-card title="支付配置">
+        <n-card :title="t('page.admin.paymentConfig')">
           <n-form label-placement="left" label-width="120">
             <n-form-item v-for="field in paymentFields" :key="field.key" :label="field.label">
               <n-input
@@ -107,7 +97,7 @@ onMounted(loadSettings);
           </n-form>
         </n-card>
 
-        <n-card title="OAuth 配置">
+        <n-card :title="t('page.admin.oauthConfig')">
           <n-form label-placement="left" label-width="120">
             <n-form-item v-for="field in oauthFields" :key="field.key" :label="field.label">
               <n-input
@@ -121,7 +111,7 @@ onMounted(loadSettings);
         </n-card>
 
         <div style="text-align: center">
-          <n-button type="primary" :loading="saving" @click="handleSave">保存设置</n-button>
+          <n-button type="primary" :loading="saving" @click="handleSave">{{ t('page.admin.saveSettings') }}</n-button>
         </div>
       </n-space>
     </n-spin>

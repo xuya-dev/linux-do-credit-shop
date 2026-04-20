@@ -1,28 +1,18 @@
 <script setup lang="ts">
 import { useMessage } from 'naive-ui';
 import { useI18n } from '@vben/locales';
-import { onMounted, ref } from 'vue';
+import { computed } from 'vue';
 
 import { getAuthorizeUrlApi } from '#/api';
-import { settingsApi } from '#/api/modules/settings';
+import { useShopSettingsStore } from '#/store';
 
 const { t } = useI18n();
 const message = useMessage();
+const shopSettingsStore = useShopSettingsStore();
 
-const siteName = ref('LDC Shop');
-const siteLogo = ref('/logo.png');
-const siteDesc = ref('LINUX DO Credit Shop');
-
-onMounted(async () => {
-  try {
-    const res = await settingsApi.getPublic();
-    if (res && res.shop_name) siteName.value = res.shop_name;
-    if (res && res.shop_logo) siteLogo.value = res.shop_logo;
-    if (res && res.shop_description) siteDesc.value = res.shop_description;
-  } catch {
-    // Fallback to defaults
-  }
-});
+const siteName = computed(() => shopSettingsStore.shopName || 'LDC Shop');
+const siteLogo = computed(() => shopSettingsStore.shopLogo || '/logo.png');
+const siteDesc = computed(() => shopSettingsStore.shopDescription || 'LINUX DO Credit Shop');
 
 async function handleLogin() {
   try {
@@ -51,16 +41,16 @@ async function handleLogin() {
 
       <div class="login-features">
         <div class="feature-item">
-          <img src="/积分.png" class="feature-img" alt="积分" />
-          <span>安全可靠的积分交易</span>
+          <img src="/积分.png" class="feature-img" alt="credits" />
+          <span>{{ t('page.shop.secureTransaction') }}</span>
         </div>
         <div class="feature-item">
-          <img src="/发货.png" class="feature-img" alt="发货" />
-          <span>自动发货，即时到账</span>
+          <img src="/发货.png" class="feature-img" alt="delivery" />
+          <span>{{ t('page.shop.autoDelivery') }}</span>
         </div>
         <div class="feature-item">
           <img src="/linuxdo.png" class="feature-img" alt="Linux DO" />
-          <span>LINUX DO 账号一键登录</span>
+          <span>{{ t('page.shop.oneClickLogin') }}</span>
         </div>
       </div>
 

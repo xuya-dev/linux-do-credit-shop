@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { orderApi } from '#/api/modules';
 
+const { t } = useI18n();
 const message = useMessage();
 const dialog = useDialog();
 
@@ -18,12 +20,12 @@ const showDeliver = ref(false);
 const selectedOrder = ref<any>(null);
 const deliverForm = ref({ deliveryInfo: '', adminRemark: '' });
 
-const statusTabs = [
-  { label: '全部', value: null },
-  { label: '待支付', value: 0 },
-  { label: '已支付', value: 1 },
-  { label: '已退款', value: 2 },
-];
+const statusTabs = computed(() => [
+  { label: t('page.admin.all'), value: null },
+  { label: t('page.admin.pending'), value: 0 },
+  { label: t('page.admin.paid'), value: 1 },
+  { label: t('page.admin.refunded'), value: 2 },
+]);
 
 async function loadOrders() {
   loading.value = true;
@@ -52,86 +54,86 @@ function openDeliver(row: any) {
 async function handleDeliver() {
   try {
     await orderApi.adminDeliver(selectedOrder.value.id, deliverForm.value);
-    message.success('发货成功');
+    message.success(t('page.admin.deliverSuccess'));
     showDeliver.value = false;
     loadOrders();
   } catch (e: any) {
-    message.error(e.message || '发货失败');
+    message.error(e.message || t('page.admin.deliverFailed'));
   }
 }
 
 function handleRefund(id: number) {
   dialog.warning({
-    title: '确认退款',
-    content: '确定要对该订单进行退款吗？此操作不可撤销。',
-    positiveText: '确认退款',
-    negativeText: '取消',
+    title: t('page.admin.confirmRefund'),
+    content: t('page.admin.confirmRefundContent'),
+    positiveText: t('page.admin.confirmRefund'),
+    negativeText: t('page.admin.cancel'),
     onPositiveClick: async () => {
       try {
         await orderApi.adminRefund(id);
-        message.success('退款成功');
+        message.success(t('page.admin.refundSuccess'));
         loadOrders();
       } catch (e: any) {
-        message.error(e.message || '退款失败');
+        message.error(e.message || t('page.admin.refundFailed'));
       }
     },
   });
 }
 
-const paymentStatusMap: Record<number, { label: string; type: 'default' | 'success' | 'warning' | 'error' }> = {
-  0: { label: '待支付', type: 'default' },
-  1: { label: '已支付', type: 'success' },
-  2: { label: '已退款', type: 'warning' },
-};
+const paymentStatusMap = computed(() => ({
+  0: { label: t('page.admin.pending'), type: 'default' as const },
+  1: { label: t('page.admin.paid'), type: 'success' as const },
+  2: { label: t('page.admin.refunded'), type: 'warning' as const },
+}));
 
-const deliveryStatusMap: Record<number, { label: string; type: 'default' | 'info' | 'success' }> = {
-  0: { label: '待发货', type: 'default' },
-  1: { label: '已发货', type: 'info' },
-  2: { label: '已完成', type: 'success' },
-};
+const deliveryStatusMap = computed(() => ({
+  0: { label: t('page.admin.pendingDelivery'), type: 'default' as const },
+  1: { label: t('page.admin.delivered'), type: 'info' as const },
+  2: { label: t('page.shop.completed'), type: 'success' as const },
+}));
 
-const columns = [
+const columns = computed(() => [
   {
-    title: '订单号',
+    title: t('page.admin.orderNo'),
     key: 'orderNo',
     width: 180,
     render: (row: any) =>
       h('span', { style: 'font-family: monospace; font-size: 13px' }, row.orderNo),
   },
-  { title: '商品名称', key: 'productName', ellipsis: { tooltip: true } },
+  { title: t('page.admin.productNameCol'), key: 'productName', ellipsis: { tooltip: true } },
   {
-    title: '金额',
+    title: t('page.admin.amount'),
     key: 'totalAmount',
     width: 100,
     render: (row: any) =>
       h('span', { style: 'font-weight: 600; color: #2563eb' }, row.totalAmount),
   },
   {
-    title: '支付状态',
+    title: t('page.admin.paymentStatus'),
     key: 'paymentStatus',
     width: 100,
     render: (row: any) => {
-      const info = paymentStatusMap[row.paymentStatus] || {
-        label: '未知',
+      const info = paymentStatusMap.value[row.paymentStatus as keyof typeof paymentStatusMap.value] || {
+        label: row.paymentStatus,
         type: 'default' as const,
       };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
-    title: '发货状态',
+    title: t('page.admin.deliveryStatus'),
     key: 'deliveryStatus',
     width: 100,
     render: (row: any) => {
-      const info = deliveryStatusMap[row.deliveryStatus] || {
-        label: '未知',
+      const info = deliveryStatusMap.value[row.deliveryStatus as keyof typeof deliveryStatusMap.value] || {
+        label: row.deliveryStatus,
         type: 'default' as const,
       };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
-    title: '操作',
+    title: t('page.admin.actions'),
     key: 'actions',
     width: 160,
     render: (row: any) => {
@@ -141,7 +143,7 @@ const columns = [
           h(
             NButton,
             { size: 'small', type: 'primary', onClick: () => openDeliver(row) },
-            { default: () => '发货' },
+            { default: () => t('page.admin.confirmDelivery') },
           ),
         );
       }
@@ -150,14 +152,14 @@ const columns = [
           h(
             NButton,
             { size: 'small', type: 'error', onClick: () => handleRefund(row.id) },
-            { default: () => '退款' },
+            { default: () => t('page.admin.confirmRefund') },
           ),
         );
       }
       return h(NSpace, { size: 'small' }, { default: () => btns });
     },
   },
-];
+]);
 
 onMounted(loadOrders);
 </script>
@@ -168,11 +170,11 @@ onMounted(loadOrders);
       <n-space align="center">
         <n-input
           v-model:value="keyword"
-          placeholder="搜索订单..."
+          :placeholder="t('page.admin.searchOrders')"
           style="width: 200px"
           @keyup.enter="page = 1; loadOrders()"
         />
-        <n-button @click="page = 1; loadOrders()">搜索</n-button>
+        <n-button @click="page = 1; loadOrders()">{{ t('page.admin.search') }}</n-button>
       </n-space>
       <n-space>
         <n-button
@@ -197,27 +199,27 @@ onMounted(loadOrders);
 
     <n-modal
       v-model:show="showDeliver"
-      title="确认发货"
+      :title="t('page.admin.confirmDelivery')"
       preset="card"
       style="width: 480px"
     >
-      <n-form label-placement="left" label-width="80">
-        <n-form-item label="物流信息">
-          <n-input v-model:value="deliverForm.deliveryInfo" placeholder="请输入物流信息" />
+      <n-form label-placement="left" label-width="100">
+        <n-form-item :label="t('page.admin.deliveryInfo')">
+          <n-input v-model:value="deliverForm.deliveryInfo" :placeholder="t('page.admin.deliveryInfo')" />
         </n-form-item>
-        <n-form-item label="管理员备注">
+        <n-form-item :label="t('page.admin.adminRemark')">
           <n-input
             v-model:value="deliverForm.adminRemark"
             type="textarea"
             :rows="3"
-            placeholder="备注信息"
+            :placeholder="t('page.admin.adminRemark')"
           />
         </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showDeliver = false">取消</n-button>
-          <n-button type="primary" @click="handleDeliver">确认发货</n-button>
+          <n-button @click="showDeliver = false">{{ t('page.admin.cancel') }}</n-button>
+          <n-button type="primary" @click="handleDeliver">{{ t('page.admin.confirmDelivery') }}</n-button>
         </n-space>
       </template>
     </n-modal>

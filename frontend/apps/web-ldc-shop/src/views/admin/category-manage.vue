@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { categoryApi } from '#/api/modules';
 
+const { t } = useI18n();
 const message = useMessage();
 const dialog = useDialog();
 
@@ -29,12 +31,12 @@ async function loadCategories() {
 async function createCategory() {
   try {
     await categoryApi.adminCreate(form.value);
-    message.success('创建成功');
+    message.success(t('page.admin.saveSuccess'));
     showCreate.value = false;
     form.value = { name: '', sortOrder: 0, status: 1 };
     loadCategories();
   } catch (e: any) {
-    message.error(e.message || '创建失败');
+    message.error(e.message || t('page.admin.saveFailed'));
   }
 }
 
@@ -47,68 +49,58 @@ function openEdit(row: any) {
 async function updateCategory() {
   try {
     await categoryApi.adminUpdate(editingId.value!, form.value);
-    message.success('更新成功');
+    message.success(t('page.admin.saveSuccess'));
     showEdit.value = false;
     loadCategories();
   } catch (e: any) {
-    message.error(e.message || '更新失败');
+    message.error(e.message || t('page.admin.saveFailed'));
   }
 }
 
 function handleDelete(id: number) {
   dialog.warning({
-    title: '确认删除',
-    content: '确定要删除该分类吗？',
-    positiveText: '确认',
-    negativeText: '取消',
+    title: t('page.admin.confirm'),
+    content: t('page.admin.confirmDeleteContent'),
+    positiveText: t('page.admin.confirm'),
+    negativeText: t('page.admin.cancel'),
     onPositiveClick: async () => {
       try {
         await categoryApi.adminDelete(id);
-        message.success('删除成功');
+        message.success(t('page.admin.deleteSuccess'));
         loadCategories();
       } catch (e: any) {
-        message.error(e.message || '删除失败');
+        message.error(e.message || t('page.admin.deleteFailed'));
       }
     },
   });
 }
 
-const columns = [
+const columns = computed(() => [
   { title: 'ID', key: 'id', width: 60 },
-  { title: '分类名称', key: 'name' },
-  { title: '排序', key: 'sortOrder', width: 80 },
+  { title: t('page.admin.categoryName'), key: 'name' },
+  { title: t('page.admin.categorySort'), key: 'sortOrder', width: 80 },
   {
-    title: '状态',
+    title: t('page.admin.status'),
     key: 'status',
     width: 80,
     render: (row: any) =>
-      h(
-        NTag,
-        { type: row.status === 1 ? 'success' : 'error', size: 'small' },
-        { default: () => (row.status === 1 ? '启用' : '禁用') },
-      ),
+      h(NTag, { type: row.status === 1 ? 'success' : 'error', size: 'small' }, {
+        default: () => row.status === 1 ? t('page.admin.enabled') : t('page.admin.disabled'),
+      }),
   },
   {
-    title: '操作',
+    title: t('page.admin.actions'),
     key: 'actions',
     width: 160,
     render: (row: any) =>
       h(NSpace, { size: 'small' }, {
         default: () => [
-          h(
-            NButton,
-            { size: 'small', type: 'primary', onClick: () => openEdit(row) },
-            { default: () => '编辑' },
-          ),
-          h(
-            NButton,
-            { size: 'small', type: 'error', onClick: () => handleDelete(row.id) },
-            { default: () => '删除' },
-          ),
+          h(NButton, { size: 'small', type: 'primary', onClick: () => openEdit(row) }, { default: () => t('page.admin.edit') }),
+          h(NButton, { size: 'small', type: 'error', onClick: () => handleDelete(row.id) }, { default: () => t('page.admin.delete') }),
         ],
       }),
   },
-];
+]);
 
 onMounted(loadCategories);
 </script>
@@ -116,18 +108,18 @@ onMounted(loadCategories);
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">分类管理</n-h3>
+      <n-h3 style="margin: 0">{{ t('page.admin.categories') }}</n-h3>
       <n-button type="primary" @click="showCreate = true; form = { name: '', sortOrder: 0, status: 1 }">
-        创建分类
+        {{ t('page.admin.create') }}
       </n-button>
     </div>
 
     <n-card v-if="showCreate" size="small" style="margin-bottom: 16px">
       <n-space align="center">
-        <n-input v-model:value="form.name" placeholder="分类名称" style="width: 200px" />
-        <n-input-number v-model:value="form.sortOrder" placeholder="排序" style="width: 120px" />
-        <n-button type="primary" @click="createCategory">保存</n-button>
-        <n-button @click="showCreate = false">取消</n-button>
+        <n-input v-model:value="form.name" :placeholder="t('page.admin.categoryName')" style="width: 200px" />
+        <n-input-number v-model:value="form.sortOrder" :placeholder="t('page.admin.categorySort')" style="width: 120px" />
+        <n-button type="primary" @click="createCategory">{{ t('page.admin.save') }}</n-button>
+        <n-button @click="showCreate = false">{{ t('page.admin.cancel') }}</n-button>
       </n-space>
     </n-card>
 
@@ -140,28 +132,28 @@ onMounted(loadCategories);
 
     <n-modal
       v-model:show="showEdit"
-      title="编辑分类"
+      :title="t('page.admin.edit')"
       preset="card"
       style="width: 400px"
     >
       <n-form label-placement="left" label-width="60">
-        <n-form-item label="名称">
+        <n-form-item :label="t('page.admin.categoryName')">
           <n-input v-model:value="form.name" />
         </n-form-item>
-        <n-form-item label="排序">
+        <n-form-item :label="t('page.admin.categorySort')">
           <n-input-number v-model:value="form.sortOrder" style="width: 100%" />
         </n-form-item>
-        <n-form-item label="状态">
+        <n-form-item :label="t('page.admin.status')">
           <n-switch v-model:value="form.status" :unchecked-value="0" :checked-value="1">
-            <template #checked>启用</template>
-            <template #unchecked>禁用</template>
+            <template #checked>{{ t('page.admin.enable') }}</template>
+            <template #unchecked>{{ t('page.admin.disable') }}</template>
           </n-switch>
         </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showEdit = false">取消</n-button>
-          <n-button type="primary" @click="updateCategory">保存</n-button>
+          <n-button @click="showEdit = false">{{ t('page.admin.cancel') }}</n-button>
+          <n-button type="primary" @click="updateCategory">{{ t('page.admin.save') }}</n-button>
         </n-space>
       </template>
     </n-modal>

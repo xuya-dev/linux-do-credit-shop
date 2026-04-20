@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useI18n } from '@vben/locales';
 
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -13,6 +14,8 @@ import {
 import VChart from 'vue-echarts';
 
 import { dashboardApi } from '#/api/modules';
+
+const { t } = useI18n();
 
 use([
   CanvasRenderer,
@@ -42,12 +45,12 @@ const statCards = computed(() => {
   const d = dashboard.value;
   if (!d) return [];
   return [
-    { label: '今日订单', value: d.todayOrderCount, color: '#3b82f6' },
-    { label: '今日销售额', value: `${d.todaySalesAmount} 积分`, color: '#2563eb' },
-    { label: '总用户数', value: d.totalUserCount, color: '#059669' },
-    { label: '总订单数', value: d.totalOrderCount, color: '#7c3aed' },
-    { label: '待处理纠纷', value: d.pendingDisputeCount, color: '#d97706' },
-    { label: '待发货', value: d.pendingDeliveryCount, color: '#dc2626' },
+    { label: t('page.admin.todayOrders'), value: d.todayOrderCount, color: '#3b82f6' },
+    { label: t('page.admin.todaySales'), value: `${d.todaySalesAmount} ${t('page.shop.credits')}`, color: '#2563eb' },
+    { label: t('page.admin.totalUsers'), value: d.totalUserCount, color: '#059669' },
+    { label: t('page.admin.totalOrders'), value: d.totalOrderCount, color: '#7c3aed' },
+    { label: t('page.admin.pendingDisputes'), value: d.pendingDisputeCount, color: '#d97706' },
+    { label: t('page.admin.pendingDeliveries'), value: d.pendingDeliveryCount, color: '#dc2626' },
   ];
 });
 
@@ -144,12 +147,12 @@ const productRankOption = computed(() => ({
 
         <n-grid :cols="24" :x-gap="24" :y-gap="24" style="margin-bottom: 24px">
           <n-gi :span="16">
-            <n-card title="销售趋势 (30天)">
+            <n-card :title="t('page.admin.salesTrend')">
               <v-chart :option="salesTrendOption" style="height: 300px" autoresize />
             </n-card>
           </n-gi>
           <n-gi :span="8">
-            <n-card title="支付状态分布">
+            <n-card :title="t('page.admin.paymentDistribution')">
               <v-chart :option="statusPieOption" style="height: 300px" autoresize />
             </n-card>
           </n-gi>
@@ -157,12 +160,12 @@ const productRankOption = computed(() => ({
 
         <n-grid :cols="24" :x-gap="24" :y-gap="24">
           <n-gi :span="12">
-            <n-card title="商品销量排行">
+            <n-card :title="t('page.admin.productRank')">
               <v-chart :option="productRankOption" style="height: 300px" autoresize />
             </n-card>
           </n-gi>
           <n-gi :span="12">
-            <n-card title="分类销售分布">
+            <n-card :title="t('page.admin.categoryDistribution')">
               <div
                 v-for="cat in dashboard.categorySalesDistribution"
                 :key="cat.categoryName"
@@ -175,7 +178,7 @@ const productRankOption = computed(() => ({
               >
                 <span style="font-size: 14px">{{ cat.categoryName }}</span>
                 <span style="font-size: 14px; font-weight: 600; color: #3b82f6">
-                  {{ cat.totalAmount }} 积分
+                  {{ cat.totalAmount }} {{ t('page.shop.credits') }}
                 </span>
               </div>
             </n-card>
