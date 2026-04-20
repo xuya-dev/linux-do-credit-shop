@@ -81,7 +81,7 @@ function setupAccessGuard(router: Router) {
     }
 
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
-    const userRoles = userInfo.roles ?? [];
+    const userRoles = userInfo.roles ?? (userInfo.role ? [userInfo.role] : []);
 
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
       roles: userRoles,

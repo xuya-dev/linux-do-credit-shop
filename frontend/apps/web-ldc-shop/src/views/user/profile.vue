@@ -15,9 +15,9 @@ const trustLabel = computed(() => {
 });
 
 const menuItems = [
-  { label: '我的订单', path: '/orders', icon: '📦', desc: '查看历史购买与卡密' },
-  { label: '售后争议', path: '/disputes', icon: '⚖️', desc: '处理问题订单反馈' },
-  { label: '站内公告', path: '/announcements', icon: '📢', desc: '平台最新通知和动态' },
+  { label: '我的订单', path: '/orders', iconImg: '/订单.png', desc: '查看历史购买与卡密' },
+  { label: '售后争议', path: '/disputes', iconImg: '/售后.png', desc: '处理问题订单反馈' },
+  { label: '站内公告', path: '/announcements', iconImg: '/公告.png', desc: '平台最新通知和动态' },
 ];
 </script>
 
@@ -62,7 +62,10 @@ const menuItems = [
             class="service-box"
             @click="router.push(item.path)"
           >
-            <div class="service-icon">{{ item.icon }}</div>
+            <div class="service-icon">
+              <img v-if="item.iconImg" :src="item.iconImg" alt="icon" class="service-icon-img" />
+              <span v-else>{{ item.icon }}</span>
+            </div>
             <div class="service-text">
               <span class="service-label">{{ item.label }}</span>
               <span class="service-desc">{{ item.desc }}</span>
@@ -206,8 +209,16 @@ const menuItems = [
   box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
 }
 .service-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28px;
   margin-right: 16px;
+}
+.service-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 .service-text {
   flex: 1;
