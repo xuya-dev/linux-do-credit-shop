@@ -24,10 +24,20 @@ public class Ed25519Util {
     /** Ed25519 算法名称 / Ed25519 Algorithm Name */
     private static final String ALGORITHM = "Ed25519";
 
+    /** PKCS#8 DER prefix for Ed25519 private key (wraps a 32-byte raw seed into 46 bytes) */
+    private static final byte[] ED25519_PKCS8_PREFIX = {
+        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+        0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20
+    };
+
+    /** X509 DER prefix for Ed25519 public key (wraps a 32-byte raw key into 44 bytes) */
+    private static final byte[] ED25519_X509_PREFIX = {
+        0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+        0x70, 0x03, 0x21, 0x00
+    };
+
     /**
      * 生成 Ed25519 密钥对 / Generate Ed25519 Key Pair
-     *
-     * @return 密钥对 / Key Pair
      */
     public static KeyPair generateKeyPair() {
         try {
@@ -40,14 +50,10 @@ public class Ed25519Util {
 
     /**
      * 使用私钥对数据进行签名 / Sign data with private key
-     *
-     * @param privateKeyBase64 Base64编码的私钥 / Base64 encoded private key
-     * @param data             待签名数据 / Data to sign
-     * @return Base64编码的签名 / Base64 encoded signature
      */
     public static String sign(String privateKeyBase64, String data) {
         try {
-            byte[] privateKeyBytes = Base64.decode(privateKeyBase64);
+            byte[] privateKeyBytes = decodeAndWrapPrivate(privateKeyBase64);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = KeyFactory.getInstance(ALGORITHM).generatePrivate(keySpec);
 
@@ -63,15 +69,10 @@ public class Ed25519Util {
 
     /**
      * 使用公钥验证签名 / Verify signature with public key
-     *
-     * @param publicKeyBase64  Base64编码的公钥 / Base64 encoded public key
-     * @param data             原始数据 / Original data
-     * @param signatureBase64  Base64编码的签名 / Base64 encoded signature
-     * @return 验签结果 / Verification result
      */
     public static boolean verify(String publicKeyBase64, String data, String signatureBase64) {
         try {
-            byte[] publicKeyBytes = Base64.decode(publicKeyBase64);
+            byte[] publicKeyBytes = decodeAndWrapPublic(publicKeyBase64);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             PublicKey publicKey = KeyFactory.getInstance(ALGORITHM).generatePublic(keySpec);
 
@@ -83,6 +84,38 @@ public class Ed25519Util {
             log.error("Ed25519验签失败 / Ed25519 verification failed", e);
             return false;
         }
+    }
+
+    private static byte[] decodeAndWrapPrivate(String keyBase64) {
+        byte[] bytes = stripPemAndDecode(keyBase64);
+        if (bytes.length == 32) {
+            byte[] wrapped = new byte[ED25519_PKCS8_PREFIX.length + 32];
+            System.arraycopy(ED25519_PKCS8_PREFIX, 0, wrapped, 0, ED25519_PKCS8_PREFIX.length);
+            System.arraycopy(bytes, 0, wrapped, ED25519_PKCS8_PREFIX.length, 32);
+            return wrapped;
+        }
+        return bytes;
+    }
+
+    private static byte[] decodeAndWrapPublic(String keyBase64) {
+        byte[] bytes = stripPemAndDecode(keyBase64);
+        if (bytes.length == 32) {
+            byte[] wrapped = new byte[ED25519_X509_PREFIX.length + 32];
+            System.arraycopy(ED25519_X509_PREFIX, 0, wrapped, 0, ED25519_X509_PREFIX.length);
+            System.arraycopy(bytes, 0, wrapped, ED25519_X509_PREFIX.length, 32);
+            return wrapped;
+        }
+        return bytes;
+    }
+
+    private static byte[] stripPemAndDecode(String keyBase64) {
+        String cleaned = keyBase64
+            .replace("-----BEGIN PRIVATE KEY-----", "")
+            .replace("-----END PRIVATE KEY-----", "")
+            .replace("-----BEGIN PUBLIC KEY-----", "")
+            .replace("-----END PUBLIC KEY-----", "")
+            .replaceAll("\\s", "");
+        return Base64.decode(cleaned);
     }
 
     /**
