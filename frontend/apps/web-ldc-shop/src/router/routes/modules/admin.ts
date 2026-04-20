@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
       title: '管理后台',
       order: 100,
       authority: ['admin'],
+      noBasicLayout: true,
     },
     name: 'Admin',
     path: '/admin',
