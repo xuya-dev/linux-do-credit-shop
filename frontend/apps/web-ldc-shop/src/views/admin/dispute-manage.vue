@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, h, computed } from 'vue';
-import { useMessage, NTag, NButton, NSpace } from 'naive-ui';
+import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
 import { disputeApi } from '#/api/modules';
@@ -12,13 +12,14 @@ const disputes = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
-const statusFilter = ref<number | null>(null);
+
+const searchForm = ref({ orderNo: '', status: null as number | null });
 
 const showHandle = ref(false);
 const selectedDispute = ref<any>(null);
 const handleForm = ref({ status: 1, adminNote: '' });
 
-const statusTabs = computed(() => [
+const statusOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
   { label: t('page.admin.processing'), value: 0 },
   { label: t('page.admin.accepted'), value: 1 },
@@ -26,13 +27,21 @@ const statusTabs = computed(() => [
   { label: t('page.admin.platformIntervened'), value: 3 },
 ]);
 
+const disputeStatusMap = computed(() => ({
+  0: { label: t('page.admin.processing'), type: 'warning' as const },
+  1: { label: t('page.admin.accepted'), type: 'success' as const },
+  2: { label: t('page.admin.rejected'), type: 'error' as const },
+  3: { label: t('page.admin.platformIntervened'), type: 'info' as const },
+}));
+
 async function loadDisputes() {
   loading.value = true;
   try {
     const res = await disputeApi.adminList({
       page: page.value,
       size: 10,
-      status: statusFilter.value ?? undefined,
+      orderNo: searchForm.value.orderNo || undefined,
+      status: searchForm.value.status ?? undefined,
     });
     disputes.value = res?.records || [];
     total.value = res?.total || 0;
@@ -42,6 +51,9 @@ async function loadDisputes() {
     loading.value = false;
   }
 }
+
+function handleSearch() { page.value = 1; loadDisputes(); }
+function resetSearch() { searchForm.value = { orderNo: '', status: null }; page.value = 1; loadDisputes(); }
 
 function openHandle(row: any) {
   selectedDispute.value = row;
@@ -60,45 +72,27 @@ async function handleDispute() {
   }
 }
 
-const disputeStatusMap = computed(() => ({
-  0: { label: t('page.admin.processing'), type: 'warning' as const },
-  1: { label: t('page.admin.accepted'), type: 'success' as const },
-  2: { label: t('page.admin.rejected'), type: 'error' as const },
-  3: { label: t('page.admin.platformIntervened'), type: 'info' as const },
-}));
-
 const columns = computed(() => [
   {
-    title: t('page.admin.orderNo'),
-    key: 'orderNo',
-    width: 180,
-    render: (row: any) =>
-      h('span', { style: 'font-family: monospace; font-size: 13px' }, row.orderNo),
+    title: t('page.admin.orderNo'), key: 'orderNo', width: 180,
+    render: (row: any) => h('span', { style: 'font-family:monospace;font-size:13px' }, row.orderNo),
   },
   { title: t('page.admin.productNameCol'), key: 'productName', ellipsis: { tooltip: true } },
+  { title: t('page.admin.buyer'), key: 'username', width: 100 },
   { title: t('page.admin.disputeReason'), key: 'reason', ellipsis: { tooltip: true } },
   {
-    title: t('page.admin.status'),
-    key: 'status',
-    width: 100,
+    title: t('page.admin.status'), key: 'status', width: 110,
     render: (row: any) => {
-      const info = disputeStatusMap.value[row.status as keyof typeof disputeStatusMap.value] || {
-        label: String(row.status),
-        type: 'default' as const,
-      };
+      const info = disputeStatusMap.value[row.status as keyof typeof disputeStatusMap.value] || { label: String(row.status), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
+  { title: t('page.admin.createdAt'), key: 'createdAt', width: 160 },
   {
-    title: t('page.admin.actions'),
-    key: 'actions',
-    width: 80,
-    render: (row: any) =>
-      row.status === 0
-        ? h(NButton, { size: 'small', type: 'primary', onClick: () => openHandle(row) }, {
-            default: () => t('page.admin.confirm'),
-          })
-        : null,
+    title: t('page.admin.actions'), key: 'actions', width: 80,
+    render: (row: any) => row.status === 0
+      ? h(NButton, { size: 'small', type: 'primary', onClick: () => openHandle(row) }, { default: () => t('page.admin.confirm') })
+      : null,
   },
 ]);
 
@@ -107,57 +101,49 @@ onMounted(loadDisputes);
 
 <template>
   <div class="p-5">
-    <n-card :bordered="false">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px">
-        <n-space>
-          <n-button
-            v-for="tab in statusTabs"
-            :key="String(tab.value)"
-            :type="statusFilter === tab.value ? 'primary' : 'default'"
-            size="small"
-            @click="statusFilter = tab.value; page = 1; loadDisputes()"
-          >
-            {{ tab.label }}
-          </n-button>
-        </n-space>
-      </div>
-
-      <n-data-table
-        :columns="columns"
-        :data="disputes"
-        :loading="loading"
-        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadDisputes() } }"
-        :bordered="false"
-      />
+    <n-card :bordered="false" style="margin-bottom:16px">
+      <n-grid :cols="3" :x-gap="16" :y-gap="12">
+        <n-gi>
+          <n-form-item :label="t('page.admin.orderNo')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-input v-model:value="searchForm.orderNo" placeholder="请输入订单号" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+        </n-gi>
+        <n-gi>
+          <n-form-item :label="t('page.admin.disputeStatus')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-select v-model:value="searchForm.status" :options="statusOptions" clearable />
+          </n-form-item>
+        </n-gi>
+        <n-gi></n-gi>
+        <n-gi :span="3" style="text-align:right">
+          <n-space justify="end">
+            <n-button @click="resetSearch">{{ t('page.admin.cancel') }}</n-button>
+            <n-button type="primary" @click="handleSearch">{{ t('page.admin.search') }}</n-button>
+          </n-space>
+        </n-gi>
+      </n-grid>
     </n-card>
 
-    <n-modal
-      v-model:show="showHandle"
-      :title="t('page.admin.disputes')"
-      preset="card"
-      style="width: 480px"
-    >
+    <n-card :bordered="false">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:15px;font-weight:600">{{ t('page.admin.disputes') }}</span>
+      </div>
+      <n-data-table :columns="columns" :data="disputes" :loading="loading"
+        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadDisputes() } }"
+        :bordered="false" />
+    </n-card>
+
+    <n-modal v-model:show="showHandle" :title="t('page.admin.disputes')" preset="card" style="width:480px">
       <n-form label-placement="left" label-width="100">
-        <n-form-item :label="t('page.admin.disputeReason')">
-          <n-text>{{ selectedDispute?.reason }}</n-text>
-        </n-form-item>
+        <n-form-item :label="t('page.admin.disputeReason')"><n-text>{{ selectedDispute?.reason }}</n-text></n-form-item>
         <n-form-item :label="t('page.admin.disputeStatus')">
-          <n-select
-            v-model:value="handleForm.status"
-            :options="[
-              { label: t('page.admin.accept'), value: 1 },
-              { label: t('page.admin.reject'), value: 2 },
-              { label: t('page.admin.platformIntervene'), value: 3 },
-            ]"
-          />
+          <n-select v-model:value="handleForm.status" :options="[
+            { label: t('page.admin.accept'), value: 1 },
+            { label: t('page.admin.reject'), value: 2 },
+            { label: t('page.admin.platformIntervene'), value: 3 },
+          ]" />
         </n-form-item>
         <n-form-item :label="t('page.admin.disputeNote')">
-          <n-input
-            v-model:value="handleForm.adminNote"
-            type="textarea"
-            :rows="3"
-            :placeholder="t('page.admin.disputeNote')"
-          />
+          <n-input v-model:value="handleForm.adminNote" type="textarea" :rows="3" :placeholder="t('page.admin.disputeNote')" />
         </n-form-item>
       </n-form>
       <template #footer>

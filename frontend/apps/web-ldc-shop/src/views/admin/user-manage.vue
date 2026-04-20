@@ -13,7 +13,14 @@ const users = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
-const keyword = ref('');
+
+const searchForm = ref({ keyword: '', role: null as string | null });
+
+const roleOptions = computed(() => [
+  { label: t('page.admin.all'), value: null },
+  { label: t('page.shop.user'), value: 'user' },
+  { label: t('page.shop.admin'), value: 'admin' },
+]);
 
 async function loadUsers() {
   loading.value = true;
@@ -21,7 +28,8 @@ async function loadUsers() {
     const res = await userApi.adminList({
       page: page.value,
       size: 10,
-      keyword: keyword.value || undefined,
+      keyword: searchForm.value.keyword || undefined,
+      role: searchForm.value.role || undefined,
     });
     users.value = res?.records || [];
     total.value = res?.total || 0;
@@ -32,7 +40,10 @@ async function loadUsers() {
   }
 }
 
-async function toggleStatus(id: number, currentStatus: number) {
+function handleSearch() { page.value = 1; loadUsers(); }
+function resetSearch() { searchForm.value = { keyword: '', role: null }; page.value = 1; loadUsers(); }
+
+async function toggleUserStatus(id: number, currentStatus: number) {
   try {
     await userApi.adminUpdateStatus(id, currentStatus === 1 ? 0 : 1);
     message.success(t('page.admin.operationSuccess'));
@@ -42,77 +53,34 @@ async function toggleStatus(id: number, currentStatus: number) {
   }
 }
 
-function confirmToggleRole(id: number, currentRole: string) {
-  const newRole = currentRole === 'admin' ? 'user' : 'admin';
-  dialog.warning({
-    title: t('page.admin.confirm'),
-    content: `${t('page.admin.role')}: ${newRole === 'admin' ? t('page.shop.admin') : t('page.shop.user')}`,
-    positiveText: t('page.admin.confirm'),
-    negativeText: t('page.admin.cancel'),
-    onPositiveClick: async () => {
-      try {
-        await userApi.adminUpdateRole(id, newRole);
-        message.success(t('page.admin.operationSuccess'));
-        loadUsers();
-      } catch (e: any) {
-        message.error(e.message || t('page.admin.operationFailed'));
-      }
-    },
-  });
-}
-
 const columns = computed(() => [
+  { title: 'ID', key: 'id', width: 60 },
   {
-    title: t('page.admin.username'),
-    key: 'username',
-    render: (row: any) =>
-      h(NSpace, { align: 'center', size: 'small' }, {
-        default: () => [
-          h(NAvatar, { src: row.avatar, size: 'small', round: true }),
-          h('span', { style: 'font-weight: 500' }, row.username),
-        ],
-      }),
+    title: t('page.shop.nickname'), key: 'username', width: 160,
+    render: (row: any) => h(NSpace, { align: 'center', size: 'small' }, { default: () => [
+      h(NAvatar, { src: row.avatarUrl, size: 28, round: true, fallbackSrc: '/logo.png' }),
+      h('span', {}, row.username),
+    ]}),
   },
-  { title: t('page.shop.nickname'), key: 'nickname', width: 120 },
+  { title: t('page.shop.email'), key: 'email', ellipsis: { tooltip: true } },
+  { title: t('page.shop.trustLevel'), key: 'trustLevel', width: 90 },
+  { title: t('page.admin.creditBalance'), key: 'creditBalance', width: 100 },
   {
-    title: t('page.admin.role'),
-    key: 'role',
-    width: 100,
-    render: (row: any) => {
-      const isAdmin = row.role === 'admin';
-      return h(NTag, { type: isAdmin ? 'success' : 'info', size: 'small' }, {
-        default: () => isAdmin ? t('page.shop.admin') : t('page.shop.user'),
-      });
-    },
+    title: t('page.admin.role'), key: 'role', width: 80,
+    render: (row: any) => h(NTag, { type: row.role === 'admin' ? 'error' : 'info', size: 'small' }, { default: () => row.role === 'admin' ? t('page.shop.admin') : t('page.shop.user') }),
   },
   {
-    title: t('page.admin.status'),
-    key: 'status',
-    width: 80,
-    render: (row: any) =>
-      h(NTag, { type: row.status === 1 ? 'success' : 'error', size: 'small' }, {
-        default: () => row.status === 1 ? t('page.admin.enabled') : t('page.admin.disabled'),
-      }),
+    title: t('page.admin.userStatus'), key: 'status', width: 80,
+    render: (row: any) => h(NTag, { type: row.status === 1 ? 'success' : 'error', size: 'small' }, { default: () => row.status === 1 ? t('page.admin.enabled') : t('page.admin.disabled') }),
   },
+  { title: t('page.shop.joined'), key: 'createdAt', width: 160 },
   {
-    title: t('page.admin.actions'),
-    key: 'actions',
-    width: 220,
-    render: (row: any) =>
-      h(NSpace, { size: 'small' }, {
-        default: () => [
-          h(NButton, {
-            size: 'small',
-            type: row.status === 1 ? 'warning' : 'success',
-            onClick: () => toggleStatus(row.id, row.status),
-          }, { default: () => row.status === 1 ? t('page.admin.disable') : t('page.admin.enable') }),
-          h(NButton, {
-            size: 'small',
-            type: row.role === 'admin' ? 'warning' : 'info',
-            onClick: () => confirmToggleRole(row.id, row.role),
-          }, { default: () => row.role === 'admin' ? t('page.shop.user') : t('page.shop.admin') }),
-        ],
-      }),
+    title: t('page.admin.actions'), key: 'actions', width: 100,
+    render: (row: any) => h(NButton, {
+      size: 'small',
+      type: row.status === 1 ? 'warning' : 'success',
+      onClick: () => toggleUserStatus(row.id, row.status),
+    }, { default: () => row.status === 1 ? t('page.admin.disable') : t('page.admin.enable') }),
   },
 ]);
 
@@ -121,26 +89,35 @@ onMounted(loadUsers);
 
 <template>
   <div class="p-5">
-    <n-card :bordered="false">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-        <n-space align="center">
-          <n-input
-            v-model:value="keyword"
-            :placeholder="t('page.admin.searchUsers')"
-            style="width: 240px"
-            @keyup.enter="page = 1; loadUsers()"
-          />
-          <n-button @click="page = 1; loadUsers()">{{ t('page.admin.search') }}</n-button>
-        </n-space>
-      </div>
+    <n-card :bordered="false" style="margin-bottom:16px">
+      <n-grid :cols="3" :x-gap="16" :y-gap="12">
+        <n-gi>
+          <n-form-item :label="t('page.admin.username')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-input v-model:value="searchForm.keyword" :placeholder="t('page.admin.searchUsers')" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+        </n-gi>
+        <n-gi>
+          <n-form-item :label="t('page.admin.role')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-select v-model:value="searchForm.role" :options="roleOptions" clearable />
+          </n-form-item>
+        </n-gi>
+        <n-gi></n-gi>
+        <n-gi :span="3" style="text-align:right">
+          <n-space justify="end">
+            <n-button @click="resetSearch">{{ t('page.admin.cancel') }}</n-button>
+            <n-button type="primary" @click="handleSearch">{{ t('page.admin.search') }}</n-button>
+          </n-space>
+        </n-gi>
+      </n-grid>
+    </n-card>
 
-      <n-data-table
-        :columns="columns"
-        :data="users"
-        :loading="loading"
-        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadUsers() } }"
-        :bordered="false"
-      />
+    <n-card :bordered="false">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:15px;font-weight:600">{{ t('page.admin.users') }}</span>
+      </div>
+      <n-data-table :columns="columns" :data="users" :loading="loading"
+        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadUsers() } }"
+        :bordered="false" />
     </n-card>
   </div>
 </template>

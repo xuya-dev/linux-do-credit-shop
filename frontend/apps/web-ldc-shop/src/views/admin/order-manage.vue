@@ -13,14 +13,14 @@ const orders = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
-const keyword = ref('');
-const statusFilter = ref<number | null>(null);
+
+const searchForm = ref({ keyword: '', paymentStatus: null as number | null });
 
 const showDeliver = ref(false);
 const selectedOrder = ref<any>(null);
 const deliverForm = ref({ deliveryInfo: '', adminRemark: '' });
 
-const statusTabs = computed(() => [
+const paymentStatusOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
   { label: t('page.admin.pending'), value: 0 },
   { label: t('page.admin.paid'), value: 1 },
@@ -33,8 +33,8 @@ async function loadOrders() {
     const res = await orderApi.adminList({
       page: page.value,
       size: 10,
-      keyword: keyword.value || undefined,
-      paymentStatus: statusFilter.value ?? undefined,
+      keyword: searchForm.value.keyword || undefined,
+      paymentStatus: searchForm.value.paymentStatus ?? undefined,
     });
     orders.value = res?.records || [];
     total.value = res?.total || 0;
@@ -44,6 +44,9 @@ async function loadOrders() {
     loading.value = false;
   }
 }
+
+function handleSearch() { page.value = 1; loadOrders(); }
+function resetSearch() { searchForm.value = { keyword: '', paymentStatus: null }; page.value = 1; loadOrders(); }
 
 function openDeliver(row: any) {
   selectedOrder.value = row;
@@ -94,67 +97,39 @@ const deliveryStatusMap = computed(() => ({
 
 const columns = computed(() => [
   {
-    title: t('page.admin.orderNo'),
-    key: 'orderNo',
-    width: 180,
-    render: (row: any) =>
-      h('span', { style: 'font-family: monospace; font-size: 13px' }, row.orderNo),
+    title: t('page.admin.orderNo'), key: 'orderNo', width: 180,
+    render: (row: any) => h('span', { style: 'font-family:monospace;font-size:13px' }, row.orderNo),
   },
   { title: t('page.admin.productNameCol'), key: 'productName', ellipsis: { tooltip: true } },
   {
-    title: t('page.admin.amount'),
-    key: 'totalAmount',
-    width: 100,
-    render: (row: any) =>
-      h('span', { style: 'font-weight: 600; color: #2563eb' }, row.totalAmount),
+    title: t('page.admin.amount'), key: 'totalAmount', width: 100,
+    render: (row: any) => h('span', { style: 'font-weight:600;color:#2563eb' }, row.totalAmount),
   },
   {
-    title: t('page.admin.paymentStatus'),
-    key: 'paymentStatus',
-    width: 100,
+    title: t('page.admin.paymentStatus'), key: 'paymentStatus', width: 100,
     render: (row: any) => {
-      const info = paymentStatusMap.value[row.paymentStatus as keyof typeof paymentStatusMap.value] || {
-        label: row.paymentStatus,
-        type: 'default' as const,
-      };
+      const info = paymentStatusMap.value[row.paymentStatus as keyof typeof paymentStatusMap.value] || { label: String(row.paymentStatus), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
-    title: t('page.admin.deliveryStatus'),
-    key: 'deliveryStatus',
-    width: 100,
+    title: t('page.admin.deliveryStatus'), key: 'deliveryStatus', width: 100,
     render: (row: any) => {
-      const info = deliveryStatusMap.value[row.deliveryStatus as keyof typeof deliveryStatusMap.value] || {
-        label: row.deliveryStatus,
-        type: 'default' as const,
-      };
+      const info = deliveryStatusMap.value[row.deliveryStatus as keyof typeof deliveryStatusMap.value] || { label: String(row.deliveryStatus), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
+  { title: t('page.admin.buyer'), key: 'username', width: 100 },
+  { title: t('page.admin.createdAt'), key: 'createdAt', width: 160 },
   {
-    title: t('page.admin.actions'),
-    key: 'actions',
-    width: 160,
+    title: t('page.admin.actions'), key: 'actions', width: 160,
     render: (row: any) => {
       const btns: any[] = [];
       if (row.paymentStatus === 1 && row.productType === 2 && row.deliveryStatus === 0) {
-        btns.push(
-          h(
-            NButton,
-            { size: 'small', type: 'primary', onClick: () => openDeliver(row) },
-            { default: () => t('page.admin.confirmDelivery') },
-          ),
-        );
+        btns.push(h(NButton, { size: 'small', type: 'primary', onClick: () => openDeliver(row) }, { default: () => t('page.admin.confirmDelivery') }));
       }
       if (row.paymentStatus === 1) {
-        btns.push(
-          h(
-            NButton,
-            { size: 'small', type: 'error', onClick: () => handleRefund(row.id) },
-            { default: () => t('page.admin.confirmRefund') },
-          ),
-        );
+        btns.push(h(NButton, { size: 'small', type: 'error', onClick: () => handleRefund(row.id) }, { default: () => t('page.admin.confirmRefund') }));
       }
       return h(NSpace, { size: 'small' }, { default: () => btns });
     },
@@ -166,57 +141,41 @@ onMounted(loadOrders);
 
 <template>
   <div class="p-5">
-    <n-card :bordered="false">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-        <n-space align="center">
-          <n-input
-            v-model:value="keyword"
-            :placeholder="t('page.admin.searchOrders')"
-            style="width: 200px"
-            @keyup.enter="page = 1; loadOrders()"
-          />
-          <n-button @click="page = 1; loadOrders()">{{ t('page.admin.search') }}</n-button>
-        </n-space>
-        <n-space>
-          <n-button
-            v-for="tab in statusTabs"
-            :key="String(tab.value)"
-            :type="statusFilter === tab.value ? 'primary' : 'default'"
-            size="small"
-            @click="statusFilter = tab.value; page = 1; loadOrders()"
-          >
-            {{ tab.label }}
-          </n-button>
-        </n-space>
-      </div>
-
-      <n-data-table
-        :columns="columns"
-        :data="orders"
-        :loading="loading"
-        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadOrders() } }"
-        :bordered="false"
-      />
+    <n-card :bordered="false" style="margin-bottom:16px">
+      <n-grid :cols="3" :x-gap="16" :y-gap="12">
+        <n-gi>
+          <n-form-item :label="t('page.admin.orderNo')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-input v-model:value="searchForm.keyword" :placeholder="t('page.admin.searchOrders')" clearable @keyup.enter="handleSearch" />
+          </n-form-item>
+        </n-gi>
+        <n-gi>
+          <n-form-item :label="t('page.admin.paymentStatus')" label-placement="left" :label-width="80" style="margin-bottom:0">
+            <n-select v-model:value="searchForm.paymentStatus" :options="paymentStatusOptions" clearable />
+          </n-form-item>
+        </n-gi>
+        <n-gi></n-gi>
+        <n-gi :span="3" style="text-align:right">
+          <n-space justify="end">
+            <n-button @click="resetSearch">{{ t('page.admin.cancel') }}</n-button>
+            <n-button type="primary" @click="handleSearch">{{ t('page.admin.search') }}</n-button>
+          </n-space>
+        </n-gi>
+      </n-grid>
     </n-card>
 
-    <n-modal
-      v-model:show="showDeliver"
-      :title="t('page.admin.confirmDelivery')"
-      preset="card"
-      style="width: 480px"
-    >
+    <n-card :bordered="false">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:15px;font-weight:600">{{ t('page.admin.orders') }}</span>
+      </div>
+      <n-data-table :columns="columns" :data="orders" :loading="loading"
+        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadOrders() } }"
+        :bordered="false" />
+    </n-card>
+
+    <n-modal v-model:show="showDeliver" :title="t('page.admin.confirmDelivery')" preset="card" style="width:480px">
       <n-form label-placement="left" label-width="100">
-        <n-form-item :label="t('page.admin.deliveryInfo')">
-          <n-input v-model:value="deliverForm.deliveryInfo" :placeholder="t('page.admin.deliveryInfo')" />
-        </n-form-item>
-        <n-form-item :label="t('page.admin.adminRemark')">
-          <n-input
-            v-model:value="deliverForm.adminRemark"
-            type="textarea"
-            :rows="3"
-            :placeholder="t('page.admin.adminRemark')"
-          />
-        </n-form-item>
+        <n-form-item :label="t('page.admin.deliveryInfo')"><n-input v-model:value="deliverForm.deliveryInfo" /></n-form-item>
+        <n-form-item :label="t('page.admin.adminRemark')"><n-input v-model:value="deliverForm.adminRemark" type="textarea" :rows="3" /></n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
