@@ -38,7 +38,7 @@ async function handleLogin() {
 
 <template>
   <div class="login-page">
-    <n-card class="login-card faka-card" :bordered="false">
+    <div class="login-card">
       <div class="login-brand">
         <div class="brand-logo-img">
           <img :src="siteLogo" alt="Logo" />
@@ -62,18 +62,15 @@ async function handleLogin() {
         </div>
       </div>
 
-      <n-button
-        type="primary"
-        size="large"
-        block
+      <button
         class="login-btn"
         @click="handleLogin"
       >
         <span class="btn-content">
           <span>{{ t('page.shop.loginWithLinuxDo') }}</span>
         </span>
-      </n-button>
-    </n-card>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -83,12 +80,9 @@ async function handleLogin() {
 }
 
 .login-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-  padding: 32px 16px;
   text-align: center;
   color: var(--faka-text-main, #333333);
+  padding: 16px;
 }
 
 .login-brand {
@@ -99,9 +93,9 @@ async function handleLogin() {
   width: 72px;
   height: 72px;
   margin: 0 auto 16px;
-  border-radius: 50%;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .brand-logo-img img {
@@ -130,8 +124,8 @@ async function handleLogin() {
   margin-bottom: 32px;
   padding: 20px;
   border-radius: 8px;
-  background: var(--faka-tag-bg, #f5f5f5);
-  border: 1px solid var(--faka-border, #f0f0f0);
+  background: var(--faka-tag-bg, rgba(0,0,0,0.02));
+  border: 1px solid var(--faka-border, rgba(0,0,0,0.06));
 }
 
 .feature-item {
@@ -148,9 +142,24 @@ async function handleLogin() {
 }
 
 .login-btn {
+  width: 100%;
   height: 48px;
   font-size: 16px;
   font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #1890ff;
+  background-color: #1890ff;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-btn:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
 }
 
 .btn-content {
