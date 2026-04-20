@@ -85,13 +85,41 @@ async function bootstrap(namespace: string) {
         { initComponentAdapter },
         { initSetupVbenForm },
         { registerLoadingDirective },
-        { initTippy }
+        { initTippy },
+        {
+          NGrid, NGi, NCard, NDataTable,
+          NForm, NFormItem, NTag, NH3, NText,
+          NSwitch, NSelect, NSpace: NSpaceAdmin,
+          NInput, NInputNumber: NInputNumberAdmin,
+          NButton: NButtonAdmin, NModal: NModalAdmin,
+          NSpin: NSpinAdmin,
+        },
       ] = await Promise.all([
         import('./adapter/component'),
         import('./adapter/form'),
         import('@vben/common-ui'),
-        import('@vben/common-ui/es/tippy')
+        import('@vben/common-ui/es/tippy'),
+        import('naive-ui'),
       ]);
+
+      // 注册管理端所需的 Naive UI 组件
+      app.component('NGrid', NGrid);
+      app.component('NGi', NGi);
+      app.component('NCard', NCard);
+      app.component('NDataTable', NDataTable);
+      app.component('NForm', NForm);
+      app.component('NFormItem', NFormItem);
+      app.component('NTag', NTag);
+      app.component('NH3', NH3);
+      app.component('NText', NText);
+      app.component('NSwitch', NSwitch);
+      app.component('NSelect', NSelect);
+      app.component('NSpace', NSpaceAdmin);
+      app.component('NInput', NInput);
+      app.component('NInputNumber', NInputNumberAdmin);
+      app.component('NButton', NButtonAdmin);
+      app.component('NModal', NModalAdmin);
+      app.component('NSpin', NSpinAdmin);
 
       await initComponentAdapter();
       await initSetupVbenForm();
