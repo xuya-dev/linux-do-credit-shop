@@ -160,6 +160,11 @@ onMounted(() => {
   --faka-text-sub: #595959;
   --faka-border: #f0f0f0;
   --faka-tag-bg: #f5f5f5;
+  --faka-tag-active-bg: #e6f7ff;
+  --faka-primary-bg: #f0f5ff;
+  --faka-primary-color: #1890ff;
+  --faka-hover-bg: #fafafa;
+  --faka-hint-color: #bfbfbf;
 }
 :global(.dark) .faka-theme, :root.dark .faka-theme {
   --faka-bg-body: #000000;
@@ -168,6 +173,11 @@ onMounted(() => {
   --faka-text-sub: #a6a6a6;
   --faka-border: #303030;
   --faka-tag-bg: #1f1f1f;
+  --faka-tag-active-bg: #112840;
+  --faka-primary-bg: #111d2c;
+  --faka-primary-color: #177ddc;
+  --faka-hover-bg: #262626;
+  --faka-hint-color: #666666;
 }
 
 /* 发卡网经典底色 */

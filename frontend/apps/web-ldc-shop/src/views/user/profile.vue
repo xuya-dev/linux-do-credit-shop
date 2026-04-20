@@ -172,9 +172,9 @@ const menuItems = [
   padding: 2px 8px;
   border-radius: 2px;
 }
-.admin-tag { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
-.user-tag { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
-.trust-tag { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.admin-tag { background: var(--faka-tag-active-bg); color: #faad14; border: 1px solid #faad14; }
+.user-tag { background: var(--faka-tag-bg); color: #52c41a; border: 1px solid #b7eb8f; }
+.trust-tag { background: var(--faka-primary-bg); color: var(--faka-primary-color); border: 1px solid var(--faka-primary-color); }
 
 .profile-meta {
   font-size: 13px;
@@ -234,9 +234,9 @@ const menuItems = [
 
 /* 管理后台 */
 .admin-panel {
-  background: #fffbe6;
-  border: 1px solid #ffe58f;
-  color: #d46b08;
+  background: var(--faka-tag-bg);
+  border: 1px solid #faad14;
+  color: #faad14;
 }
 .admin-flex {
   padding: 20px 30px;

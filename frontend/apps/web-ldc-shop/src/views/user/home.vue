@@ -191,8 +191,8 @@ function goProductDetail(id: number) {
 }
 
 .search-tag.active {
-  background: #e6f7ff;
-  color: #1890ff;
+  background: var(--faka-tag-active-bg);
+  color: var(--faka-primary-color);
 }
 
 .search-input {
@@ -285,17 +285,17 @@ function goProductDetail(id: number) {
 }
 
 .category-item:hover {
-  background: var(--faka-tag-bg, #fafafa);
+  background: var(--faka-hover-bg);
 }
 
 .category-item.active {
-  background: #f0f5ff;
-  color: #1890ff;
-  border-left: 3px solid #1890ff;
+  background: var(--faka-primary-bg);
+  color: var(--faka-primary-color);
+  border-left: 3px solid var(--faka-primary-color);
 }
 
 .cat-count {
-  color: #bfbfbf;
+  color: var(--faka-hint-color);
   font-size: 12px;
 }
 
@@ -314,7 +314,7 @@ function goProductDetail(id: number) {
 
 .ann-type { color: #faad14; }
 .ann-title { flex: 1; color: var(--faka-text-main, #595959); }
-.ann-date { color: var(--faka-text-sub, #bfbfbf); font-size: 12px; }
+.ann-date { color: var(--faka-hint-color); font-size: 12px; }
 
 /* 商品列表（核心） */
 .product-list {
@@ -337,7 +337,7 @@ function goProductDetail(id: number) {
 }
 
 .product-row:hover {
-  background: var(--faka-tag-bg, #fafafa);
+  background: var(--faka-hover-bg);
 }
 
 .product-name {
@@ -364,15 +364,15 @@ function goProductDetail(id: number) {
 }
 
 .product-price {
-  color: #4f46e5;
+  color: var(--faka-primary-color);
   font-weight: 700;
   font-size: 15px;
 }
 
 .product-stock {
-  background: #e6f7ff;
-  color: #1890ff;
-  border: 1px solid #91d5ff;
+  background: var(--faka-tag-active-bg);
+  color: var(--faka-primary-color);
+  border: 1px solid var(--faka-border);
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -383,13 +383,13 @@ function goProductDetail(id: number) {
 .load-more {
   text-align: center;
   padding: 20px 0;
-  color: #bfbfbf;
+  color: var(--faka-hint-color);
   font-size: 13px;
   cursor: pointer;
 }
 
 .load-more:hover {
-  color: #8c8c8c;
+  color: var(--faka-text-sub);
 }
 
 .empty-state {
@@ -397,7 +397,7 @@ function goProductDetail(id: number) {
   padding: 48px;
 }
 .empty-text {
-  color: #bfbfbf;
+  color: var(--faka-hint-color);
 }
 
 @media (max-width: 900px) {
