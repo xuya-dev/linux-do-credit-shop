@@ -3,9 +3,7 @@ package dev.xuya.ldcshop.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import dev.xuya.ldcshop.common.ResultCode;
@@ -30,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -324,6 +321,62 @@ public class OrderServiceImpl implements OrderService {
         if (order.getPaymentStatus() != Order.PAYMENT_PAID) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
+
+        // 调用 LDC 退款 API / Call LDC refund API
+        Map<String, String> dbSettings = shopSettingService.getAllSettings();
+        String clientId = getSettingOrDefault(dbSettings, "ldc_client_id", properties.getPayment().getClientId());
+        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
+        String gatewayUrl = getSettingOrDefault(dbSettings, "ldc_gateway_url", properties.getPayment().getGatewayUrl());
+
+        if (StrUtil.isNotBlank(order.getLdcTradeNo())) {
+            Map<String, Object> refundParams = new LinkedHashMap<>();
+            refundParams.put("pid", clientId);
+            refundParams.put("key", clientSecret);
+            refundParams.put("trade_no", order.getLdcTradeNo());
+            refundParams.put("money", order.getTotalAmount().setScale(2).toPlainString());
+
+            try {
+                String response = HttpUtil.post(gatewayUrl + "/api.php", refundParams);
+                log.info("LDC退款响应 / LDC refund response: {}", response);
+                // 检查退款结果 / Check refund result
+                if (StrUtil.isNotBlank(response) && !response.contains("\"code\":1")) {
+                    log.error("LDC退款失败 / LDC refund failed: {}", response);
+                    throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
+                }
+            } catch (BusinessException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("LDC退款请求异常 / LDC refund request error", e);
+                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
+            }
+        }
+
+        // 释放虚拟商品卡密 / Release virtual product cards
+        if (order.getProductType() == 1) {
+            List<OrderCard> orderCards = orderCardMapper.selectList(
+                    new LambdaQueryWrapper<OrderCard>().eq(OrderCard::getOrderId, order.getId()));
+            for (OrderCard oc : orderCards) {
+                ProductCard card = productCardMapper.selectById(oc.getCardId());
+                if (card != null && card.getStatus() == 1) {
+                    card.setStatus(0);
+                    card.setOrderId(null);
+                    card.setSoldAt(null);
+                    productCardMapper.updateById(card);
+                }
+            }
+            orderCardMapper.delete(new LambdaQueryWrapper<OrderCard>().eq(OrderCard::getOrderId, order.getId()));
+        }
+
+        // 恢复实物商品库存 / Restore physical product stock
+        if (order.getProductType() == 2) {
+            Product product = productMapper.selectById(order.getProductId());
+            if (product != null) {
+                product.setStock(product.getStock() + order.getQuantity());
+                product.setSoldCount(Math.max(0, product.getSoldCount() - order.getQuantity()));
+                productMapper.updateById(product);
+            }
+        }
+
         order.setPaymentStatus(Order.PAYMENT_REFUNDED);
         orderMapper.updateById(order);
         log.info("订单已退款 / Order refunded: orderId={}", orderId);

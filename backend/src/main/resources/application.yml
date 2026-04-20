@@ -91,13 +91,14 @@ ldc-shop:
     token-url: ${LDC_OAUTH_TOKEN_URL:https://connect.linux.do/oauth2/token}
     user-info-url: ${LDC_OAUTH_USER_INFO_URL:https://connect.linux.do/api/user}
 
-  # LDC Credit 支付配置 / LDC Credit Payment Configuration
+  # LDC Credit 支付配置（仅作为DB配置的兜底默认值，管理后台配置优先）
+  # LDC Credit Payment Config (fallback defaults only, admin settings take priority)
   payment:
-    client-id: ${LDC_PAYMENT_CLIENT_ID:your-ldc-client-id}
-    client-secret: ${LDC_PAYMENT_CLIENT_SECRET:your-ldc-client-secret}
+    client-id: ${LDC_PAYMENT_CLIENT_ID:}
+    client-secret: ${LDC_PAYMENT_CLIENT_SECRET:}
     gateway-url: ${LDC_PAYMENT_GATEWAY_URL:https://credit.linux.do/epay}
-    notify-url: ${LDC_PAYMENT_NOTIFY_URL:http://localhost:3000/api/order/notify}
-    return-url: ${LDC_PAYMENT_RETURN_URL:http://localhost:3000/order/result}
+    notify-url: ${LDC_PAYMENT_NOTIFY_URL:}
+    return-url: ${LDC_PAYMENT_RETURN_URL:}
 
   # 管理员配置 / Admin Configuration
   admin:
