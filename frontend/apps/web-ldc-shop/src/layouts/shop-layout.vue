@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useAccessStore, useUserStore } from '@vben/stores';
-
+import { LanguageToggle, ThemeToggle } from '@vben/layouts';
 import { useAuthStore } from '#/store';
 
 const router = useRouter();
@@ -13,20 +13,15 @@ const authStore = useAuthStore();
 
 const isLoggedIn = computed(() => !!accessStore.accessToken);
 const userInfo = computed(() => userStore.userInfo);
-const isAdmin = computed(() => userInfo.value?.roles?.includes('admin'));
-
-const showMobileMenu = ref(false);
 
 const navItems = computed(() => {
   const items = [
-    { label: '首页', path: '/home', icon: '🏠' },
-    { label: '商品', path: '/products', icon: '🛍️' },
-    { label: '公告', path: '/announcements', icon: '📢' },
+    { label: '网站首页', path: '/home' },
+    { label: '最新公告', path: '/announcements' },
   ];
   if (isLoggedIn.value) {
     items.push(
-      { label: '我的订单', path: '/orders', icon: '📦' },
-      { label: '争议', path: '/disputes', icon: '⚖️' },
+      { label: '争议处理', path: '/disputes' },
     );
   }
   return items;
@@ -34,8 +29,7 @@ const navItems = computed(() => {
 
 const activePath = computed(() => {
   return navItems.value.find(
-    (item) =>
-      route.path === item.path || route.path.startsWith(item.path + '/'),
+    (item) => route.path === item.path || route.path.startsWith(item.path + '/'),
   )?.path;
 });
 
@@ -46,7 +40,6 @@ async function handleLogout() {
 
 function navigate(path: string) {
   router.push(path);
-  showMobileMenu.value = false;
 }
 
 const userOptions = [
@@ -62,272 +55,210 @@ function handleUserSelect(key: string) {
 </script>
 
 <template>
-  <n-layout style="min-height: 100vh" has-sider>
-    <n-layout>
-      <!-- 导航栏 -->
-      <n-layout-header
-        bordered
-        style="
-          position: sticky;
-          top: 0;
-          z-index: 1000;
-          backdrop-filter: blur(12px);
-        "
-      >
-        <div class="nav-container">
-          <!-- Logo -->
-          <div class="nav-logo" @click="router.push('/home')">
-            <span class="logo-icon">🚀</span>
+  <div class="faka-layout faka-theme">
+    <!-- 顶部导航栏 -->
+    <header class="faka-header">
+      <div class="faka-header-container">
+        <!-- Logo区及标签 -->
+        <div class="header-left">
+          <div class="faka-logo" @click="router.push('/home')">
+            <span class="logo-emoji">🚀</span>
             <span class="logo-text">LDC Shop</span>
           </div>
+        </div>
 
-          <!-- 桌面端导航 -->
-          <n-menu
-            :value="activePath"
-            mode="horizontal"
-            class="desktop-nav"
-            @update:value="navigate"
-          >
-            <n-menu-item
+        <!-- 右侧导航及操作 -->
+        <div class="header-right">
+          <nav class="faka-nav">
+            <a
               v-for="item in navItems"
               :key="item.path"
-              :value="item.path"
+              href="javascript:void(0)"
+              class="nav-link"
+              :class="{ active: activePath === item.path }"
+              @click="navigate(item.path)"
             >
-              <span>{{ item.label }}</span>
-            </n-menu-item>
-          </n-menu>
+              {{ item.label }}
+            </a>
+          </nav>
 
-          <!-- 右侧操作区 -->
-          <div class="nav-actions">
-            <n-button
-              v-if="isAdmin"
-              quaternary
-              size="small"
-              type="primary"
-              @click="router.push('/admin/dashboard')"
-            >
-              管理后台
-            </n-button>
+          <div style="display: flex; align-items: center; gap: 8px; margin-left: 16px;">
+            <ThemeToggle />
+            <LanguageToggle />
+          </div>
 
-            <template v-if="isLoggedIn && userInfo">
-              <n-dropdown
-                :options="userOptions"
-                trigger="hover"
-                @select="handleUserSelect"
-              >
-                <div class="user-avatar">
-                  <n-avatar
-                    :size="32"
-                    round
-                    :src="userInfo.avatar"
-                  >
-                    {{
-                      (userInfo?.username?.[0] || userInfo?.realName?.[0] || 'U').toUpperCase()
-                    }}
-                  </n-avatar>
-                  <span class="username">{{ userInfo?.username || userInfo?.realName }}</span>
-                </div>
-              </n-dropdown>
-            </template>
-            <n-button
-              v-else
-              type="primary"
-              size="small"
-              @click="router.push('/auth/login')"
-            >
-              登录
-            </n-button>
+          <template v-if="isLoggedIn && userInfo">
+            <n-dropdown :options="userOptions" trigger="click" @select="handleUserSelect">
+              <div class="user-avatar-trigger" style="margin-left: 16px;">
+                <n-avatar round size="small" style="background-color: #4f46e5; font-size: 14px;">
+                  {{ (userInfo?.username?.[0] || userInfo?.realName?.[0] || 'U').toUpperCase() }}
+                </n-avatar>
+              </div>
+            </n-dropdown>
+          </template>
+          <template v-else>
+            <span class="nav-link" style="margin-left: 16px; cursor: pointer;" @click="router.push('/auth/login')">登录</span>
+          </template>
 
-            <!-- 移动端菜单按钮 -->
-            <n-button
-              quaternary
-              class="mobile-menu-btn"
-              @click="showMobileMenu = true"
-            >
-              <span style="font-size: 20px">☰</span>
-            </n-button>
+          <div class="primary-search-btn" @click="router.push('/orders')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            订单查询
           </div>
         </div>
-      </n-layout-header>
-
-      <!-- 主内容区 -->
-      <n-layout-content>
-        <RouterView />
-      </n-layout-content>
-
-      <!-- 页脚 -->
-      <n-layout-footer bordered class="site-footer">
-        <div class="footer-content">
-          <div class="footer-brand">
-            <span class="logo-icon">🚀</span>
-            <span>LDC Shop</span>
-          </div>
-          <p class="footer-desc">
-            LINUX DO Credit Shop — 使用 LINUX DO 积分兑换商品
-          </p>
-          <p class="footer-copyright">
-            &copy; {{ new Date().getFullYear() }} LDC Shop. All rights reserved.
-          </p>
-        </div>
-      </n-layout-footer>
-    </n-layout>
-
-    <!-- 移动端抽屉菜单 -->
-    <n-drawer
-      v-model:show="showMobileMenu"
-      placement="left"
-      width="280"
-      :auto-focus="false"
-    >
-      <div class="mobile-drawer">
-        <div class="mobile-drawer-header">
-          <span class="logo-icon">🚀</span>
-          <span class="logo-text">LDC Shop</span>
-        </div>
-        <n-menu
-          :value="activePath"
-          @update:value="navigate"
-        >
-          <n-menu-item
-            v-for="item in navItems"
-            :key="item.path"
-            :value="item.path"
-          >
-            <span style="margin-right: 8px">{{ item.icon }}</span>
-            {{ item.label }}
-          </n-menu-item>
-        </n-menu>
       </div>
-    </n-drawer>
-  </n-layout>
+    </header>
+
+    <!-- 主体内容 -->
+    <main class="faka-main">
+      <RouterView />
+    </main>
+
+    <!-- 底部页脚 -->
+    <footer class="faka-footer">
+      <div class="footer-inner">
+        <span>Powered by LINUX DO Credit Shop</span>
+        <span>|</span>
+        <span>© 2026 虚拟商品兑换平台</span>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
-.nav-container {
+/* 骨架主题变量 - 深浅切换核心支持 */
+.faka-theme {
+  --faka-bg-body: #f4f5f7;
+  --faka-bg-header: #ffffff;
+  --faka-text-main: #333333;
+  --faka-text-sub: #595959;
+  --faka-border: #f0f0f0;
+  --faka-tag-bg: #f5f5f5;
+}
+:global(.dark) .faka-theme, :root.dark .faka-theme {
+  --faka-bg-body: #000000;
+  --faka-bg-header: #141414;
+  --faka-text-main: #e0e0e0;
+  --faka-text-sub: #a6a6a6;
+  --faka-border: #303030;
+  --faka-tag-bg: #1f1f1f;
+}
+
+/* 发卡网经典底色 */
+.faka-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--faka-bg-body);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--faka-text-main);
+  transition: background-color 0.3s;
+}
+
+/* 头部导航 */
+.faka-header {
+  background: var(--faka-bg-header);
+  height: 64px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.faka-header-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 24px 0 60px; /* 留出左侧悬浮的视觉空间或居中偏右 */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 24px;
-  height: 64px;
 }
 
-.nav-logo {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  flex-shrink: 0;
+  gap: 24px;
 }
 
-.logo-icon {
+.faka-logo {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.logo-emoji {
   font-size: 24px;
-  line-height: 1;
 }
 
 .logo-text {
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  color: var(--faka-text-main);
 }
 
-.desktop-nav {
-  flex: 1;
-  margin: 0 32px;
-  max-width: 600px;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.user-avatar {
+.header-right {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.faka-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 14px;
+  color: var(--faka-text-sub);
+  transition: color 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #1890ff;
+}
+
+.primary-search-btn {
+  background: #4f46e5;
+  color: #fff;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  margin-left: 16px;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+  transition: background 0.2s;
+}
+.primary-search-btn:hover {
+  background: #4338ca;
 }
 
-.user-avatar:hover {
-  background-color: rgba(128, 128, 128, 0.1);
+/* 主体及页脚 */
+.faka-main {
+  flex: 1;
+  padding: 24px 0;
 }
 
-.username {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.mobile-menu-btn {
-  display: none;
-}
-
-.site-footer {
-  padding: 40px 24px;
-}
-
-.footer-content {
-  max-width: 1280px;
-  margin: 0 auto;
+.faka-footer {
   text-align: center;
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--faka-text-sub);
 }
 
-.footer-brand {
+.footer-inner {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.footer-desc {
-  font-size: 14px;
-  opacity: 0.6;
-  margin: 0 0 8px;
-}
-
-.footer-copyright {
-  font-size: 12px;
-  opacity: 0.4;
-  margin: 0;
-}
-
-.mobile-drawer {
-  padding: 20px;
-}
-
-.mobile-drawer-header {
-  display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  gap: 12px;
 }
 
-@media (max-width: 768px) {
-  .desktop-nav {
-    display: none !important;
-  }
-
-  .mobile-menu-btn {
-    display: flex !important;
-  }
-
-  .username {
-    display: none;
-  }
-
-  .nav-container {
-    padding: 0 16px;
-  }
+@media (max-width: 900px) {
+  .faka-nav { display: none; }
+  .faka-header-container { padding: 0 16px; }
 }
 </style>

@@ -19,7 +19,7 @@ const total = ref(0);
 const statusFilter = ref<number | null>(null);
 
 const statusTabs = [
-  { label: '全部', value: null },
+  { label: '全部订单', value: null },
   { label: '待支付', value: 0 },
   { label: '已支付', value: 1 },
   { label: '已退款', value: 2 },
@@ -71,145 +71,160 @@ function goPay(order: Order) {
 </script>
 
 <template>
-  <div class="order-list-page">
-    <div class="page-header">
-      <h1 class="page-title">我的订单</h1>
-      <p class="page-subtitle">查看和管理您的所有订单</p>
+  <div class="faka-container">
+    <div class="breadcrumb" @click="router.push('/home')">
+      <span>首页</span> &gt; <span>我的订单</span>
     </div>
 
-    <!-- 状态筛选 -->
-    <n-tabs
-      :value="statusFilter"
-      type="segment"
-      class="status-tabs"
-      @update:value="handleTabChange"
-    >
-      <n-tab-pane
-        v-for="tab in statusTabs"
-        :key="String(tab.value)"
-        :name="tab.value"
-        :tab="tab.label"
-      />
-    </n-tabs>
+    <!-- 订单查询面板 -->
+    <div class="faka-card filter-card">
+      <div class="card-header">订单查询</div>
+      <div class="card-body">
+        <div class="filter-tabs">
+          <span 
+            v-for="tab in statusTabs" 
+            :key="String(tab.value)"
+            :class="['filter-tab', { active: statusFilter === tab.value }]"
+            @click="handleTabChange(tab.value)"
+          >
+            {{ tab.label }}
+          </span>
+        </div>
+      </div>
+    </div>
 
     <!-- 订单列表 -->
-    <div v-if="loading" class="order-skeleton-list">
-      <n-card v-for="i in 3" :key="i" class="order-skeleton">
-        <n-skeleton text :repeat="4" />
-      </n-card>
-    </div>
+    <div class="faka-card mt-24">
+      <div class="card-body">
+        <n-spin v-if="loading" size="large" class="loading-spin" />
 
-    <template v-else-if="orders.length">
-      <div class="order-list">
-        <n-card
-          v-for="order in orders"
-          :key="order.id"
-          hoverable
-          class="order-card"
-        >
-          <div class="order-header">
-            <div class="order-meta">
-              <span class="order-no">{{ order.orderNo }}</span>
-              <span class="order-date">{{ order.createdAt }}</span>
-            </div>
-            <n-tag
-              :type="PAYMENT_STATUS_MAP[order.paymentStatus]?.type || 'default'"
-              size="small"
+        <template v-else-if="orders.length">
+          <div class="order-list">
+            <div
+              v-for="order in orders"
+              :key="order.id"
+              class="order-item-box"
             >
-              {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
-            </n-tag>
-          </div>
-
-          <div class="order-body" @click="goDetail(order.id)">
-            <div class="order-product">
-              <div class="product-cover-small">
-                <img
-                  v-if="order.productCoverImage"
-                  :src="order.productCoverImage"
-                  :alt="order.productName"
-                />
-                <div v-else>📦</div>
-              </div>
-              <div class="product-info">
-                <h3 class="product-name">{{ order.productName }}</h3>
-                <div class="product-detail">
-                  <span>数量: {{ order.quantity }}</span>
-                  <n-tag
-                    v-if="order.paymentStatus === 1"
-                    :type="DELIVERY_STATUS_MAP[order.deliveryStatus]?.type || 'default'"
-                    size="small"
-                  >
-                    {{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}
-                  </n-tag>
+              <div class="order-meta-head">
+                <div class="meta-left">
+                  <span class="order-no">订单号: {{ order.orderNo }}</span>
+                  <span class="order-date">{{ order.createdAt }}</span>
+                </div>
+                <div class="meta-right">
+                  <span :class="['faka-status-tag', 'status-' + order.paymentStatus]">
+                    {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
+                  </span>
                 </div>
               </div>
-            </div>
-            <div class="order-amount">
-              <span class="amount-value">{{ order.totalAmount }}</span>
-              <span class="amount-unit">积分</span>
+
+              <div class="order-content" @click="goDetail(order.id)">
+                <div class="product-info">
+                  <div class="product-name">{{ order.productName }}</div>
+                  <div class="product-sku">数量: {{ order.quantity }}件 
+                    <span v-if="order.paymentStatus === 1" class="dlv-tag">
+                      [{{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}]
+                    </span>
+                  </div>
+                </div>
+                <div class="order-price">
+                  <span>实付款：</span>
+                  <span class="price-num">{{ order.totalAmount }} 积分</span>
+                </div>
+              </div>
+
+              <div class="order-actions">
+                <button 
+                  v-if="order.paymentStatus === 0" 
+                  class="faka-btn primary"
+                  @click.stop="goPay(order)"
+                >去支付</button>
+                <button class="faka-btn plain" @click="goDetail(order.id)">查看详情</button>
+              </div>
             </div>
           </div>
 
-          <div class="order-footer">
-            <n-button
-              v-if="order.paymentStatus === 0"
-              type="primary"
-              size="small"
-              @click="goPay(order)"
-            >
-              去支付
-            </n-button>
-            <n-button text size="small" @click="goDetail(order.id)">
-              查看详情
-            </n-button>
+          <!-- 分页 -->
+          <div v-if="total > 10" class="pagination-wrapper">
+            <n-pagination
+              :page="page"
+              :page-count="Math.ceil(total / 10)"
+              @update:page="handlePageChange"
+            />
           </div>
-        </n-card>
-      </div>
+        </template>
 
-      <div v-if="total > 10" class="pagination-wrapper">
-        <n-pagination
-          :page="page"
-          :page-count="Math.ceil(total / 10)"
-          @update:page="handlePageChange"
-        />
+        <div v-else class="empty-state">
+          未查询到相关订单记录
+        </div>
       </div>
-    </template>
-
-    <n-empty v-else description="暂无订单" />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.order-list-page {
-  max-width: 1280px;
+.faka-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 24px;
 }
 
-.page-header {
-  margin-bottom: 24px;
+.breadcrumb {
+  font-size: 13px;
+  color: var(--faka-text-sub, #8c8c8c);
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.breadcrumb span:hover {
+  color: #1890ff;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px;
+.faka-card {
+  background: var(--faka-bg-header, #ffffff);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  color: var(--faka-text-main, #333);
 }
 
-.page-subtitle {
+.mt-24 { margin-top: 24px; }
+
+.card-header {
+  padding: 16px 20px;
   font-size: 15px;
-  opacity: 0.5;
-  margin: 0;
+  font-weight: 600;
+  border-bottom: 1px solid var(--faka-border, #f0f0f0);
 }
 
-.status-tabs {
-  margin-bottom: 24px;
+.card-body {
+  padding: 20px;
 }
 
-.order-skeleton-list {
+.filter-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+}
+.filter-tab {
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--faka-text-sub, #595959);
+  cursor: pointer;
+  border-radius: 2px;
+  border: 1px solid var(--faka-border, #d9d9d9);
+  transition: all 0.2s;
+}
+.filter-tab.active {
+  background: #1890ff;
+  color: #fff;
+  border-color: #1890ff;
+}
+.filter-tab:hover:not(.active) {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.loading-spin {
+  display: flex;
+  justify-content: center;
+  padding: 60px;
 }
 
 .order-list {
@@ -218,141 +233,99 @@ function goPay(order: Order) {
   gap: 16px;
 }
 
-.order-card :deep(.n-card__content) {
-  padding: 16px 20px;
+.order-item-box {
+  border: 1px solid var(--faka-border, #e8e8e8);
+  border-radius: 2px;
+  transition: box-shadow 0.2s;
+}
+.order-item-box:hover {
+  border-color: var(--faka-border, #d9d9d9);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.order-header {
+.order-meta-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.08);
-}
-
-.order-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.order-no {
+  padding: 10px 16px;
+  background: var(--faka-tag-bg, #fafafa);
+  border-bottom: 1px solid var(--faka-border, #e8e8e8);
   font-size: 13px;
-  font-weight: 600;
-  opacity: 0.8;
-  font-family: monospace;
 }
-
-.order-date {
-  font-size: 12px;
-  opacity: 0.4;
-}
-
-.order-body {
+.meta-left {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: 16px;
-  cursor: pointer;
-  padding: 4px 0;
+  color: var(--faka-text-sub, #595959);
 }
+.order-no { font-weight: 500; color: var(--faka-text-main, #333); }
 
-.order-product {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.product-cover-small {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(128, 128, 128, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.product-cover-small img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.product-name {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-detail {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  opacity: 0.6;
-}
-
-.order-amount {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.amount-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #18a058;
-}
-
-.amount-unit {
+.faka-status-tag {
   font-size: 12px;
-  opacity: 0.6;
-  margin-left: 2px;
+  font-weight: 500;
+}
+.status-0 { color: #faad14; }
+.status-1 { color: #52c41a; }
+.status-2 { color: #f5222d; }
+
+.order-content {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  cursor: pointer;
+}
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.product-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--faka-text-main, #333);
+}
+.product-sku {
+  font-size: 13px;
+  color: var(--faka-text-sub, #8c8c8c);
+}
+.dlv-tag { color: #1890ff; font-size: 12px; margin-left: 8px; }
+
+.order-price {
+  font-size: 13px;
+  color: var(--faka-text-sub, #595959);
+  text-align: right;
+}
+.price-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f5222d;
 }
 
-.order-footer {
+.order-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(128, 128, 128, 0.08);
+  padding: 10px 16px;
+  border-top: 1px dashed var(--faka-border, #f0f0f0);
 }
 
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
+.faka-btn {
+  padding: 4px 16px;
+  font-size: 13px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
-
-@media (max-width: 768px) {
-  .order-list-page {
-    padding: 20px 16px;
-  }
-
-  .order-body {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .order-amount {
-    width: 100%;
-    text-align: left;
-    padding-top: 8px;
-    border-top: 1px solid rgba(128, 128, 128, 0.06);
-  }
+.faka-btn.primary {
+  background: #1890ff;
+  color: #fff;
 }
+.faka-btn.plain {
+  background: transparent;
+  border-color: var(--faka-border, #d9d9d9);
+  color: var(--faka-text-main, #333);
+}
+.faka-btn.plain:hover { color: #1890ff; border-color: #1890ff; }
+
+.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
+.pagination-wrapper { display: flex; justify-content: flex-end; margin-top: 24px; }
 </style>

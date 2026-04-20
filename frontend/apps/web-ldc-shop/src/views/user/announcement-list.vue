@@ -1,229 +1,120 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-
-import type { Announcement } from '#/api/types';
-import { ANNOUNCEMENT_TYPE_MAP } from '#/api/types';
-
 import { announcementApi } from '#/api/modules';
 
 const router = useRouter();
 
-const announcements = ref<Announcement[]>([]);
+const announcements = ref<any[]>([]);
 const loading = ref(true);
-const page = ref(1);
-const total = ref(0);
-const typeFilter = ref<number | null>(null);
 
-const typeTabs = [
-  { label: '全部', value: null },
-  { label: '通知', value: 1 },
-  { label: '活动', value: 2 },
-  { label: '更新', value: 3 },
-];
-
-async function loadAnnouncements() {
-  loading.value = true;
+onMounted(async () => {
   try {
-    const res = await announcementApi.userList({
-      page: page.value,
-      size: 10,
-      type: typeFilter.value ?? undefined,
-    });
+    const res = await announcementApi.userList({ page: 1, size: 20 });
     announcements.value = res?.records || [];
-    total.value = res?.total || 0;
   } catch (e) {
     console.error(e);
   } finally {
     loading.value = false;
   }
-}
-
-onMounted(loadAnnouncements);
-
-function handleTabChange(value: number | null) {
-  typeFilter.value = value;
-  page.value = 1;
-  loadAnnouncements();
-}
-
-function handlePageChange(p: number) {
-  page.value = p;
-  loadAnnouncements();
-}
-
-function goDetail(id: number) {
-  router.push(`/announcement/${id}`);
-}
+});
 </script>
 
 <template>
-  <div class="announcement-list-page">
-    <div class="page-header">
-      <h1 class="page-title">公告中心</h1>
-      <p class="page-subtitle">获取最新的活动、通知和更新信息</p>
+  <div class="faka-container">
+    <div class="breadcrumb" @click="router.push('/home')">
+      <span>首页</span> &gt; <span>站点公告</span>
     </div>
 
-    <n-tabs
-      :value="typeFilter"
-      type="segment"
-      class="type-tabs"
-      @update:value="handleTabChange"
-    >
-      <n-tab-pane
-        v-for="tab in typeTabs"
-        :key="String(tab.value)"
-        :name="tab.value"
-        :tab="tab.label"
-      />
-    </n-tabs>
-
-    <div v-if="loading" class="announcement-skeleton-list">
-      <n-card v-for="i in 3" :key="i" class="announcement-skeleton">
-        <n-skeleton text :repeat="3" />
-      </n-card>
-    </div>
-
-    <template v-else-if="announcements.length">
-      <div class="announcement-list">
-        <n-card
-          v-for="ann in announcements"
-          :key="ann.id"
-          hoverable
-          class="announcement-card"
-          @click="goDetail(ann.id)"
-        >
-          <div class="announcement-content">
-            <div class="announcement-tags">
-              <n-tag
-                :type="ANNOUNCEMENT_TYPE_MAP[ann.type]?.type || 'default'"
-                size="small"
-                :bordered="false"
-              >
-                {{ ann.typeName }}
-              </n-tag>
-              <n-tag v-if="ann.isTop" type="error" size="small" :bordered="false">
-                置顶
-              </n-tag>
+    <div class="faka-card">
+      <div class="card-header">公告列表</div>
+      <div class="card-body">
+        <n-spin v-if="loading" size="large" class="loading-spin" />
+        
+        <div v-else-if="announcements.length" class="ann-list">
+          <div 
+            v-for="ann in announcements" 
+            :key="ann.id"
+            class="ann-row"
+            @click="router.push(`/announcement/${ann.id}`)"
+          >
+            <div class="ann-title">
+              <span class="ann-badge">公告</span>
+              {{ ann.title }}
             </div>
-            <h3 class="announcement-title">{{ ann.title }}</h3>
-            <div class="announcement-footer">
-              <span class="announcement-date">{{ ann.publishedAt }}</span>
-              <span class="announcement-arrow">→</span>
-            </div>
+            <div class="ann-date">{{ ann.createdAt }}</div>
           </div>
-        </n-card>
-      </div>
+        </div>
 
-      <div v-if="total > 10" class="pagination-wrapper">
-        <n-pagination
-          :page="page"
-          :page-count="Math.ceil(total / 10)"
-          @update:page="handlePageChange"
-        />
+        <div v-else class="empty-state">
+          暂无公告信息
+        </div>
       </div>
-    </template>
-
-    <n-empty v-else description="暂无公告" />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.announcement-list-page {
-  max-width: 1280px;
+.faka-container {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 24px;
 }
-
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px;
-}
-
-.page-subtitle {
-  font-size: 15px;
-  opacity: 0.5;
-  margin: 0;
-}
-
-.type-tabs {
-  margin-bottom: 24px;
-}
-
-.announcement-skeleton-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.announcement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.announcement-card {
+.breadcrumb {
+  font-size: 13px;
+  color: var(--faka-text-sub, #8c8c8c);
+  margin-bottom: 20px;
   cursor: pointer;
-  transition: transform 0.2s;
 }
+.breadcrumb span:hover { color: #1890ff; }
 
-.announcement-card:hover {
-  transform: translateY(-2px);
+.faka-card {
+  background: var(--faka-bg-header, #ffffff);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  color: var(--faka-text-main, #333);
 }
-
-.announcement-content {
-  padding: 8px 4px;
-}
-
-.announcement-tags {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.announcement-title {
-  font-size: 18px;
+.card-header {
+  padding: 16px 20px;
+  font-size: 15px;
   font-weight: 600;
-  margin: 0 0 16px;
-  line-height: 1.4;
+  border-bottom: 1px solid var(--faka-border, #f0f0f0);
 }
+.card-body { padding: 8px 0; }
+.loading-spin { display: flex; justify-content: center; padding: 60px; }
+.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
 
-.announcement-footer {
+.ann-list {
+  display: flex;
+  flex-direction: column;
+}
+.ann-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px dashed var(--faka-border, #f0f0f0);
+  cursor: pointer;
+  transition: background 0.2s;
 }
+.ann-row:hover { background: var(--faka-tag-bg, #fafafa); }
+.ann-row:last-child { border-bottom: none; }
 
-.announcement-date {
+.ann-badge {
+  background: #fffbe6;
+  color: #faad14;
+  border: 1px solid #ffe58f;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+.ann-title {
+  font-size: 14px;
+  color: var(--faka-text-main, #333);
+}
+.ann-date {
   font-size: 13px;
-  opacity: 0.4;
-}
-
-.announcement-arrow {
-  font-size: 18px;
-  opacity: 0.3;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.announcement-card:hover .announcement-arrow {
-  opacity: 0.6;
-  transform: translateX(4px);
-}
-
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
-}
-
-@media (max-width: 768px) {
-  .announcement-list-page {
-    padding: 20px 16px;
-  }
+  color: var(--faka-text-sub, #8c8c8c);
 }
 </style>

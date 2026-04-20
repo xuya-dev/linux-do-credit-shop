@@ -41,17 +41,6 @@ async function copyCard(text: string) {
   }
 }
 
-const statusSteps = computed(() => {
-  if (!order.value) return [];
-  const steps = [
-    { label: '创建订单', done: true },
-    { label: '支付完成', done: order.value.paymentStatus >= 1 },
-    { label: '已发货', done: order.value.deliveryStatus >= 1 },
-    { label: '已完成', done: order.value.deliveryStatus >= 2 },
-  ];
-  return steps;
-});
-
 function canCreateDispute() {
   return (
     order.value?.paymentStatus === 1 &&
@@ -92,392 +81,309 @@ function goPay() {
 </script>
 
 <template>
-  <div class="order-detail-page">
-    <!-- 返回按钮 -->
-    <n-button text class="back-btn" @click="router.back()">
-      ← 返回
-    </n-button>
+  <div class="faka-container">
+    <div class="breadcrumb" @click="router.push('/orders')">
+      <span>我的订单</span> &gt; <span>订单详情</span>
+    </div>
 
-    <n-spin v-if="loading" size="large" style="padding: 80px" />
+    <div v-if="loading" class="loading-spin">
+      <n-spin size="large" />
+    </div>
 
     <template v-else-if="order">
-      <!-- 状态进度 -->
-      <n-card class="status-card">
-        <div class="status-header">
-          <div class="status-info">
-            <span class="status-label">订单状态</span>
-            <n-tag
-              :type="PAYMENT_STATUS_MAP[order.paymentStatus]?.type || 'default'"
-              size="large"
-            >
-              {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
-            </n-tag>
-          </div>
-          <div v-if="order.paymentStatus === 1" class="status-info">
-            <span class="status-label">发货状态</span>
-            <n-tag
-              :type="DELIVERY_STATUS_MAP[order.deliveryStatus]?.type || 'default'"
-              size="large"
-            >
-              {{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}
-            </n-tag>
+      <!-- 提取结果（发卡核心模块） -->
+      <div v-if="order.paymentStatus === 1" class="faka-card highlight-card mb-24">
+        <div class="card-header highlight">
+          📝 订单已支付 / 提取卡密
+          <div class="header-tags">
+            <span class="dlv-badge">状态：{{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}</span>
           </div>
         </div>
-
-        <div class="status-steps">
-          <div
-            v-for="(step, idx) in statusSteps"
-            :key="idx"
-            :class="['step-item', { done: step.done }]"
-          >
-            <div class="step-dot"></div>
-            <span class="step-label">{{ step.label }}</span>
-            <div v-if="idx < statusSteps.length - 1" class="step-line"></div>
-          </div>
-        </div>
-      </n-card>
-
-      <div class="detail-grid">
-        <!-- 左侧：商品信息 -->
-        <div class="detail-left">
-          <n-card title="商品信息">
-            <div class="product-detail">
-              <div class="product-cover-large">
-                <img
-                  v-if="order.productCoverImage"
-                  :src="order.productCoverImage"
-                  :alt="order.productName"
-                />
-                <div v-else>📦</div>
-              </div>
-              <div class="product-detail-info">
-                <h3>{{ order.productName }}</h3>
-                <p class="order-no">订单号: {{ order.orderNo }}</p>
-              </div>
+        <div class="card-body">
+          <div v-if="order.cardContents?.length" class="card-codes">
+            <div v-for="(card, i) in order.cardContents" :key="i" class="code-box">
+              <span class="code-text">{{ card }}</span>
+              <button class="faka-btn plain sm" @click="copyCard(card)">复制卡密</button>
             </div>
-
-            <n-divider />
-
-            <n-descriptions :column="2" label-placement="top">
-              <n-descriptions-item label="单价">
-                {{ order.unitPrice }} 积分
-              </n-descriptions-item>
-              <n-descriptions-item label="数量">
-                {{ order.quantity }}
-              </n-descriptions-item>
-              <n-descriptions-item label="总价">
-                <span class="highlight">{{ order.totalAmount }} 积分</span>
-              </n-descriptions-item>
-              <n-descriptions-item label="创建时间">
-                {{ order.createdAt }}
-              </n-descriptions-item>
-            </n-descriptions>
-          </n-card>
-
-          <!-- 卡密信息（虚拟商品） -->
-          <n-card
-            v-if="order.cardContents?.length"
-            title="卡密信息"
-            class="card-section"
-          >
-            <div class="card-list">
-              <div
-                v-for="(card, i) in order.cardContents"
-                :key="i"
-                class="card-item"
-              >
-                <code class="card-content">{{ card }}</code>
-                <n-button
-                  size="tiny"
-                  type="primary"
-                  ghost
-                  @click="copyCard(card)"
-                >
-                  复制
-                </n-button>
-              </div>
+            <div class="alert-tip mt-12">
+              💡 提示：请妥善保管您的卡密，切勿泄露给他人。
             </div>
-          </n-card>
-        </div>
-
-        <!-- 右侧：操作区 -->
-        <div class="detail-right">
-          <n-card title="订单详情">
-            <n-descriptions label-placement="top" :column="1">
-              <n-descriptions-item v-if="order.contactInfo" label="联系信息">
-                {{ order.contactInfo }}
-              </n-descriptions-item>
-              <n-descriptions-item v-if="order.remark" label="备注">
-                {{ order.remark }}
-              </n-descriptions-item>
-              <n-descriptions-item v-if="order.deliveryInfo" label="发货信息">
-                {{ order.deliveryInfo }}</n-descriptions-item>
-              <n-descriptions-item v-if="order.adminRemark" label="管理员备注">
-                {{ order.adminRemark }}</n-descriptions-item>
-              <n-descriptions-item v-if="order.paidAt" label="支付时间">
-                {{ order.paidAt }}
-              </n-descriptions-item>
-              <n-descriptions-item v-if="order.deliveredAt" label="发货时间">
-                {{ order.deliveredAt }}
-              </n-descriptions-item>
-            </n-descriptions>
-          </n-card>
-
-          <!-- 操作按钮 -->
-          <n-card class="action-card">
-            <n-button
-              v-if="order.paymentStatus === 0"
-              type="primary"
-              block
-              size="large"
-              @click="goPay"
-            >
-              立即支付 ({{ order.totalAmount }} 积分)
-            </n-button>
-
-            <n-button
-              v-if="canCreateDispute()"
-              block
-              type="warning"
-              ghost
-              @click="showDisputeModal = true"
-            >
-              发起争议
-            </n-button>
-          </n-card>
+          </div>
+          <div v-else class="empty-code">
+            <div v-if="order.deliveryStatus === 0">
+              您的商品正在处理中，请稍后刷新查看...
+            </div>
+            <div v-else>
+              没有检测到卡密信息。该商品可能属于人工发货或直充类型。
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- 订单基础信息 -->
+      <div class="faka-card">
+        <div class="card-header">
+          订单信息
+          <span :class="['status-tag-sm', 'status-' + order.paymentStatus]" style="margin-left:8px;">
+            {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
+          </span>
+        </div>
+        <div class="card-body order-info-grid">
+          <div class="info-item">
+            <label>订单编号：</label>
+            <span>{{ order.orderNo }}</span>
+          </div>
+          <div class="info-item">
+            <label>商品名称：</label>
+            <span>{{ order.productName }}</span>
+          </div>
+          <div class="info-item">
+            <label>购买单价：</label>
+            <span>{{ order.unitPrice }} 积分</span>
+          </div>
+          <div class="info-item">
+            <label>购买数量：</label>
+            <span>{{ order.quantity }}</span>
+          </div>
+          <div class="info-item">
+            <label>实付金额：</label>
+            <span class="highlight-price">{{ order.totalAmount }} 积分</span>
+          </div>
+          <div class="info-item">
+            <label>下单时间：</label>
+            <span>{{ order.createdAt }}</span>
+          </div>
+          <div class="info-item" v-if="order.contactInfo">
+            <label>预留联系：</label>
+            <span>{{ order.contactInfo }}</span>
+          </div>
+          <div class="info-item" v-if="order.remark">
+            <label>订单备注：</label>
+            <span>{{ order.remark }}</span>
+          </div>
+          <div class="info-item" v-if="order.deliveryInfo">
+            <label>发货详情：</label>
+            <span>{{ order.deliveryInfo }}</span>
+          </div>
+        </div>
+        <div class="card-footer actions">
+          <button v-if="order.paymentStatus === 0" class="faka-btn primary" @click="goPay">
+            立即支付 ({{ order.totalAmount }} 积分)
+          </button>
+          
+          <button v-if="canCreateDispute()" class="faka-btn warning outline" @click="showDisputeModal = true">
+            发起售后争议
+          </button>
+        </div>
+      </div>
+
     </template>
 
+    <div v-else class="empty-state">
+      找不到该订单
+    </div>
+
     <!-- 发起争议弹窗 -->
-    <n-modal
-      v-model:show="showDisputeModal"
-      preset="card"
-      title="发起争议"
-      style="max-width: 480px"
-    >
-      <p class="dispute-hint">
-        请详细描述您遇到的问题，管理员将在核实后进行处理。
-      </p>
-      <n-form label-placement="top">
-        <n-form-item label="争议原因">
-          <n-input
-            v-model:value="disputeReason"
-            type="textarea"
-            :rows="4"
-            placeholder="请描述您遇到的问题..."
-          />
-        </n-form-item>
-      </n-form>
+    <n-modal v-model:show="showDisputeModal" preset="card" title="申请售后" style="max-width: 440px" class="faka-modal">
+      <div class="modal-body">
+        <label class="modal-label">争议原因</label>
+        <textarea 
+          v-model="disputeReason" 
+          class="faka-textarea w-full" 
+          placeholder="请详细描述卡密无效或缺失等情况，以便卖家核实。" 
+          rows="4"
+        ></textarea>
+      </div>
       <template #action>
-        <n-space justify="end">
-          <n-button @click="showDisputeModal = false">取消</n-button>
-          <n-button
-            type="warning"
-            :loading="creatingDispute"
-            @click="createDispute"
-          >
-            提交争议
-          </n-button>
-        </n-space>
+        <div class="modal-actions">
+          <button class="faka-btn plain" @click="showDisputeModal = false">取消</button>
+          <button class="faka-btn warning" @click="createDispute" :disabled="creatingDispute">
+            {{ creatingDispute ? '提交中...' : '提交售后记录' }}
+          </button>
+        </div>
       </template>
     </n-modal>
+
   </div>
 </template>
 
 <style scoped>
-.order-detail-page {
-  max-width: 1280px;
+.faka-container {
+  max-width: 1000px;
   margin: 0 auto;
   padding: 24px;
 }
 
-.back-btn {
-  margin-bottom: 16px;
-}
-
-.status-card {
-  margin-bottom: 24px;
-}
-
-.status-header {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 24px;
-}
-
-.status-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.status-label {
+.breadcrumb {
   font-size: 13px;
-  opacity: 0.5;
+  color: var(--faka-text-sub, #8c8c8c);
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+.breadcrumb span:hover { color: #1890ff; }
+
+.mb-24 { margin-bottom: 24px; }
+.mt-12 { margin-top: 12px; }
+
+.faka-card {
+  background: var(--faka-bg-header, #ffffff);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  color: var(--faka-text-main, #333);
+}
+.highlight-card {
+  border: 1px solid #91d5ff;
 }
 
-.status-steps {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-  flex: 1;
-}
-
-.step-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(128, 128, 128, 0.2);
-  transition: background-color 0.3s;
-}
-
-.step-item.done .step-dot {
-  background: #18a058;
-}
-
-.step-label {
-  font-size: 12px;
-  opacity: 0.5;
-  transition: opacity 0.3s;
-}
-
-.step-item.done .step-label {
-  opacity: 1;
+.card-header {
+  padding: 16px 20px;
+  font-size: 15px;
   font-weight: 600;
-  color: #18a058;
-}
-
-.step-line {
-  position: absolute;
-  top: 6px;
-  left: calc(50% + 10px);
-  width: calc(100% - 8px);
-  height: 2px;
-  background: rgba(128, 128, 128, 0.1);
-}
-
-.step-item.done + .step-item .step-line {
-  background: #18a058;
-  opacity: 0.3;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
-.detail-left {
+  border-bottom: 1px solid var(--faka-border, #f0f0f0);
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header.highlight {
+  background: #e6f7ff;
+  border-bottom-color: #91d5ff;
+  color: #096dd9;
 }
 
-.product-detail {
+.dlv-badge {
+  font-size: 12px;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.card-body {
+  padding: 20px;
+}
+.card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--faka-border, #f0f0f0);
+  background: var(--faka-tag-bg, #fafafa);
   display: flex;
   gap: 16px;
+  justify-content: flex-end;
 }
 
-.product-cover-large {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(128, 128, 128, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  flex-shrink: 0;
-}
-
-.product-cover-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.product-detail-info h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 6px;
-}
-
-.order-no {
-  font-size: 12px;
-  opacity: 0.5;
-  margin: 0;
-  font-family: monospace;
-}
-
-.highlight {
-  color: #18a058;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.card-list {
+/* 提取卡密区 */
+.card-codes {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-.card-item {
+.code-box {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  background: var(--faka-tag-bg, #fafafa);
+  border: 1px dashed var(--faka-border, #d9d9d9);
   padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(128, 128, 128, 0.06);
-  gap: 12px;
+  border-radius: 2px;
 }
-
-.card-content {
-  font-size: 14px;
-  word-break: break-all;
+.code-text {
   font-family: monospace;
+  font-size: 15px;
+  color: var(--faka-text-main, #333);
+  word-break: break-all;
 }
-
-.detail-right {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.action-card :deep(.n-card__content) {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dispute-hint {
+.empty-code {
+  color: var(--faka-text-sub, #8c8c8c);
   font-size: 14px;
-  opacity: 0.7;
-  margin: 0 0 16px;
 }
+.alert-tip {
+  font-size: 12px;
+  color: #fa8c16;
+  background: #fff7e6;
+  padding: 8px 12px;
+  border-radius: 2px;
+}
+
+/* 订单明细 */
+.order-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.info-item {
+  display: flex;
+  font-size: 14px;
+}
+.info-item label {
+  color: var(--faka-text-sub, #8c8c8c);
+  width: 80px;
+  flex-shrink: 0;
+}
+.info-item span {
+  color: var(--faka-text-main, #333);
+  word-break: break-all;
+}
+.highlight-price {
+  color: #f5222d !important;
+  font-weight: 700;
+}
+
+.status-tag-sm {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.status-0 { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+.status-1 { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.status-2 { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+
+/* 按钮通用 */
+.faka-btn {
+  padding: 6px 20px;
+  font-size: 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.2s;
+}
+.faka-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.faka-btn:hover:not(:disabled) { opacity: 0.85; }
+
+.faka-btn.sm { font-size: 12px; padding: 4px 12px; }
+.faka-btn.primary { background: #1890ff; color: #fff; }
+.faka-btn.warning { background: #faad14; color: #fff; }
+.faka-btn.warning.outline { background: transparent; color: #faad14; border-color: #faad14; }
+.faka-btn.plain { background: transparent; border-color: var(--faka-border, #d9d9d9); color: var(--faka-text-main, #333); }
+
+/* Modal Elements */
+.modal-label {
+  display: block;
+  font-size: 13px;
+  color: var(--faka-text-main, #333);
+  margin-bottom: 8px;
+}
+.w-full { width: 100%; }
+.faka-textarea {
+  border: 1px solid var(--faka-border, #d9d9d9);
+  border-radius: 2px;
+  padding: 8px 12px;
+  background: var(--faka-bg-header, #fff);
+  color: var(--faka-text-main, #333);
+  outline: none;
+  font-size: 13px;
+  resize: vertical;
+}
+.faka-textarea:focus { border-color: #faad14; }
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.loading-spin { padding: 80px; text-align: center; }
+.empty-state { padding: 80px; text-align: center; color: var(--faka-text-sub); }
 
 @media (max-width: 768px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .status-header {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .status-steps {
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
+  .order-info-grid { grid-template-columns: 1fr; }
+  .card-footer { flex-direction: column; }
 }
 </style>

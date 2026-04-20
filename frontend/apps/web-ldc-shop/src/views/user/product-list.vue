@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-
 import type { Category, Product } from '#/api/types';
-import { PRODUCT_TYPE_MAP } from '#/api/types';
-
 import { categoryApi, productApi } from '#/api/modules';
 
 const router = useRouter();
@@ -16,23 +13,15 @@ const page = ref(1);
 const total = ref(0);
 const keyword = ref('');
 const selectedCategory = ref<number | null>(null);
-const selectedType = ref<number | null>(null);
-
-const typeOptions = [
-  { label: '全部类型', value: null },
-  { label: '虚拟商品', value: 1 },
-  { label: '实物商品', value: 2 },
-];
 
 async function loadData() {
   loading.value = true;
   try {
     const res = await productApi.userList({
       page: page.value,
-      size: 12,
+      size: 20,
       categoryId: selectedCategory.value || undefined,
       keyword: keyword.value || undefined,
-      productType: selectedType.value || undefined,
     });
     products.value = res?.records || [];
     total.value = res?.total || 0;
@@ -52,7 +41,7 @@ onMounted(async () => {
   await loadData();
 });
 
-watch([selectedCategory, selectedType], () => {
+watch([selectedCategory], () => {
   page.value = 1;
   loadData();
 });
@@ -73,277 +62,281 @@ function goDetail(id: number) {
 </script>
 
 <template>
-  <div class="product-list-page">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 class="page-title">商品列表</h1>
-      <p class="page-subtitle">浏览所有可用商品，使用积分兑换</p>
+  <div class="faka-container">
+    <div class="breadcrumb" @click="router.push('/home')">
+      <span>首页</span> &gt; <span>全部商品</span>
     </div>
 
-    <!-- 筛选器 -->
-    <div class="filter-bar">
-      <n-input
-        v-model:value="keyword"
-        placeholder="搜索商品..."
-        clearable
-        class="filter-search"
-        @keyup.enter="searchProducts"
-      >
-        <template #suffix>
-          <n-button text @click="searchProducts">🔍</n-button>
-        </template>
-      </n-input>
+    <!-- 搜索与筛选区 -->
+    <div class="faka-card filter-card">
+      <div class="search-box">
+        <input 
+          type="text" 
+          v-model="keyword" 
+          class="faka-input" 
+          placeholder="请输入商品名称搜索..." 
+          @keyup.enter="searchProducts"
+        />
+        <button class="faka-btn" @click="searchProducts">搜索</button>
+      </div>
 
-      <n-select
-        v-model:value="selectedCategory"
-        :options="[
-          { label: '全部分类', value: null },
-          ...categories.map((c) => ({ label: c.name, value: c.id })),
-        ]"
-        class="filter-select"
-        placeholder="选择分类"
-      />
-
-      <n-select
-        v-model:value="selectedType"
-        :options="typeOptions"
-        class="filter-select"
-        placeholder="商品类型"
-      />
+      <div class="category-filter">
+        <span class="filter-label">分类目录：</span>
+        <div class="filter-options">
+          <span 
+            :class="['filter-item', { active: selectedCategory === null }]"
+            @click="selectedCategory = null"
+          >
+            全部
+          </span>
+          <span 
+            v-for="cat in categories" 
+            :key="cat.id"
+            :class="['filter-item', { active: selectedCategory === cat.id }]"
+            @click="selectedCategory = cat.id"
+          >
+            {{ cat.name }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- 商品列表 -->
-    <div v-if="loading" class="product-grid">
-      <n-card v-for="i in 8" :key="i" class="product-skeleton">
-        <n-skeleton height="180px" width="100%" />
-        <n-skeleton text :repeat="2" style="margin-top: 12px" />
-      </n-card>
-    </div>
+    <div class="faka-card mt-24">
+      <div class="card-header">
+        <span class="header-title">产品列表 (共 {{ total }} 件)</span>
+      </div>
 
-    <div v-else-if="products.length" class="product-grid">
-      <n-card
-        v-for="p in products"
-        :key="p.id"
-        hoverable
-        class="product-card"
-        @click="goDetail(p.id)"
-      >
-        <div class="product-cover">
-          <img
-            v-if="p.coverImage"
-            :src="p.coverImage"
-            :alt="p.name"
-            loading="lazy"
-          />
-          <div v-else class="product-placeholder">📦</div>
-          <n-tag
-            v-if="p.productType"
-            :type="PRODUCT_TYPE_MAP[p.productType]?.type || 'default'"
-            size="small"
-            class="product-type-tag"
+      <div class="card-body">
+        <n-spin v-if="loading" size="large" class="loading-spin" />
+        
+        <div v-else-if="products.length" class="product-list">
+          <div
+            v-for="p in products"
+            :key="p.id"
+            class="product-row"
+            @click="goDetail(p.id)"
           >
-            {{ PRODUCT_TYPE_MAP[p.productType]?.label }}
-          </n-tag>
-        </div>
-
-        <div class="product-info">
-          <h3 class="product-name">{{ p.name }}</h3>
-          <p v-if="p.description" class="product-desc">{{ p.description }}</p>
-          <div class="product-meta">
-            <span class="product-price">
-              {{ p.price }}
-              <span class="price-unit">积分</span>
-            </span>
-            <span class="product-stock">库存 {{ p.stock }}</span>
+            <div class="product-name">
+              {{ p.name }}
+              <span v-if="p.isHot" class="hot-badge">热</span>
+            </div>
+            <div class="product-info-right">
+              <span class="product-price">{{ p.price }} 积分</span>
+              <span class="product-stock">库存 {{ p.stock || 0 }}</span>
+              <button class="buy-small-btn">兑换</button>
+            </div>
           </div>
         </div>
-      </n-card>
-    </div>
 
-    <n-empty v-else description="没有找到符合条件的商品" />
+        <div v-else class="empty-state">
+          未能找到匹配的商品
+        </div>
 
-    <!-- 分页 -->
-    <div v-if="total > 12" class="pagination-wrapper">
-      <n-pagination
-        :page="page"
-        :page-count="Math.ceil(total / 12)"
-        :page-sizes="[12, 24, 36]"
-        show-size-picker
-        @update:page="handlePageChange"
-      />
+        <!-- 分页 -->
+        <div v-if="total > 20" class="pagination-wrapper">
+          <n-pagination
+            v-model:page="page"
+            :page-count="Math.ceil(total / 20)"
+            @update:page="handlePageChange"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.product-list-page {
-  max-width: 1280px;
+.faka-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 24px;
 }
 
-.page-header {
-  margin-bottom: 32px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  font-size: 15px;
-  opacity: 0.5;
-  margin: 0;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.filter-search {
-  max-width: 320px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.filter-select {
-  width: 160px;
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-
-.product-card {
+.breadcrumb {
+  font-size: 13px;
+  color: var(--faka-text-sub, #8c8c8c);
+  margin-bottom: 16px;
   cursor: pointer;
-  transition: transform 0.2s;
+}
+.breadcrumb span:hover {
+  color: #1890ff;
 }
 
-.product-card:hover {
-  transform: translateY(-4px);
+.faka-card {
+  background: var(--faka-bg-header, #ffffff);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  color: var(--faka-text-main, #333);
 }
 
-.product-cover {
-  position: relative;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 8px;
-  background: rgba(128, 128, 128, 0.06);
+.mt-24 {
+  margin-top: 24px;
 }
 
-.product-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--faka-border, #f0f0f0);
 }
-
-.product-card:hover .product-cover img {
-  transform: scale(1.05);
-}
-
-.product-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-}
-
-.product-type-tag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-}
-
-.product-info {
-  padding: 12px 4px 4px;
-}
-
-.product-name {
+.header-title {
   font-size: 15px;
   font-weight: 600;
-  margin: 0 0 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-left: 3px solid #1890ff;
+  padding-left: 10px;
 }
 
-.product-desc {
+.card-body {
+  padding: 8px 0;
+}
+
+/* 筛选区 */
+.filter-card {
+  padding: 20px;
+}
+
+.search-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  max-width: 500px;
+}
+
+.faka-input {
+  flex: 1;
+  height: 36px;
+  border: 1px solid var(--faka-border, #d9d9d9);
+  border-radius: 2px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--faka-text-main, #333);
   font-size: 13px;
-  opacity: 0.5;
-  margin: 0 0 10px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.4;
+  outline: none;
+}
+.faka-input:focus {
+  border-color: #1890ff;
 }
 
-.product-meta {
+.faka-btn {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0 24px;
+  height: 36px;
+  font-size: 14px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.faka-btn:hover { opacity: 0.85; }
+
+.category-filter {
+  display: flex;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.filter-label {
+  color: var(--faka-text-sub, #8c8c8c);
+  margin-right: 16px;
+  white-space: nowrap;
+  line-height: 24px;
+}
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.filter-item {
+  color: var(--faka-text-main, #333);
+  padding: 2px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  line-height: 20px;
+}
+.filter-item:hover { color: #1890ff; }
+.filter-item.active {
+  background: #1890ff;
+  color: #fff;
+}
+
+/* 商品列表 */
+.loading-spin {
+  display: flex;
+  justify-content: center;
+  padding: 60px;
+}
+
+.product-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px dashed var(--faka-border, #f0f0f0);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.product-row:last-child { border-bottom: none; }
+.product-row:hover {
+  background: var(--faka-tag-bg, #fafafa);
+}
+
+.product-name {
+  font-size: 14px;
+  color: var(--faka-text-main, #333);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hot-badge {
+  background: #fff1f0;
+  color: #f5222d;
+  font-size: 12px;
+  padding: 0 4px;
+  border-radius: 2px;
+  border: 1px solid #ffa39e;
+}
+
+.product-info-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .product-price {
-  font-size: 18px;
+  color: #f5222d;
   font-weight: 700;
-  color: #18a058;
-}
-
-.price-unit {
-  font-size: 12px;
-  font-weight: 400;
-  margin-left: 2px;
-  opacity: 0.7;
+  font-size: 15px;
 }
 
 .product-stock {
+  background: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+  padding: 2px 8px;
+  border-radius: 12px;
   font-size: 12px;
-  opacity: 0.5;
+  min-width: 70px;
+  text-align: center;
 }
 
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
+.buy-small-btn {
+  background: transparent;
+  color: #1890ff;
+  border: 1px solid #1890ff;
+  padding: 2px 14px;
+  border-radius: 2px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.product-row:hover .buy-small-btn {
+  background: #1890ff;
+  color: #fff;
 }
 
-@media (max-width: 1024px) {
-  .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .filter-search {
-    max-width: none;
-    width: 100%;
-  }
-
-  .filter-select {
-    width: calc(50% - 6px);
-  }
-}
-
-@media (max-width: 480px) {
-  .product-list-page {
-    padding: 20px 16px;
-  }
-}
+.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
+.pagination-wrapper { display: flex; justify-content: flex-end; padding: 20px; }
 </style>

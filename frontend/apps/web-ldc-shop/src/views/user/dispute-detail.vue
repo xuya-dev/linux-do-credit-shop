@@ -1,29 +1,26 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useMessage } from 'naive-ui';
-
-import type { Dispute } from '#/api/types';
-import { DISPUTE_STATUS_MAP } from '#/api/types';
-
 import { disputeApi } from '#/api/modules';
 
 const route = useRoute();
 const router = useRouter();
-const message = useMessage();
 
-const dispute = ref<Dispute | null>(null);
+const dispute = ref<any>(null);
 const loading = ref(true);
 
-function openImage(url: string) {
-  window.open(url, '_blank');
-}
+const STATUS_MAP: Record<number, { label: string; class: string }> = {
+  0: { label: '待处理', class: 'status-0' },
+  1: { label: '处理中', class: 'status-1' },
+  2: { label: '已解决', class: 'status-2' },
+  3: { label: '已驳回', class: 'status-3' },
+};
 
 onMounted(async () => {
   try {
-    dispute.value = await disputeApi.userDetail(Number(route.params.id));
-  } catch {
-    message.error('加载争议详情失败');
+    dispute.value = await disputeApi.detail(Number(route.params.id));
+  } catch (e) {
+    console.error(e);
   } finally {
     loading.value = false;
   }
@@ -31,214 +28,73 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dispute-detail-page">
-    <n-button text class="back-btn" @click="router.back()">
-      ← 返回
-    </n-button>
+  <div class="faka-container">
+    <div class="breadcrumb" @click="router.push('/disputes')">
+      <span>售后争议</span> &gt; <span>争议详情</span>
+    </div>
 
-    <n-spin v-if="loading" size="large" style="padding: 80px" />
-
-    <template v-else-if="dispute">
-      <!-- 状态卡片 -->
-      <n-card class="status-card">
-        <div class="status-header">
-          <div class="status-info">
-            <span class="status-label">争议状态</span>
-            <n-tag
-              :type="DISPUTE_STATUS_MAP[dispute.status]?.type || 'default'"
-              size="large"
-            >
-              {{ dispute.statusName }}
-            </n-tag>
-          </div>
-          <div class="status-meta">
-            <span>订单号: {{ dispute.orderNo }}</span>
-            <span>提交时间: {{ dispute.createdAt }}</span>
-          </div>
+    <div class="faka-card">
+      <div v-if="loading" class="loading-spin"><n-spin size="large" /></div>
+      
+      <template v-else-if="dispute">
+        <div class="card-header highlight">
+          争议编号: {{ dispute.sn }}
+          <span :class="['faka-status', STATUS_MAP[dispute.status]?.class]">
+            {{ STATUS_MAP[dispute.status]?.label }}
+          </span>
         </div>
-      </n-card>
-
-      <div class="detail-grid">
-        <!-- 左侧：争议信息 -->
-        <div class="detail-left">
-          <n-card title="争议详情">
-            <n-descriptions label-placement="top" :column="1">
-              <n-descriptions-item label="商品名称">
-                {{ dispute.productName }}
-              </n-descriptions-item>
-              <n-descriptions-item label="争议原因">
-                <div class="reason-text">{{ dispute.reason }}</div>
-              </n-descriptions-item>
-              <n-descriptions-item
-                v-if="dispute.evidence?.length"
-                label="证据图片"
-              >
-                <div class="evidence-list">
-                  <img
-                    v-for="(img, idx) in dispute.evidence"
-                    :key="idx"
-                    :src="img"
-                    class="evidence-img"
-                    @click="openImage(img)"
-                  />
-                </div>
-              </n-descriptions-item>
-            </n-descriptions>
-          </n-card>
-        </div>
-
-        <!-- 右侧：处理结果 -->
-        <div class="detail-right">
-          <n-card title="处理结果">
-            <div v-if="dispute.adminNote" class="result-section">
-              <div class="result-label">管理员备注</div>
-              <div class="result-content">{{ dispute.adminNote }}</div>
+        
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-row">
+              <label>相关订单</label>
+              <span class="link-text" @click="router.push(`/order/${dispute.orderId}`)">
+                查看关联订单
+              </span>
             </div>
-            <div v-else class="result-empty">
-              <span>⏳</span>
-              <p>正在处理中，请耐心等待...</p>
+            <div class="info-row">
+              <label>创建时间</label>
+              <span>{{ dispute.createdAt }}</span>
             </div>
-
-            <n-divider />
-
-            <n-descriptions :column="1" label-placement="top">
-              <n-descriptions-item v-if="dispute.handlerName" label="处理人">
-                {{ dispute.handlerName }}
-              </n-descriptions-item>
-              <n-descriptions-item v-if="dispute.handledAt" label="处理时间">
-                {{ dispute.handledAt }}
-              </n-descriptions-item>
-            </n-descriptions>
-          </n-card>
+            <div class="info-row block-row">
+              <label>争议原因</label>
+              <div class="text-box">{{ dispute.reason }}</div>
+            </div>
+            <div class="info-row block-row" v-if="dispute.result">
+              <label>处理结果</label>
+              <div class="text-box result-box">{{ dispute.result }}</div>
+            </div>
+          </div>
         </div>
-      </div>
-    </template>
+      </template>
 
-    <n-empty v-else description="争议不存在" />
+      <div v-else class="empty-state">记录不存在</div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.dispute-detail-page {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 24px;
-}
+.faka-container { max-width: 800px; margin: 0 auto; padding: 24px; }
+.breadcrumb { font-size: 13px; color: var(--faka-text-sub); margin-bottom: 20px; cursor: pointer; }
+.breadcrumb span:hover { color: #1890ff; }
+.faka-card { background: var(--faka-bg-header); border-radius: 4px; border: 1px solid var(--faka-border); color: var(--faka-text-main); }
+.card-header { padding: 16px 20px; font-weight: 600; border-bottom: 1px solid var(--faka-border); font-size: 15px; display: flex; justify-content: space-between; align-items: center;}
+.card-header.highlight { background: #fafafa; }
+.card-body { padding: 20px; }
 
-.back-btn {
-  margin-bottom: 16px;
-}
+.faka-status { font-size: 12px; padding: 2px 8px; border-radius: 2px; }
+.status-0 { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+.status-1 { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.status-2 { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.status-3 { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
 
-.status-card {
-  margin-bottom: 24px;
-}
-
-.status-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.status-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.status-label {
-  font-size: 13px;
-  opacity: 0.5;
-}
-
-.status-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  opacity: 0.6;
-  text-align: right;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
-.reason-text {
-  line-height: 1.7;
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(128, 128, 128, 0.06);
-}
-
-.evidence-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.evidence-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.evidence-img:hover {
-  transform: scale(1.05);
-}
-
-.result-section {
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(128, 128, 128, 0.06);
-}
-
-.result-label {
-  font-size: 13px;
-  opacity: 0.5;
-  margin-bottom: 8px;
-}
-
-.result-content {
-  line-height: 1.7;
-}
-
-.result-empty {
-  text-align: center;
-  padding: 40px 20px;
-  opacity: 0.6;
-}
-
-.result-empty span {
-  font-size: 48px;
-  line-height: 1;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.result-empty p {
-  margin: 0;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .status-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-meta {
-    text-align: left;
-  }
-}
+.info-grid { display: flex; flex-direction: column; gap: 16px; }
+.info-row { display: flex; font-size: 14px; }
+.info-row label { width: 80px; color: var(--faka-text-sub); flex-shrink: 0; }
+.info-row.block-row { flex-direction: column; gap: 8px; }
+.text-box { background: var(--faka-tag-bg); padding: 12px; border: 1px dashed var(--faka-border); border-radius: 2px; line-height: 1.6; }
+.result-box { border-color: #91d5ff; background: #e6f7ff; color: #096dd9; }
+.link-text { color: #1890ff; cursor: pointer; text-decoration: underline; }
+.loading-spin { padding: 60px; text-align: center; }
+.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
 </style>
