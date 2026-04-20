@@ -7,7 +7,7 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const userInfo = computed(() => userStore.userInfo);
-const isAdmin = computed(() => userInfo.value?.roles?.includes('admin'));
+const isAdmin = computed(() => userInfo.value?.role === 'admin' || userInfo.value?.roles?.includes('admin'));
 const trustLabel = computed(() => {
   const level = userInfo.value?.trustLevel ?? 0;
   const labels = ['新用户', '基本信任', '一般信任', '高度信任', '核心用户'];
@@ -32,7 +32,7 @@ const menuItems = [
       <div class="profile-avatar-wrap">
         <div class="profile-avatar">
           <img v-if="userInfo?.avatar" :src="userInfo.avatar" alt="avatar" />
-          <span v-else>{{ (userInfo?.username?.[0] || 'U').toUpperCase() }}</span>
+          <span v-else>{{ (userInfo?.username?.[0] || userInfo?.nickname?.[0] || 'U').toUpperCase() }}</span>
         </div>
       </div>
       <div class="profile-info">

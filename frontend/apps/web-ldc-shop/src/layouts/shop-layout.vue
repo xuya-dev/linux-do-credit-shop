@@ -45,14 +45,23 @@ function navigate(path: string) {
   router.push(path);
 }
 
-const userOptions = computed(() => [
-  { label: t('page.shop.profile'), key: 'profile' },
-  { type: 'divider', key: 'd1' },
-  { label: t('page.shop.logout'), key: 'logout' },
-]);
+const userOptions = computed(() => {
+  const options = [
+    { label: t('page.shop.profile'), key: 'profile' },
+  ];
+  if (userStore.userInfo?.role === 'admin' || userStore.userInfo?.roles?.includes('admin')) {
+    options.push({ label: t('page.shop.adminPanel'), key: 'admin' });
+  }
+  options.push(
+    { type: 'divider', key: 'd1' },
+    { label: t('page.shop.logout'), key: 'logout' }
+  );
+  return options;
+});
 
 function handleUserSelect(key: string) {
   if (key === 'profile') router.push('/profile');
+  else if (key === 'admin') router.push('/admin/dashboard');
   else if (key === 'logout') handleLogout();
 }
 
@@ -100,9 +109,16 @@ onMounted(() => {
 
           <template v-if="isLoggedIn && userInfo">
             <n-dropdown :options="userOptions" trigger="click" @select="handleUserSelect">
-              <div class="user-avatar-trigger" style="margin-left: 16px;">
-                <n-avatar round size="small" style="background-color: #4f46e5; font-size: 14px;">
-                  {{ (userInfo?.username?.[0] || userInfo?.realName?.[0] || 'U').toUpperCase() }}
+              <div class="user-avatar-trigger" style="margin-left: 16px; cursor: pointer;">
+                <n-avatar 
+                  round 
+                  size="small" 
+                  :src="userInfo?.avatar"
+                  style="background-color: #4f46e5; font-size: 14px;"
+                >
+                  <template v-if="!userInfo?.avatar">
+                    {{ (userInfo?.username?.[0] || userInfo?.nickname?.[0] || 'U').toUpperCase() }}
+                  </template>
                 </n-avatar>
               </div>
             </n-dropdown>
