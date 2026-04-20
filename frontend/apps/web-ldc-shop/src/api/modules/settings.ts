@@ -6,4 +6,5 @@ export const settingsApi = {
   getAll: () => requestClient.get<ShopSettings>('/admin/settings'),
   batchUpdate: (data: ShopSettings) =>
     requestClient.put('/admin/settings', data),
+  getPublic: () => requestClient.get<ShopSettings>('/public/settings', { _silent: true } as any),
 };

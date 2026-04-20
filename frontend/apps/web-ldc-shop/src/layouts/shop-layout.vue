@@ -5,6 +5,8 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { LanguageToggle, ThemeToggle } from '@vben/layouts';
 import { useI18n } from '@vben/locales';
 import { useAuthStore } from '#/store';
+import { settingsApi } from '#/api/modules/settings';
+import { ref } from 'vue';
 
 const { t } = useI18n();
 
@@ -13,6 +15,9 @@ const route = useRoute();
 const userStore = useUserStore();
 const accessStore = useAccessStore();
 const authStore = useAuthStore();
+
+const siteName = ref('LDC Shop');
+const siteLogo = ref('/logo.png');
 
 const isLoggedIn = computed(() => !!accessStore.accessToken);
 const userInfo = computed(() => userStore.userInfo);
@@ -71,6 +76,10 @@ onMounted(() => {
       accessStore.setAccessToken('');
     });
   }
+  settingsApi.getPublic().then((res) => {
+    if (res?.site_name) siteName.value = res.site_name;
+    if (res?.site_logo) siteLogo.value = res.site_logo;
+  }).catch(() => {});
 });
 </script>
 
@@ -82,8 +91,8 @@ onMounted(() => {
         <!-- Logo区及标签 -->
         <div class="header-left">
           <div class="faka-logo" @click="router.push('/home')">
-            <span class="logo-emoji">🚀</span>
-            <span class="logo-text">LDC Shop</span>
+            <img v-if="siteLogo" :src="siteLogo" class="logo-img" alt="logo" />
+            <span class="logo-text">{{ siteName }}</span>
           </div>
         </div>
 
@@ -224,8 +233,10 @@ onMounted(() => {
   gap: 8px;
 }
 
-.logo-emoji {
-  font-size: 24px;
+.logo-img {
+  height: 28px;
+  width: auto;
+  border-radius: 4px;
 }
 
 .logo-text {

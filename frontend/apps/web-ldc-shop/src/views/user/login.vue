@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { useMessage } from 'naive-ui';
 import { useI18n } from '@vben/locales';
+import { onMounted, ref } from 'vue';
 
 import { getAuthorizeUrlApi } from '#/api';
+import { settingsApi } from '#/api/modules/settings';
 
 const { t } = useI18n();
 const message = useMessage();
+
+const siteName = ref('LDC Shop');
+const siteLogo = ref('/logo.png');
+
+onMounted(async () => {
+  try {
+    const res = await settingsApi.getPublic();
+    if (res && res.site_name) siteName.value = res.site_name;
+    if (res && res.site_logo) siteLogo.value = res.site_logo;
+  } catch {
+    // Fallback to defaults
+  }
+});
 
 async function handleLogin() {
   try {
@@ -23,10 +38,12 @@ async function handleLogin() {
 
 <template>
   <div class="login-page">
-    <n-card class="login-card" :bordered="false">
+    <n-card class="login-card faka-card" :bordered="false">
       <div class="login-brand">
-        <div class="brand-logo">🚀</div>
-        <h1 class="brand-title">LDC Shop</h1>
+        <div class="brand-logo-img">
+          <img :src="siteLogo" alt="Logo" />
+        </div>
+        <h1 class="brand-title">{{ siteName }}</h1>
         <p class="brand-subtitle">LINUX DO Credit Shop</p>
       </div>
 
@@ -66,18 +83,31 @@ async function handleLogin() {
 }
 
 .login-card {
-  background: transparent;
+  background: var(--faka-bg-header, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  padding: 32px 16px;
   text-align: center;
+  color: var(--faka-text-main, #333333);
 }
 
 .login-brand {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
-.brand-logo {
-  font-size: 64px;
-  line-height: 1;
-  margin-bottom: 16px;
+.brand-logo-img {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.brand-logo-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-title {
@@ -99,8 +129,9 @@ async function handleLogin() {
   gap: 12px;
   margin-bottom: 32px;
   padding: 20px;
-  border-radius: 12px;
-  background: rgba(128, 128, 128, 0.06);
+  border-radius: 8px;
+  background: var(--faka-tag-bg, #f5f5f5);
+  border: 1px solid var(--faka-border, #f0f0f0);
 }
 
 .feature-item {
@@ -108,7 +139,7 @@ async function handleLogin() {
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  opacity: 0.8;
+  color: var(--faka-text-sub, #595959);
 }
 
 .feature-icon {
