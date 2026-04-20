@@ -126,28 +126,29 @@ onMounted(async () => {
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-space align="center">
-        <n-h3 style="margin: 0">{{ t('page.admin.cards') }}</n-h3>
-        <n-select
-          v-model:value="filterProductId"
-          :options="[{ label: t('page.admin.allProducts'), value: null }, ...productOptions]"
-          :placeholder="t('page.admin.selectProduct')"
-          style="width: 200px"
-          clearable
-          @update:value="page = 1; loadCards()"
-        />
-      </n-space>
-      <n-button type="primary" @click="showImport = true">{{ t('page.admin.batchImport') }}</n-button>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <n-space align="center">
+          <n-select
+            v-model:value="filterProductId"
+            :options="[{ label: t('page.admin.allProducts'), value: null }, ...productOptions]"
+            :placeholder="t('page.admin.selectProduct')"
+            style="width: 200px"
+            clearable
+            @update:value="page = 1; loadCards()"
+          />
+        </n-space>
+        <n-button type="primary" @click="showImport = true">{{ t('page.admin.batchImport') }}</n-button>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="cards"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 20, onChange: (p: number) => { page = p; loadCards() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="cards"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 20, onChange: (p: number) => { page = p; loadCards() } }"
+        :bordered="false"
+      />
+    </n-card>
 
     <n-modal
       v-model:show="showImport"

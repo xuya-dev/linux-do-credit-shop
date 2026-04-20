@@ -107,28 +107,30 @@ onMounted(loadCategories);
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">{{ t('page.admin.categories') }}</n-h3>
-      <n-button type="primary" @click="showCreate = true; form = { name: '', sortOrder: 0, status: 1 }">
-        {{ t('page.admin.create') }}
-      </n-button>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <div></div>
+        <n-button type="primary" @click="showCreate = true; form = { name: '', sortOrder: 0, status: 1 }">
+          {{ t('page.admin.create') }}
+        </n-button>
+      </div>
 
-    <n-card v-if="showCreate" size="small" style="margin-bottom: 16px">
-      <n-space align="center">
-        <n-input v-model:value="form.name" :placeholder="t('page.admin.categoryName')" style="width: 200px" />
-        <n-input-number v-model:value="form.sortOrder" :placeholder="t('page.admin.categorySort')" style="width: 120px" />
-        <n-button type="primary" @click="createCategory">{{ t('page.admin.save') }}</n-button>
-        <n-button @click="showCreate = false">{{ t('page.admin.cancel') }}</n-button>
-      </n-space>
+      <n-card v-if="showCreate" size="small" style="margin-bottom: 16px">
+        <n-space align="center">
+          <n-input v-model:value="form.name" :placeholder="t('page.admin.categoryName')" style="width: 200px" />
+          <n-input-number v-model:value="form.sortOrder" :placeholder="t('page.admin.categorySort')" style="width: 120px" />
+          <n-button type="primary" @click="createCategory">{{ t('page.admin.save') }}</n-button>
+          <n-button @click="showCreate = false">{{ t('page.admin.cancel') }}</n-button>
+        </n-space>
+      </n-card>
+
+      <n-data-table
+        :columns="columns"
+        :data="categories"
+        :loading="loading"
+        :bordered="false"
+      />
     </n-card>
-
-    <n-data-table
-      :columns="columns"
-      :data="categories"
-      :loading="loading"
-      :bordered="false"
-    />
 
     <n-modal
       v-model:show="showEdit"

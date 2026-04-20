@@ -194,23 +194,25 @@ onMounted(async () => {
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-input
-        v-model:value="keyword"
-        :placeholder="t('page.admin.searchProducts')"
-        style="width: 240px"
-        @keyup.enter="page = 1; loadProducts()"
-      />
-      <n-button type="primary" @click="openCreate">{{ t('page.admin.createProduct') }}</n-button>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <n-input
+          v-model:value="keyword"
+          :placeholder="t('page.admin.searchProducts')"
+          style="width: 240px"
+          @keyup.enter="page = 1; loadProducts()"
+        />
+        <n-button type="primary" @click="openCreate">{{ t('page.admin.createProduct') }}</n-button>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="products"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadProducts() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="products"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadProducts() } }"
+        :bordered="false"
+      />
+    </n-card>
 
     <n-modal
       v-model:show="showModal"

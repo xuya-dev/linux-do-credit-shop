@@ -166,36 +166,38 @@ onMounted(loadOrders);
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-space align="center">
-        <n-input
-          v-model:value="keyword"
-          :placeholder="t('page.admin.searchOrders')"
-          style="width: 200px"
-          @keyup.enter="page = 1; loadOrders()"
-        />
-        <n-button @click="page = 1; loadOrders()">{{ t('page.admin.search') }}</n-button>
-      </n-space>
-      <n-space>
-        <n-button
-          v-for="tab in statusTabs"
-          :key="String(tab.value)"
-          :type="statusFilter === tab.value ? 'primary' : 'default'"
-          size="small"
-          @click="statusFilter = tab.value; page = 1; loadOrders()"
-        >
-          {{ tab.label }}
-        </n-button>
-      </n-space>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <n-space align="center">
+          <n-input
+            v-model:value="keyword"
+            :placeholder="t('page.admin.searchOrders')"
+            style="width: 200px"
+            @keyup.enter="page = 1; loadOrders()"
+          />
+          <n-button @click="page = 1; loadOrders()">{{ t('page.admin.search') }}</n-button>
+        </n-space>
+        <n-space>
+          <n-button
+            v-for="tab in statusTabs"
+            :key="String(tab.value)"
+            :type="statusFilter === tab.value ? 'primary' : 'default'"
+            size="small"
+            @click="statusFilter = tab.value; page = 1; loadOrders()"
+          >
+            {{ tab.label }}
+          </n-button>
+        </n-space>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="orders"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadOrders() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="orders"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadOrders() } }"
+        :bordered="false"
+      />
+    </n-card>
 
     <n-modal
       v-model:show="showDeliver"

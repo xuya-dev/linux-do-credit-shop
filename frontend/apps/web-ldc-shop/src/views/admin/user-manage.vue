@@ -121,25 +121,26 @@ onMounted(loadUsers);
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">{{ t('page.admin.users') }}</n-h3>
-      <n-space align="center">
-        <n-input
-          v-model:value="keyword"
-          :placeholder="t('page.admin.searchUsers')"
-          style="width: 240px"
-          @keyup.enter="page = 1; loadUsers()"
-        />
-        <n-button @click="page = 1; loadUsers()">{{ t('page.admin.search') }}</n-button>
-      </n-space>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <n-space align="center">
+          <n-input
+            v-model:value="keyword"
+            :placeholder="t('page.admin.searchUsers')"
+            style="width: 240px"
+            @keyup.enter="page = 1; loadUsers()"
+          />
+          <n-button @click="page = 1; loadUsers()">{{ t('page.admin.search') }}</n-button>
+        </n-space>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="users"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadUsers() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="users"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadUsers() } }"
+        :bordered="false"
+      />
+    </n-card>
   </div>
 </template>

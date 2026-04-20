@@ -107,28 +107,29 @@ onMounted(loadDisputes);
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">{{ t('page.admin.disputes') }}</n-h3>
-      <n-space>
-        <n-button
-          v-for="tab in statusTabs"
-          :key="String(tab.value)"
-          :type="statusFilter === tab.value ? 'primary' : 'default'"
-          size="small"
-          @click="statusFilter = tab.value; page = 1; loadDisputes()"
-        >
-          {{ tab.label }}
-        </n-button>
-      </n-space>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px">
+        <n-space>
+          <n-button
+            v-for="tab in statusTabs"
+            :key="String(tab.value)"
+            :type="statusFilter === tab.value ? 'primary' : 'default'"
+            size="small"
+            @click="statusFilter = tab.value; page = 1; loadDisputes()"
+          >
+            {{ tab.label }}
+          </n-button>
+        </n-space>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="disputes"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadDisputes() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="disputes"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadDisputes() } }"
+        :bordered="false"
+      />
+    </n-card>
 
     <n-modal
       v-model:show="showHandle"

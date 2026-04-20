@@ -159,18 +159,20 @@ onMounted(loadAnnouncements);
 
 <template>
   <div class="p-5">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <n-h3 style="margin: 0">{{ t('page.admin.announcements') }}</n-h3>
-      <n-button type="primary" @click="openCreate">{{ t('page.admin.create') }}</n-button>
-    </div>
+    <n-card :bordered="false">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+        <div></div>
+        <n-button type="primary" @click="openCreate">{{ t('page.admin.create') }}</n-button>
+      </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="announcements"
-      :loading="loading"
-      :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadAnnouncements() } }"
-      :bordered="false"
-    />
+      <n-data-table
+        :columns="columns"
+        :data="announcements"
+        :loading="loading"
+        :pagination="{ page: page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadAnnouncements() } }"
+        :bordered="false"
+      />
+    </n-card>
 
     <n-modal
       v-model:show="showModal"
