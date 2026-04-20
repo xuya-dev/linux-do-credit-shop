@@ -49,15 +49,15 @@ async function handleLogin() {
 
       <div class="login-features">
         <div class="feature-item">
-          <span class="feature-icon">🛡️</span>
+          <img src="/积分.png" class="feature-img" alt="积分" />
           <span>安全可靠的积分交易</span>
         </div>
         <div class="feature-item">
-          <span class="feature-icon">⚡</span>
+          <img src="/发货.png" class="feature-img" alt="发货" />
           <span>自动发货，即时到账</span>
         </div>
         <div class="feature-item">
-          <span class="feature-icon">🔒</span>
+          <img src="/linuxdo.png" class="feature-img" alt="Linux DO" />
           <span>LINUX DO 账号一键登录</span>
         </div>
       </div>
@@ -136,9 +136,10 @@ async function handleLogin() {
   color: var(--faka-text-sub, #595959);
 }
 
-.feature-icon {
-  font-size: 20px;
-  line-height: 1;
+.feature-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .login-btn {
