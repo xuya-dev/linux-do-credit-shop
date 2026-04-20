@@ -1,7 +1,6 @@
 import { createApp, watchEffect } from 'vue';
 
 import { registerAccessDirective } from '@vben/access';
-import { registerLoadingDirective } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import { initStores } from '@vben/stores';
 import '@vben/styles';
@@ -11,17 +10,10 @@ import { useTitle } from '@vueuse/core';
 
 import { $t, setupI18n } from '#/locales';
 
-import { initComponentAdapter } from './adapter/component';
-import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
 
 async function bootstrap(namespace: string) {
-  // 初始化组件适配器
-  await initComponentAdapter();
-
-  // 初始化表单组件
-  await initSetupVbenForm();
 
   // // 设置弹窗的默认配置
   // setDefaultModalProps({
@@ -34,11 +26,7 @@ async function bootstrap(namespace: string) {
 
   const app = createApp(App);
 
-  // 注册v-loading指令
-  registerLoadingDirective(app, {
-    loading: 'loading', // 在这里可以自定义指令名称,也可以明确提供false表示不注册这个指令
-    spinning: 'spinning',
-  });
+  // 移除全局同步的 v-loading 注册（按需加载）
 
   // 国际化 i18n 配置
   await setupI18n(app);
@@ -49,9 +37,7 @@ async function bootstrap(namespace: string) {
   // 安装权限指令
   registerAccessDirective(app);
 
-  // 初始化 tippy
-  const { initTippy } = await import('@vben/common-ui/es/tippy');
-  initTippy(app);
+  // 移除全局同步的 tippy 初始化（按需加载）
 
   // 配置路由及路由守卫
   app.use(router);
@@ -69,6 +55,38 @@ async function bootstrap(namespace: string) {
       useTitle(pageTitle);
     }
   });
+
+  // ========== 按需懒加载重量级后台组件 ==========
+  let adminInitialized = false;
+  router.beforeEach(async (to) => {
+    if (to.path.startsWith('/admin') && !adminInitialized) {
+      // 动态引入只在后台用到的组件和适配器
+      const [
+        { initComponentAdapter },
+        { initSetupVbenForm },
+        { registerLoadingDirective },
+        { initTippy }
+      ] = await Promise.all([
+        import('./adapter/component'),
+        import('./adapter/form'),
+        import('@vben/common-ui'),
+        import('@vben/common-ui/es/tippy')
+      ]);
+
+      await initComponentAdapter();
+      await initSetupVbenForm();
+      
+      registerLoadingDirective(app, {
+        loading: 'loading',
+        spinning: 'spinning',
+      });
+      initTippy(app);
+
+      adminInitialized = true;
+    }
+    return true;
+  });
+  // ===========================================
 
   app.mount('#app');
 }
