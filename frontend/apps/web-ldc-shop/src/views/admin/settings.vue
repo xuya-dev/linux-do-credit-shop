@@ -22,10 +22,11 @@ const shopInfoFields = computed(() => [
 ]);
 
 const paymentFields = computed(() => [
-  { key: 'payment_method', label: t('page.admin.paymentMethod') },
-  { key: 'payment_api_key', label: t('page.admin.paymentApiKey') },
-  { key: 'payment_api_url', label: t('page.admin.paymentApiUrl') },
-  { key: 'payment_notify_url', label: t('page.admin.paymentNotifyUrl') },
+  { key: 'ldc_client_id', label: t('page.admin.ldcClientId') },
+  { key: 'ldc_client_secret', label: t('page.admin.ldcClientSecret') },
+  { key: 'ldc_gateway_url', label: t('page.admin.ldcGatewayUrl') },
+  { key: 'ldc_notify_url', label: t('page.admin.ldcNotifyUrl') },
+  { key: 'ldc_return_url', label: t('page.admin.ldcReturnUrl') },
 ]);
 
 const oauthFields = computed(() => [
@@ -90,7 +91,7 @@ onMounted(loadSettings);
               <n-input
                 v-model:value="paymentConfig[field.key]"
                 :placeholder="field.label"
-                :type="field.key.includes('secret') || field.key.includes('key') ? 'password' : 'text'"
+                :type="field.key.includes('secret') ? 'password' : 'text'"
                 show-password-on="click"
               />
             </n-form-item>
