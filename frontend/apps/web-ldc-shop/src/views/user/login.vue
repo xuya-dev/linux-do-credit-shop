@@ -1,3 +1,4 @@
+<script setup lang="ts">
 import { useMessage } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
