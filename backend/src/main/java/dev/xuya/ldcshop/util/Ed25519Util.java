@@ -53,7 +53,10 @@ public class Ed25519Util {
      */
     public static String sign(String privateKeyBase64, String data) {
         try {
+            byte[] rawDecoded = stripPemAndDecode(privateKeyBase64);
+            log.info("Ed25519私钥解码长度: {} bytes (原始32字节会自动包装为46字节PKCS#8)", rawDecoded.length);
             byte[] privateKeyBytes = decodeAndWrapPrivate(privateKeyBase64);
+            log.info("Ed25519私钥最终长度: {} bytes", privateKeyBytes.length);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = KeyFactory.getInstance(ALGORITHM).generatePrivate(keySpec);
 
