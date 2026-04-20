@@ -1,117 +1,129 @@
 import type { RouteRecordRaw } from 'vue-router';
 
+const layout = () => import('#/layouts/basic.vue');
+const authority = ['admin'];
+const noBasicLayout = true;
+
 const routes: RouteRecordRaw[] = [
   {
-    component: () => import('#/layouts/basic.vue'),
-    meta: {
-      icon: 'lucide:settings',
-      title: '管理后台',
-      order: 100,
-      authority: ['admin'],
-      noBasicLayout: true,
-    },
-    name: 'Admin',
     path: '/admin',
     redirect: '/admin/dashboard',
+    meta: { hideMenu: true },
+  },
+  {
+    path: '/admin/dashboard',
+    component: layout,
+    meta: { noBasicLayout, authority },
     children: [
       {
+        path: '',
         name: 'AdminDashboard',
-        path: 'dashboard',
         component: () => import('#/views/admin/dashboard.vue'),
-        meta: {
-          title: '数据看板',
-          icon: 'lucide:layout-dashboard',
-          order: 1,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.dashboard', icon: 'lucide:layout-dashboard', order: 100, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/products',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminProducts',
-        path: 'products',
         component: () => import('#/views/admin/product-manage.vue'),
-        meta: {
-          title: '商品管理',
-          icon: 'lucide:package',
-          order: 2,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.products', icon: 'lucide:package', order: 101, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/categories',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminCategories',
-        path: 'categories',
         component: () => import('#/views/admin/category-manage.vue'),
-        meta: {
-          title: '分类管理',
-          icon: 'lucide:folder',
-          order: 3,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.categories', icon: 'lucide:folder', order: 102, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/cards',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminCards',
-        path: 'cards',
         component: () => import('#/views/admin/card-manage.vue'),
-        meta: {
-          title: '卡密管理',
-          icon: 'lucide:key',
-          order: 4,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.cards', icon: 'lucide:key', order: 103, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/orders',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminOrders',
-        path: 'orders',
         component: () => import('#/views/admin/order-manage.vue'),
-        meta: {
-          title: '订单管理',
-          icon: 'lucide:file-text',
-          order: 5,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.orders', icon: 'lucide:file-text', order: 104, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/disputes',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminDisputes',
-        path: 'disputes',
         component: () => import('#/views/admin/dispute-manage.vue'),
-        meta: {
-          title: '争议管理',
-          icon: 'lucide:shield-alert',
-          order: 6,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.disputes', icon: 'lucide:shield-alert', order: 105, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/announcements',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminAnnouncements',
-        path: 'announcements',
         component: () => import('#/views/admin/announcement-manage.vue'),
-        meta: {
-          title: '公告管理',
-          icon: 'lucide:megaphone',
-          order: 7,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.announcements', icon: 'lucide:megaphone', order: 106, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/users',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminUsers',
-        path: 'users',
         component: () => import('#/views/admin/user-manage.vue'),
-        meta: {
-          title: '用户管理',
-          icon: 'lucide:users',
-          order: 8,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.users', icon: 'lucide:users', order: 107, authority },
       },
+    ],
+  },
+  {
+    path: '/admin/settings',
+    component: layout,
+    meta: { noBasicLayout, authority },
+    children: [
       {
+        path: '',
         name: 'AdminSettings',
-        path: 'settings',
         component: () => import('#/views/admin/settings.vue'),
-        meta: {
-          title: '系统设置',
-          icon: 'lucide:settings',
-          order: 9,
-          authority: ['admin'],
-        },
+        meta: { title: 'page.admin.settings', icon: 'lucide:settings', order: 108, authority },
       },
     ],
   },
