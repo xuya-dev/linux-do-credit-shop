@@ -24,6 +24,7 @@ const shopInfoFields = computed(() => [
 const paymentFields = computed(() => [
   { key: 'ldc_client_id', label: t('page.admin.ldcClientId') },
   { key: 'ldc_client_secret', label: t('page.admin.ldcClientSecret') },
+  { key: 'ldc_private_key', label: t('page.admin.ldcPrivateKey') },
   { key: 'ldc_gateway_url', label: t('page.admin.ldcGatewayUrl') },
   { key: 'ldc_notify_url', label: t('page.admin.ldcNotifyUrl') },
   { key: 'ldc_return_url', label: t('page.admin.ldcReturnUrl') },

@@ -192,6 +192,7 @@
     "saveSettings": "Save Settings",
     "ldcClientId": "LDC Client ID",
     "ldcClientSecret": "LDC Client Secret",
+    "ldcPrivateKey": "Ed25519 Merchant Private Key",
     "ldcGatewayUrl": "LDC Gateway URL",
     "ldcNotifyUrl": "Async Notify URL",
     "ldcReturnUrl": "Return URL",

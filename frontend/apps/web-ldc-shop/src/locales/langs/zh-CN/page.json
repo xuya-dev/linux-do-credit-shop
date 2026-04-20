@@ -192,6 +192,7 @@
     "saveSettings": "保存设置",
     "ldcClientId": "LDC Client ID",
     "ldcClientSecret": "LDC Client Secret",
+    "ldcPrivateKey": "Ed25519 商户私钥",
     "ldcGatewayUrl": "LDC 网关地址",
     "ldcNotifyUrl": "异步通知地址",
     "ldcReturnUrl": "同步跳转地址",

@@ -216,6 +216,7 @@ INSERT INTO `shop_setting` (`setting_key`, `setting_value`, `description`) VALUE
 ('shop_logo', '', '商店Logo / Shop Logo'),
 ('ldc_client_id', '', 'LDC支付Client ID / LDC Payment Client ID'),
 ('ldc_client_secret', '', 'LDC支付Client Secret / LDC Payment Client Secret'),
+('ldc_private_key', '', 'Ed25519商户私钥(Base64) / Ed25519 Merchant Private Key(Base64)'),
 ('ldc_gateway_url', 'https://credit.linux.do/epay', 'LDC网关地址 / LDC Gateway URL'),
 ('ldc_notify_url', '', 'LDC异步通知地址 / LDC Notify URL'),
 ('ldc_return_url', '', 'LDC同步跳转地址 / LDC Return URL'),

@@ -19,6 +19,7 @@ import dev.xuya.ldcshop.results.OrderDetailResult;
 import dev.xuya.ldcshop.results.PaymentSubmitResult;
 import dev.xuya.ldcshop.service.OrderService;
 import dev.xuya.ldcshop.service.ProductCardService;
+import dev.xuya.ldcshop.service.ShopSettingService;
 import dev.xuya.ldcshop.util.Ed25519Util;
 import dev.xuya.ldcshop.util.OrderUtil;
 import dev.xuya.ldcshop.util.UserContextUtil;
@@ -50,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductCardMapper productCardMapper;
     private final ProductCardService productCardService;
     private final LdcShopProperties properties;
+    private final ShopSettingService shopSettingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -122,31 +124,42 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
-        LdcShopProperties.Payment payment = properties.getPayment();
+        // 从数据库读取支付配置，YAML 作为兜底
+        Map<String, String> dbSettings = shopSettingService.getAllSettings();
+        String clientId = getSettingOrDefault(dbSettings, "ldc_client_id", properties.getPayment().getClientId());
+        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
+        String privateKey = getSettingOrDefault(dbSettings, "ldc_private_key", null);
+        String gatewayUrl = getSettingOrDefault(dbSettings, "ldc_gateway_url", properties.getPayment().getGatewayUrl());
+        String notifyUrl = getSettingOrDefault(dbSettings, "ldc_notify_url", properties.getPayment().getNotifyUrl());
+        String returnUrl = getSettingOrDefault(dbSettings, "ldc_return_url", properties.getPayment().getReturnUrl());
+
+        if (StrUtil.isBlank(privateKey)) {
+            log.error("Ed25519商户私钥未配置 / Ed25519 merchant private key not configured");
+            throw new BusinessException(ResultCode.PAY_SIGN_ERROR);
+        }
 
         // 构建支付参数 / Build payment params
         Map<String, Object> payParams = new LinkedHashMap<>();
-        payParams.put("client_id", payment.getClientId());
+        payParams.put("client_id", clientId);
         payParams.put("type", "ldcpay");
         payParams.put("out_trade_no", order.getLdcOutTradeNo());
         payParams.put("money", order.getTotalAmount().setScale(2).toPlainString());
         payParams.put("order_name", order.getProductName());
-        payParams.put("notify_url", payment.getNotifyUrl());
-        payParams.put("return_url", payment.getReturnUrl() + "?orderNo=" + order.getOrderNo());
+        payParams.put("notify_url", notifyUrl);
+        payParams.put("return_url", returnUrl + "?orderNo=" + order.getOrderNo());
 
-        // 生成签名 / Generate signature
-        String signString = Ed25519Util.buildSignString(payParams, payment.getClientSecret());
-        payParams.put("sign", Ed25519Util.sign(payment.getClientSecret(), signString));
+        // 生成签名: client_secret追加到签名字符串末尾, privateKey用于Ed25519签名
+        String signString = Ed25519Util.buildSignString(payParams, clientSecret);
+        payParams.put("sign", Ed25519Util.sign(privateKey, signString));
 
         // 提交支付请求 / Submit payment request
         try {
-            String response = HttpUtil.post(payment.getGatewayUrl() + "/pay/submit.php", payParams);
+            String response = HttpUtil.post(gatewayUrl + "/pay/submit.php", payParams);
             log.info("支付请求已发送 / Payment request sent: orderNo={}", order.getOrderNo());
 
             PaymentSubmitResult result = new PaymentSubmitResult();
             result.setOrderNo(order.getOrderNo());
-            // LDC 会返回跳转地址 / LDC returns redirect URL
-            result.setPayUrl(payment.getGatewayUrl() + "/paying?order_no=" + order.getLdcOutTradeNo());
+            result.setPayUrl(gatewayUrl + "/paying?order_no=" + order.getLdcOutTradeNo());
             return result;
         } catch (Exception e) {
             log.error("支付请求失败 / Payment request failed", e);
@@ -154,14 +167,20 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    private String getSettingOrDefault(Map<String, String> dbSettings, String key, String defaultValue) {
+        String value = dbSettings.get(key);
+        return StrUtil.isNotBlank(value) ? value : defaultValue;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String handlePaymentNotify(Map<String, String> params) {
-        LdcShopProperties.Payment payment = properties.getPayment();
+        Map<String, String> dbSettings = shopSettingService.getAllSettings();
+        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
 
         // 验证签名 / Verify signature
         String sign = params.get("sign");
-        String signString = Ed25519Util.buildSignString(params, payment.getClientSecret());
+        String signString = Ed25519Util.buildSignString(params, clientSecret);
         // 注意：实际生产中需要使用 LDC 平台公钥验签 / Note: In production, use LDC platform public key
         log.info("收到支付回调 / Payment callback received: params={}", params);
 
