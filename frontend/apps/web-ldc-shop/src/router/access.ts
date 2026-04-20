@@ -1,6 +1,7 @@
 import type {
   ComponentRecordType,
   GenerateMenuAndRoutesOptions,
+  MenuRecordRaw,
 } from '@vben/types';
 
 import { generateAccessible } from '@vben/access';
@@ -13,6 +14,21 @@ import { $t } from '#/locales';
 
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
+/**
+ * Promote admin children to top-level menu items so they appear flat in the sidebar.
+ */
+function flattenAdminMenus(menus: MenuRecordRaw[]): MenuRecordRaw[] {
+  const result: MenuRecordRaw[] = [];
+  for (const menu of menus) {
+    if (menu.path === '/admin' && menu.children && menu.children.length > 0) {
+      result.push(...menu.children);
+    } else {
+      result.push(menu);
+    }
+  }
+  return result;
+}
+
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const pageMap: ComponentRecordType = import.meta.glob('../views/**/*.vue');
 
@@ -21,7 +37,7 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
     IFrameView,
   };
 
-  return await generateAccessible(preferences.app.accessMode, {
+  const result = await generateAccessible(preferences.app.accessMode, {
     ...options,
     fetchMenuListAsync: async () => {
       message.loading(`${$t('common.loadingMenu')}...`, {
@@ -35,6 +51,11 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
     layoutMap,
     pageMap,
   });
+
+  return {
+    ...result,
+    accessibleMenus: flattenAdminMenus(result.accessibleMenus),
+  };
 }
 
 export { generateAccess };

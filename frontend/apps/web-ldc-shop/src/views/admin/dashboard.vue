@@ -123,7 +123,7 @@ const productRankOption = computed(() => ({
   <div class="p-5">
     <n-spin :show="loading">
       <template v-if="dashboard">
-        <n-grid :cols="6" :x-gap="16" :y-gap="16" style="margin-bottom: 24px">
+        <n-grid :cols="3" :x-gap="12" :y-gap="12" style="margin-bottom: 16px">
           <n-gi v-for="item in statCards" :key="item.label">
             <n-card size="small" style="text-align: center">
               <p

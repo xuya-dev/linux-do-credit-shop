@@ -3,51 +3,120 @@ import type { RouteRecordRaw } from 'vue-router';
 const layout = () => import('#/layouts/basic.vue');
 const authority = ['admin'];
 
-function adminRoute(
-  name: string,
-  path: string,
-  component: () => Promise<any>,
-  icon: string,
-  titleKey: string,
-  order: number,
-): RouteRecordRaw {
-  return {
-    path: `/admin/${path}`,
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/admin',
     component: layout,
     meta: {
       noBasicLayout: true,
       authority,
-      title: titleKey,
-      icon,
-      order,
-      hideChildrenInMenu: true,
+      title: 'page.admin.dashboard',
+      icon: 'lucide:shield',
+      order: 100,
     },
+    redirect: '/admin/dashboard',
     children: [
       {
-        path: '',
-        name,
-        component,
-        meta: { title: titleKey, icon, authority, hideInMenu: true },
+        name: 'AdminDashboard',
+        path: 'dashboard',
+        component: () => import('#/views/admin/dashboard.vue'),
+        meta: {
+          title: 'page.admin.dashboard',
+          icon: 'lucide:layout-dashboard',
+          authority,
+          order: 100,
+        },
+      },
+      {
+        name: 'AdminProducts',
+        path: 'products',
+        component: () => import('#/views/admin/product-manage.vue'),
+        meta: {
+          title: 'page.admin.products',
+          icon: 'lucide:package',
+          authority,
+          order: 101,
+        },
+      },
+      {
+        name: 'AdminCategories',
+        path: 'categories',
+        component: () => import('#/views/admin/category-manage.vue'),
+        meta: {
+          title: 'page.admin.categories',
+          icon: 'lucide:folder',
+          authority,
+          order: 102,
+        },
+      },
+      {
+        name: 'AdminCards',
+        path: 'cards',
+        component: () => import('#/views/admin/card-manage.vue'),
+        meta: {
+          title: 'page.admin.cards',
+          icon: 'lucide:key',
+          authority,
+          order: 103,
+        },
+      },
+      {
+        name: 'AdminOrders',
+        path: 'orders',
+        component: () => import('#/views/admin/order-manage.vue'),
+        meta: {
+          title: 'page.admin.orders',
+          icon: 'lucide:file-text',
+          authority,
+          order: 104,
+        },
+      },
+      {
+        name: 'AdminDisputes',
+        path: 'disputes',
+        component: () => import('#/views/admin/dispute-manage.vue'),
+        meta: {
+          title: 'page.admin.disputes',
+          icon: 'lucide:shield-alert',
+          authority,
+          order: 105,
+        },
+      },
+      {
+        name: 'AdminAnnouncements',
+        path: 'announcements',
+        component: () => import('#/views/admin/announcement-manage.vue'),
+        meta: {
+          title: 'page.admin.announcements',
+          icon: 'lucide:megaphone',
+          authority,
+          order: 106,
+        },
+      },
+      {
+        name: 'AdminUsers',
+        path: 'users',
+        component: () => import('#/views/admin/user-manage.vue'),
+        meta: {
+          title: 'page.admin.users',
+          icon: 'lucide:users',
+          authority,
+          order: 107,
+        },
+      },
+      {
+        name: 'AdminSettings',
+        path: 'settings',
+        component: () => import('#/views/admin/settings.vue'),
+        meta: {
+          title: 'page.admin.settings',
+          icon: 'lucide:settings',
+          authority,
+          order: 108,
+        },
       },
     ],
-  };
-}
-
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/admin',
-    redirect: '/admin/dashboard',
-    meta: { hideInMenu: true },
   },
-  adminRoute('AdminDashboard',     'dashboard',     () => import('#/views/admin/dashboard.vue'),          'lucide:layout-dashboard', 'page.admin.dashboard',     100),
-  adminRoute('AdminProducts',      'products',      () => import('#/views/admin/product-manage.vue'),     'lucide:package',          'page.admin.products',      101),
-  adminRoute('AdminCategories',    'categories',    () => import('#/views/admin/category-manage.vue'),    'lucide:folder',           'page.admin.categories',    102),
-  adminRoute('AdminCards',         'cards',         () => import('#/views/admin/card-manage.vue'),        'lucide:key',              'page.admin.cards',         103),
-  adminRoute('AdminOrders',        'orders',        () => import('#/views/admin/order-manage.vue'),       'lucide:file-text',        'page.admin.orders',        104),
-  adminRoute('AdminDisputes',      'disputes',      () => import('#/views/admin/dispute-manage.vue'),     'lucide:shield-alert',     'page.admin.disputes',      105),
-  adminRoute('AdminAnnouncements', 'announcements', () => import('#/views/admin/announcement-manage.vue'),'lucide:megaphone',        'page.admin.announcements', 106),
-  adminRoute('AdminUsers',         'users',         () => import('#/views/admin/user-manage.vue'),        'lucide:users',            'page.admin.users',         107),
-  adminRoute('AdminSettings',      'settings',      () => import('#/views/admin/settings.vue'),           'lucide:settings',         'page.admin.settings',      108),
 ];
 
 export default routes;
