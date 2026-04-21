@@ -10,9 +10,28 @@ const message = useMessage();
 const loading = ref(true);
 const saving = ref(false);
 
-const shopInfo = reactive<Record<string, string>>({});
-const paymentConfig = reactive<Record<string, string>>({});
-const oauthConfig = reactive<Record<string, string>>({});
+const shopInfo = reactive<Record<string, string>>({
+  shop_name: '',
+  shop_description: '',
+  shop_logo: '',
+  shop_notice: '',
+});
+const paymentConfig = reactive<Record<string, string>>({
+  ldc_payment_client_id: '',
+  ldc_payment_client_secret: '',
+  ldc_payment_private_key: '',
+  ldc_payment_public_key: '',
+  ldc_payment_gateway_url: '',
+  ldc_payment_notify_url: '',
+  ldc_payment_return_url: '',
+});
+const oauthConfig = reactive<Record<string, string>>({
+  ldc_oauth_client_id: '',
+  ldc_oauth_client_secret: '',
+  ldc_oauth_redirect_uri: '',
+  ldc_oauth_authorize_url: '',
+  ldc_oauth_token_url: '',
+});
 
 const shopInfoFields = computed(() => [
   { key: 'shop_name', label: t('page.admin.shopName') },
