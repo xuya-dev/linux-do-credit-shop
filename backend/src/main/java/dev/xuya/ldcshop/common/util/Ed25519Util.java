@@ -53,19 +53,14 @@ public class Ed25519Util {
      */
     public static String sign(String privateKeyBase64, String data) {
         try {
-            byte[] rawDecoded = stripPemAndDecode(privateKeyBase64);
-            log.info("Ed25519 raw key decoded length: {} bytes", rawDecoded.length);
             byte[] privateKeyBytes = decodeAndWrapPrivate(privateKeyBase64);
-            log.info("Ed25519 PKCS8 key length: {} bytes", privateKeyBytes.length);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = KeyFactory.getInstance(ALGORITHM).generatePrivate(keySpec);
 
             Signature signature = Signature.getInstance(ALGORITHM);
             signature.initSign(privateKey);
             signature.update(data.getBytes(StandardCharsets.UTF_8));
-            byte[] signed = signature.sign();
-            log.info("Ed25519 signature length: {} bytes", signed.length);
-            return Base64.encode(signed);
+            return Base64.encode(signature.sign());
         } catch (Exception e) {
             log.error("Ed25519 signing failed", e);
             throw new BusinessException(ResultCode.PAY_SIGN_ERROR);

@@ -21,6 +21,7 @@ import dev.xuya.ldcshop.results.PaymentSubmitResult;
 import dev.xuya.ldcshop.service.OrderService;
 import dev.xuya.ldcshop.service.ProductCardService;
 import dev.xuya.ldcshop.service.ShopSettingService;
+import cn.hutool.crypto.digest.DigestUtil;
 import dev.xuya.ldcshop.common.util.CryptoUtil;
 import dev.xuya.ldcshop.common.util.Ed25519Util;
 import dev.xuya.ldcshop.common.util.OrderUtil;
@@ -144,7 +145,6 @@ public class OrderServiceImpl implements OrderService {
         }
 
         String signString = Ed25519Util.buildSignString(payParams, clientSecret);
-        log.info("LDC payment sign string: {}", signString);
         payParams.put("sign", Ed25519Util.sign(privateKey, signString));
 
         try {
@@ -182,17 +182,12 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("Payment callback received: outTradeNo={}", params.get("out_trade_no"));
 
-        String publicKey = shopSettingService.getSettingOrDefault("ldc_payment_public_key", "");
         String sign = params.get("sign");
         String signString = Ed25519Util.buildSignString(params, clientSecret);
+        String expectedSign = DigestUtil.md5Hex(signString);
 
-        if (StrUtil.isNotBlank(publicKey) && StrUtil.isNotBlank(sign)) {
-            if (!Ed25519Util.verify(publicKey, signString, sign)) {
-                log.warn("Payment callback signature verification failed: outTradeNo={}", params.get("out_trade_no"));
-                return "fail";
-            }
-        } else {
-            log.error("Payment callback rejected: public key or sign is empty. outTradeNo={}", params.get("out_trade_no"));
+        if (StrUtil.isBlank(sign) || !sign.equalsIgnoreCase(expectedSign)) {
+            log.warn("Payment callback signature verification failed: outTradeNo={}, expected={}, got={}", params.get("out_trade_no"), expectedSign, sign);
             return "fail";
         }
 
