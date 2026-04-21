@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue';
+import { ref, onMounted, h, computed, reactive } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
@@ -34,15 +34,17 @@ const paymentStatusOptions = computed(() => [
   { label: t('page.admin.cancelled'), value: 3 },
 ]);
 
-const pagination = computed(() => ({
-  page: page.value,
-  itemCount: total.value,
+const pagination = reactive({
+  page: 1,
   pageSize: 10,
+  itemCount: 0,
+  pageCount: 0,
   onUpdatePage: (p: number) => {
     page.value = p;
+    pagination.page = p;
     loadOrders();
   },
-}));
+});
 
 async function loadOrders() {
   loading.value = true;
@@ -55,6 +57,9 @@ async function loadOrders() {
     });
     orders.value = res?.records || [];
     total.value = res?.total || 0;
+    pagination.itemCount = res?.total || 0;
+    pagination.pageCount = res?.pages || 0;
+    pagination.page = page.value;
   } catch (e: any) {
     console.error(e);
     message.error(e.message || t('page.admin.operationFailed'));
@@ -63,8 +68,8 @@ async function loadOrders() {
   }
 }
 
-function handleSearch() { page.value = 1; loadOrders(); }
-function resetSearch() { searchForm.value = { keyword: '', paymentStatus: null }; page.value = 1; loadOrders(); }
+function handleSearch() { page.value = 1; pagination.page = 1; loadOrders(); }
+function resetSearch() { searchForm.value = { keyword: '', paymentStatus: null }; page.value = 1; pagination.page = 1; loadOrders(); }
 
 function openDeliver(row: any) {
   selectedOrder.value = row;
