@@ -2,7 +2,6 @@ package dev.xuya.ldcshop.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
 import dev.xuya.ldcshop.common.R;
-import dev.xuya.ldcshop.results.SettingsResult;
 import dev.xuya.ldcshop.service.ShopSettingService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +33,10 @@ public class AdminSettingController {
     private final ShopSettingService shopSettingService;
 
     @GetMapping
-    public R<SettingsResult> getAll() {
-        return R.ok(toSettingsResult(shopSettingService.getAllSettingsMasked()));
+    public R<Map<String, String>> getAll() {
+        Map<String, String> settings = shopSettingService.getAllSettingsMasked();
+        settings.entrySet().removeIf(e -> !ALLOWED_KEYS.contains(e.getKey()));
+        return R.ok(settings);
     }
 
     @PutMapping
@@ -43,26 +44,5 @@ public class AdminSettingController {
         settings.entrySet().removeIf(e -> !ALLOWED_KEYS.contains(e.getKey()));
         shopSettingService.batchUpdateSettings(settings);
         return R.ok();
-    }
-
-    private SettingsResult toSettingsResult(Map<String, String> map) {
-        SettingsResult result = new SettingsResult();
-        result.setShopName(map.get("shop_name"));
-        result.setShopDescription(map.get("shop_description"));
-        result.setShopLogo(map.get("shop_logo"));
-        result.setShopNotice(map.get("shop_notice"));
-        result.setLdcPaymentClientId(map.get("ldc_payment_client_id"));
-        result.setLdcPaymentClientSecret(map.get("ldc_payment_client_secret"));
-        result.setLdcPaymentPrivateKey(map.get("ldc_payment_private_key"));
-        result.setLdcPaymentPublicKey(map.get("ldc_payment_public_key"));
-        result.setLdcPaymentGatewayUrl(map.get("ldc_payment_gateway_url"));
-        result.setLdcPaymentNotifyUrl(map.get("ldc_payment_notify_url"));
-        result.setLdcPaymentReturnUrl(map.get("ldc_payment_return_url"));
-        result.setLdcOAuthClientId(map.get("ldc_oauth_client_id"));
-        result.setLdcOAuthClientSecret(map.get("ldc_oauth_client_secret"));
-        result.setLdcOAuthRedirectUri(map.get("ldc_oauth_redirect_uri"));
-        result.setLdcOAuthAuthorizeUrl(map.get("ldc_oauth_authorize_url"));
-        result.setLdcOAuthTokenUrl(map.get("ldc_oauth_token_url"));
-        return result;
     }
 }
