@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from '@vben/locales';
 import type { Category, Product } from '#/api/types';
 import { categoryApi, productApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const products = ref<Product[]>([]);
@@ -64,7 +67,7 @@ function goDetail(id: number) {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/home')">
-      <span>首页</span> &gt; <span>全部商品</span>
+      <span>{{ t('page.user.home') }}</span> &gt; <span>{{ t('page.user.allProducts') }}</span>
     </div>
 
     <!-- 搜索与筛选区 -->
@@ -74,20 +77,20 @@ function goDetail(id: number) {
           type="text" 
           v-model="keyword" 
           class="faka-input" 
-          placeholder="请输入商品名称搜索..." 
+          :placeholder="t('page.user.searchProductPlaceholder')"
           @keyup.enter="searchProducts"
         />
-        <button class="faka-btn" @click="searchProducts">搜索</button>
+        <button class="faka-btn" @click="searchProducts">{{ t('page.user.search') }}</button>
       </div>
 
       <div class="category-filter">
-        <span class="filter-label">分类目录：</span>
+        <span class="filter-label">{{ t('page.user.categoryDirectory') }}</span>
         <div class="filter-options">
           <span 
             :class="['filter-item', { active: selectedCategory === null }]"
             @click="selectedCategory = null"
           >
-            全部
+            {{ t('page.user.all') }}
           </span>
           <span 
             v-for="cat in categories" 
@@ -104,7 +107,7 @@ function goDetail(id: number) {
     <!-- 商品列表 -->
     <div class="faka-card mt-24">
       <div class="card-header">
-        <span class="header-title">产品列表 (共 {{ total }} 件)</span>
+        <span class="header-title">{{ t('page.user.productList') }} ({{ t('page.user.totalCount', { count: total }) }})</span>
       </div>
 
       <div class="card-body">
@@ -119,18 +122,18 @@ function goDetail(id: number) {
           >
             <div class="product-name">
               {{ p.name }}
-              <span v-if="p.isHot" class="hot-badge">热</span>
+              <span v-if="p.isHot" class="hot-badge">{{ t('page.user.hot') }}</span>
             </div>
             <div class="product-info-right">
-              <span class="product-price">{{ p.price }} 积分</span>
-              <span class="product-stock">库存 {{ p.stock || 0 }}</span>
-              <button class="buy-small-btn">兑换</button>
+              <span class="product-price">{{ p.price }} {{ t('page.user.credits') }}</span>
+              <span class="product-stock">{{ t('page.user.stock') }} {{ p.stock || 0 }}</span>
+              <button class="buy-small-btn">{{ t('page.user.exchange') }}</button>
             </div>
           </div>
         </div>
 
         <div v-else class="empty-state">
-          未能找到匹配的商品
+          {{ t('page.user.noMatchingProducts') }}
         </div>
 
         <!-- 分页 -->
@@ -147,48 +150,6 @@ function goDetail(id: number) {
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 16px;
-  cursor: pointer;
-}
-.breadcrumb span:hover {
-  color: #1890ff;
-}
-
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-}
-
-.mt-24 {
-  margin-top: 24px;
-}
-
-.card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
-}
-.header-title {
-  font-size: 15px;
-  font-weight: 600;
-  border-left: 3px solid #1890ff;
-  padding-left: 10px;
-}
-
-.card-body {
-  padding: 8px 0;
-}
-
 /* 筛选区 */
 .filter-card {
   padding: 20px;
@@ -222,11 +183,14 @@ function goDetail(id: number) {
   border: none;
   padding: 0 24px;
   height: 36px;
-  font-size: 14px;
-  border-radius: 2px;
-  cursor: pointer;
 }
-.faka-btn:hover { opacity: 0.85; }
+
+.header-title {
+  font-size: 15px;
+  font-weight: 600;
+  border-left: 3px solid #1890ff;
+  padding-left: 10px;
+}
 
 .category-filter {
   display: flex;
@@ -258,12 +222,6 @@ function goDetail(id: number) {
 }
 
 /* 商品列表 */
-.loading-spin {
-  display: flex;
-  justify-content: center;
-  padding: 60px;
-}
-
 .product-list {
   display: flex;
   flex-direction: column;
@@ -337,6 +295,5 @@ function goDetail(id: number) {
   color: #fff;
 }
 
-.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
 .pagination-wrapper { display: flex; justify-content: flex-end; padding: 20px; }
 </style>

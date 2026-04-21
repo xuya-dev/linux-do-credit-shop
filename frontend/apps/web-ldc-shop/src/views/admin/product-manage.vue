@@ -44,8 +44,9 @@ async function loadProducts() {
     });
     products.value = res?.records || [];
     total.value = res?.total || 0;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }
@@ -199,7 +200,8 @@ onMounted(async () => {
           <n-select v-model:value="form.categoryId" :options="categoryOptions" :placeholder="t('page.admin.selectCategory')" clearable />
         </n-form-item>
         <n-form-item :label="t('page.admin.productPrice')"><n-input-number v-model:value="form.price" :min="0" style="width:100%" /></n-form-item>
-        <n-form-item :label="t('page.admin.productStock')"><n-input-number v-model:value="form.stock" :min="0" style="width:100%" /></n-form-item>
+        <n-form-item v-if="form.productType === 2" :label="t('page.admin.productStock')"><n-input-number v-model:value="form.stock" :min="0" style="width:100%" /></n-form-item>
+        <n-form-item v-else :label="t('page.admin.productStock')"><span style="color:#999;line-height:34px">{{ t('page.admin.autoFromCards') }}</span></n-form-item>
         <n-form-item :label="t('page.admin.sortOrder')"><n-input-number v-model:value="form.sortOrder" style="width:100%" /></n-form-item>
         <n-form-item :label="t('page.admin.productDescription')"><n-input v-model:value="form.description" type="textarea" :rows="4" /></n-form-item>
         <n-form-item :label="t('page.admin.coverImage')"><n-input v-model:value="form.coverImage" /></n-form-item>

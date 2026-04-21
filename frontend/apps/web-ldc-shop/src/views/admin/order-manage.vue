@@ -3,13 +3,15 @@ import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
+import type { Order, OrderDeliveryParams } from '#/api/types';
+import { PAYMENT_STATUS_MAP, DELIVERY_STATUS_MAP } from '#/api/types';
 import { orderApi } from '#/api/modules';
 
 const { t } = useI18n();
 const message = useMessage();
 const dialog = useDialog();
 
-const orders = ref<any[]>([]);
+const orders = ref<Order[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
@@ -17,14 +19,15 @@ const total = ref(0);
 const searchForm = ref({ keyword: '', paymentStatus: null as number | null });
 
 const showDeliver = ref(false);
-const selectedOrder = ref<any>(null);
-const deliverForm = ref({ deliveryInfo: '', adminRemark: '' });
+const selectedOrder = ref<Order | null>(null);
+const deliverForm = ref<OrderDeliveryParams>({ deliveryInfo: '', adminRemark: '' });
 
 const paymentStatusOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
   { label: t('page.admin.pending'), value: 0 },
   { label: t('page.admin.paid'), value: 1 },
   { label: t('page.admin.refunded'), value: 2 },
+  { label: t('page.admin.cancelled'), value: 3 },
 ]);
 
 async function loadOrders() {
@@ -38,8 +41,9 @@ async function loadOrders() {
     });
     orders.value = res?.records || [];
     total.value = res?.total || 0;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }
@@ -83,18 +87,6 @@ function handleRefund(id: number) {
   });
 }
 
-const paymentStatusMap = computed(() => ({
-  0: { label: t('page.admin.pending'), type: 'default' as const },
-  1: { label: t('page.admin.paid'), type: 'success' as const },
-  2: { label: t('page.admin.refunded'), type: 'warning' as const },
-}));
-
-const deliveryStatusMap = computed(() => ({
-  0: { label: t('page.admin.pendingDelivery'), type: 'default' as const },
-  1: { label: t('page.admin.delivered'), type: 'info' as const },
-  2: { label: t('page.shop.completed'), type: 'success' as const },
-}));
-
 const columns = computed(() => [
   {
     title: t('page.admin.orderNo'), key: 'orderNo', width: 180,
@@ -108,14 +100,14 @@ const columns = computed(() => [
   {
     title: t('page.admin.paymentStatus'), key: 'paymentStatus', width: 100,
     render: (row: any) => {
-      const info = paymentStatusMap.value[row.paymentStatus as keyof typeof paymentStatusMap.value] || { label: String(row.paymentStatus), type: 'default' as const };
+      const info = PAYMENT_STATUS_MAP[row.paymentStatus] || { label: String(row.paymentStatus), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
   {
     title: t('page.admin.deliveryStatus'), key: 'deliveryStatus', width: 100,
     render: (row: any) => {
-      const info = deliveryStatusMap.value[row.deliveryStatus as keyof typeof deliveryStatusMap.value] || { label: String(row.deliveryStatus), type: 'default' as const };
+      const info = DELIVERY_STATUS_MAP[row.deliveryStatus] || { label: String(row.deliveryStatus), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },

@@ -8,6 +8,7 @@ import dev.xuya.ldcshop.results.OrderDetailResult;
 import dev.xuya.ldcshop.service.OrderService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -43,7 +44,7 @@ public class AdminOrderController {
      * 发货 / Deliver order
      */
     @PutMapping("/{id}/deliver")
-    public R<Void> deliver(@PathVariable Long id, @RequestBody OrderDeliveryParams params) {
+    public R<Void> deliver(@PathVariable Long id, @Valid @RequestBody OrderDeliveryParams params) {
         orderService.deliverOrder(id, params);
         return R.ok();
     }

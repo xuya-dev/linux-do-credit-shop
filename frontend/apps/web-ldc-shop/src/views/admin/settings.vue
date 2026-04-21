@@ -22,20 +22,21 @@ const shopInfoFields = computed(() => [
 ]);
 
 const paymentFields = computed(() => [
-  { key: 'ldc_client_id', label: t('page.admin.ldcClientId') },
-  { key: 'ldc_client_secret', label: t('page.admin.ldcClientSecret') },
-  { key: 'ldc_private_key', label: t('page.admin.ldcPrivateKey') },
-  { key: 'ldc_gateway_url', label: t('page.admin.ldcGatewayUrl') },
-  { key: 'ldc_notify_url', label: t('page.admin.ldcNotifyUrl') },
-  { key: 'ldc_return_url', label: t('page.admin.ldcReturnUrl') },
+  { key: 'ldc_payment_client_id', label: t('page.admin.ldcClientId') },
+  { key: 'ldc_payment_client_secret', label: t('page.admin.ldcClientSecret') },
+  { key: 'ldc_payment_private_key', label: t('page.admin.ldcPrivateKey') },
+  { key: 'ldc_payment_public_key', label: t('page.admin.ldcPublicKey') },
+  { key: 'ldc_payment_gateway_url', label: t('page.admin.ldcGatewayUrl') },
+  { key: 'ldc_payment_notify_url', label: t('page.admin.ldcNotifyUrl') },
+  { key: 'ldc_payment_return_url', label: t('page.admin.ldcReturnUrl') },
 ]);
 
 const oauthFields = computed(() => [
-  { key: 'oauth_client_id', label: t('page.admin.clientId') },
-  { key: 'oauth_client_secret', label: t('page.admin.clientSecret') },
-  { key: 'oauth_redirect_uri', label: t('page.admin.redirectUri') },
-  { key: 'oauth_authorize_url', label: t('page.admin.authorizeUrl') },
-  { key: 'oauth_token_url', label: t('page.admin.tokenUrl') },
+  { key: 'ldc_oauth_client_id', label: t('page.admin.clientId') },
+  { key: 'ldc_oauth_client_secret', label: t('page.admin.clientSecret') },
+  { key: 'ldc_oauth_redirect_uri', label: t('page.admin.redirectUri') },
+  { key: 'ldc_oauth_authorize_url', label: t('page.admin.authorizeUrl') },
+  { key: 'ldc_oauth_token_url', label: t('page.admin.tokenUrl') },
 ]);
 
 async function loadSettings() {
@@ -47,8 +48,9 @@ async function loadSettings() {
     shopInfoFields.value.forEach((f) => (shopInfo[f.key] = settings[f.key] || ''));
     paymentFields.value.forEach((f) => (paymentConfig[f.key] = settings[f.key] || ''));
     oauthFields.value.forEach((f) => (oauthConfig[f.key] = settings[f.key] || ''));
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }

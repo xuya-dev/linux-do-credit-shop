@@ -9,8 +9,10 @@ A full-stack credit shop for the LINUX DO community, built with Spring Boot 3 + 
 - **用户端** — 极简 SaaS 风格，商品浏览、下单购买、卡密自动发货、订单管理、争议申诉
 - **管理端** — 企业级 Dashboard，商品/分类/卡密/订单/争议/公告/用户管理，ECharts 数据看板
 - **LINUX DO OAuth** — 一键登录，首次登录自动注册，支持管理员白名单
-- **LDC Credit 支付** — Ed25519 签名，异步回调通知，订单自动确认
-- **国际化** — 中英文双语界面（i18n）
+- **LDC Credit 支付** — Ed25519 签名验证，异步回调通知，订单自动确认，支持退款
+- **安全** — 可配置 CORS、支付回调签名验证、Redis 限流、禁用用户拦截
+- **国际化** — 中英文双语界面（i18n），基于 Accept-Language 请求头
+- **数据库迁移** — Flyway 版本化迁移，支持平滑升级
 - **深浅主题** — 明暗主题一键切换
 - **Docker 单容器部署** — 前端打包注入 Spring Boot 静态资源，无需 Nginx
 
@@ -18,7 +20,7 @@ A full-stack credit shop for the LINUX DO community, built with Spring Boot 3 + 
 
 | 层 | 技术 |
 |---|---|
-| 后端 | Java 17, Spring Boot 3.2, MyBatis-Plus, Sa-Token, Hutool, Lombok |
+| 后端 | Java 17, Spring Boot 3.2, MyBatis-Plus, Sa-Token, Flyway, Spring Actuator |
 | 前端 | Vue 3, TypeScript, Naive UI, Pinia, Vue Router, Axios, ECharts |
 | 数据库 | MySQL 8, Redis 7 |
 | 部署 | Docker 多阶段构建, docker-compose |

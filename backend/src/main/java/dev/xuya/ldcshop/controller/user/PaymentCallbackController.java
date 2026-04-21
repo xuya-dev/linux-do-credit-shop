@@ -27,14 +27,15 @@ public class PaymentCallbackController {
     /**
      * LDC 异步通知回调 / LDC async notification callback
      * 该接口不需要登录验证，由 LDC 平台调用
+     * 仅接受 POST 请求，防止 CSRF 类攻击
      */
-    @GetMapping("/notify")
+    @PostMapping("/notify")
     public String handleNotify(@RequestParam Map<String, String> params) {
-        log.info("收到LDC支付回调 / Received LDC payment callback: {}", params);
+        log.info("Received LDC payment callback: outTradeNo={}", params.get("out_trade_no"));
         try {
             return orderService.handlePaymentNotify(params);
         } catch (Exception e) {
-            log.error("处理支付回调异常 / Error processing payment callback", e);
+            log.error("Error processing payment callback", e);
             return "fail";
         }
     }

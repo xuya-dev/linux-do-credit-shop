@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import dev.xuya.ldcshop.common.util.I18nUtil;
 import dev.xuya.ldcshop.common.ResultCode;
-import dev.xuya.ldcshop.common.exception.BusinessException;
+import dev.xuya.ldcshop.common.util.AuditLog;
+import dev.xuya.ldcshop.common.util.EntityUtil;
 import dev.xuya.ldcshop.entity.Announcement;
 import dev.xuya.ldcshop.entity.User;
 import dev.xuya.ldcshop.mapper.AnnouncementMapper;
@@ -14,14 +16,15 @@ import dev.xuya.ldcshop.mapper.UserMapper;
 import dev.xuya.ldcshop.params.AnnouncementParams;
 import dev.xuya.ldcshop.results.AnnouncementResult;
 import dev.xuya.ldcshop.service.AnnouncementService;
-import dev.xuya.ldcshop.util.UserContextUtil;
+import dev.xuya.ldcshop.common.util.UserContextUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
  *
  * @author xuya
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Announcement>
@@ -36,13 +40,16 @@ public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Ann
 
     private final UserMapper userMapper;
 
-    /** 公告类型名称映射 / Announcement type name mapping */
-    private static final Map<Integer, String> TYPE_NAMES = Map.of(
-            1, "通知 / Notice",
-            2, "活动 / Activity",
-            3, "更新 / Update"
+    /** 公告类型名称 / Announcement type name keys */
+    private static final Map<Integer, String> TYPE_KEYS = Map.of(
+            1, "announcement.type_notice",
+            2, "announcement.type_activity",
+            3, "announcement.type_update"
     );
 
+    /**
+     * 创建公告 / Create an announcement
+     */
     @Override
     public Long createAnnouncement(AnnouncementParams params) {
         Announcement announcement = BeanUtil.copyProperties(params, Announcement.class);
@@ -57,68 +64,82 @@ public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Ann
             announcement.setType(Announcement.TYPE_NOTICE);
         }
         save(announcement);
+        AuditLog.log("createAnnouncement", "announcementId=" + announcement.getId() + ", title=" + announcement.getTitle());
         return announcement.getId();
     }
 
+    /**
+     * 更新公告 / Update an announcement
+     */
     @Override
     public void updateAnnouncement(Long id, AnnouncementParams params) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
-        }
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
         BeanUtil.copyProperties(params, announcement, "id", "createdBy");
         updateById(announcement);
+        AuditLog.log("updateAnnouncement", "announcementId=" + id + ", title=" + announcement.getTitle());
     }
 
+    /**
+     * 删除公告 / Delete an announcement
+     */
     @Override
     public void deleteAnnouncement(Long id) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
-        }
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
         removeById(id);
+        AuditLog.log("deleteAnnouncement", "announcementId=" + id + ", title=" + announcement.getTitle());
     }
 
+    /**
+     * 发布公告 / Publish an announcement
+     */
     @Override
     public void publishAnnouncement(Long id) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
-        }
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
         announcement.setStatus(Announcement.STATUS_PUBLISHED);
         announcement.setPublishedAt(LocalDateTime.now());
         updateById(announcement);
     }
 
+    /**
+     * 取消发布公告 / Unpublish an announcement
+     */
     @Override
     public void unpublishAnnouncement(Long id) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
-        }
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
         announcement.setStatus(Announcement.STATUS_DRAFT);
         updateById(announcement);
     }
 
+    /**
+     * 切换公告置顶状态 / Toggle announcement top status
+     */
     @Override
     public void toggleTop(Long id) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
-        }
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
         announcement.setIsTop(announcement.getIsTop() == 1 ? 0 : 1);
         updateById(announcement);
     }
 
+    /**
+     * 获取公告详情 / Get announcement detail
+     */
     @Override
     public AnnouncementResult getAnnouncementDetail(Long id) {
-        Announcement announcement = getById(id);
-        if (announcement == null) {
-            throw new BusinessException(ResultCode.ANNOUNCEMENT_NOT_FOUND);
+        Announcement announcement = EntityUtil.requireNonNull(getById(id), ResultCode.ANNOUNCEMENT_NOT_FOUND);
+        AnnouncementResult result = BeanUtil.copyProperties(announcement, AnnouncementResult.class);
+        result.setTypeName(I18nUtil.get(TYPE_KEYS.getOrDefault(announcement.getType(), "announcement.type_unknown")));
+        if (announcement.getCreatedBy() != null) {
+            User user = userMapper.selectById(announcement.getCreatedBy());
+            if (user != null) {
+                result.setCreatedByName(user.getUsername());
+            }
         }
-        return convertToResult(announcement);
+        return result;
     }
 
+    /**
+     * 用户端公告分页查询 / User-side announcement pagination
+     */
     @Override
     public IPage<AnnouncementResult> pageUserAnnouncements(int page, int size, Integer type) {
         LambdaQueryWrapper<Announcement> wrapper = new LambdaQueryWrapper<>();
@@ -129,9 +150,12 @@ public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Ann
         wrapper.orderByDesc(Announcement::getIsTop).orderByDesc(Announcement::getPublishedAt);
 
         IPage<Announcement> announcementPage = page(new Page<>(page, size), wrapper);
-        return announcementPage.convert(this::convertToResult);
+        return convertPage(announcementPage);
     }
 
+    /**
+     * 管理端公告分页查询 / Admin-side announcement pagination
+     */
     @Override
     public IPage<AnnouncementResult> pageAdminAnnouncements(int page, int size, Integer type, Integer status) {
         LambdaQueryWrapper<Announcement> wrapper = new LambdaQueryWrapper<>();
@@ -144,27 +168,55 @@ public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Ann
         wrapper.orderByDesc(Announcement::getIsTop).orderByDesc(Announcement::getCreatedAt);
 
         IPage<Announcement> announcementPage = page(new Page<>(page, size), wrapper);
-        return announcementPage.convert(this::convertToResult);
-    }
-
-    @Override
-    public List<AnnouncementResult> getLatestAnnouncements(int limit) {
-        List<Announcement> announcements = list(new LambdaQueryWrapper<Announcement>()
-                .eq(Announcement::getStatus, Announcement.STATUS_PUBLISHED)
-                .orderByDesc(Announcement::getIsTop)
-                .orderByDesc(Announcement::getPublishedAt)
-                .last("LIMIT " + limit));
-        return announcements.stream().map(this::convertToResult).collect(Collectors.toList());
+        return convertPage(announcementPage);
     }
 
     /**
-     * 转换为公告结果 / Convert to announcement result
+     * 获取最新公告列表 / Get latest announcements
      */
-    private AnnouncementResult convertToResult(Announcement announcement) {
+    @Override
+    public List<AnnouncementResult> getLatestAnnouncements(int limit) {
+        List<Announcement> announcements = baseMapper.selectLatest(Math.min(limit, 50));
+        return batchConvertToResults(announcements);
+    }
+
+    /**
+     * 转换公告分页 / Convert announcement page
+     */
+    private IPage<AnnouncementResult> convertPage(IPage<Announcement> page) {
+        Map<Long, User> userMap = resolveUserMap(page.getRecords());
+        return page.convert(ann -> toResult(ann, userMap));
+    }
+
+    /**
+     * 批量转换公告结果 / Batch convert announcement results
+     */
+    private List<AnnouncementResult> batchConvertToResults(List<Announcement> announcements) {
+        Map<Long, User> userMap = resolveUserMap(announcements);
+        return announcements.stream().map(ann -> toResult(ann, userMap)).collect(Collectors.toList());
+    }
+
+    /**
+     * 解析公告关联的用户映射 / Resolve user map from announcements
+     */
+    private Map<Long, User> resolveUserMap(List<Announcement> announcements) {
+        Set<Long> userIds = announcements.stream()
+                .map(Announcement::getCreatedBy)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return Map.of();
+        return userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+    }
+
+    /**
+     * 转换公告为结果对象 / Convert announcement to result object
+     */
+    private AnnouncementResult toResult(Announcement announcement, Map<Long, User> userMap) {
         AnnouncementResult result = BeanUtil.copyProperties(announcement, AnnouncementResult.class);
-        result.setTypeName(TYPE_NAMES.getOrDefault(announcement.getType(), "未知 / Unknown"));
+        result.setTypeName(I18nUtil.get(TYPE_KEYS.getOrDefault(announcement.getType(), "announcement.type_unknown")));
         if (announcement.getCreatedBy() != null) {
-            User user = userMapper.selectById(announcement.getCreatedBy());
+            User user = userMap.get(announcement.getCreatedBy());
             if (user != null) {
                 result.setCreatedByName(user.getUsername());
             }

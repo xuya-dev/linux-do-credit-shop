@@ -40,7 +40,9 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     fulfilled: async (config) => {
       const accessStore = useAccessStore();
 
-      config.headers.Authorization = accessStore.accessToken || null;
+      config.headers.Authorization = accessStore.accessToken
+        ? `Bearer ${accessStore.accessToken}`
+        : null;
       config.headers['Accept-Language'] = preferences.app.locale;
       return config;
     },

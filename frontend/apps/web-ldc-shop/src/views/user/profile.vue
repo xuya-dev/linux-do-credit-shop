@@ -2,58 +2,61 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@vben/stores';
+import { useI18n } from '@vben/locales';
+import '#/styles/faka-common.css';
 
 const router = useRouter();
 const userStore = useUserStore();
+const { t } = useI18n();
 
 const userInfo = computed(() => userStore.userInfo);
 const isAdmin = computed(() => userInfo.value?.role === 'admin' || userInfo.value?.roles?.includes('admin'));
 const trustLabel = computed(() => {
   const level = userInfo.value?.trustLevel ?? 0;
-  const labels = ['新用户', '基本信任', '一般信任', '高度信任', '核心用户'];
-  return labels[level] || `信任等级 ${level}`;
+  const labels = [t('page.user.newUser'), t('page.user.basicTrust'), t('page.user.generalTrust'), t('page.user.highTrust'), t('page.user.coreUser')];
+  return labels[level] || t('page.user.trustLevel', { level });
 });
 
-const menuItems = [
-  { label: '我的订单', path: '/orders', iconImg: '/订单.png', desc: '查看历史购买与卡密' },
-  { label: '售后争议', path: '/disputes', iconImg: '/售后.png', desc: '处理问题订单反馈' },
-  { label: '站内公告', path: '/announcements', iconImg: '/公告.png', desc: '平台最新通知和动态' },
-];
+const menuItems = computed(() => [
+  { label: t('page.user.myOrdersMenu'), path: '/orders', iconImg: '/订单.png', desc: t('page.user.myOrdersDesc') },
+  { label: t('page.user.afterSaleMenu'), path: '/disputes', iconImg: '/售后.png', desc: t('page.user.afterSaleDesc') },
+  { label: t('page.user.siteAnnouncementsMenu'), path: '/announcements', iconImg: '/公告.png', desc: t('page.user.siteAnnouncementsDesc') },
+]);
 </script>
 
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/home')">
-      <span>首页</span> &gt; <span>个人中心</span>
+      <span>{{ t('page.user.home') }}</span> &gt; <span>{{ t('page.user.profile') }}</span>
     </div>
 
     <!-- 用户基本信息卡片 -->
     <div class="faka-card profile-header-card">
       <div class="profile-avatar-wrap">
         <div class="profile-avatar">
-          <img v-if="userInfo?.avatar" :src="userInfo.avatar" alt="avatar" />
+          <img v-if="userInfo?.avatar" :src="userInfo.avatar" alt="avatar" loading="lazy" />
           <span v-else>{{ (userInfo?.username?.[0] || userInfo?.nickname?.[0] || 'U').toUpperCase() }}</span>
         </div>
       </div>
       <div class="profile-info">
         <div class="profile-title">
-          <span class="profile-name">{{ userInfo?.username || '用户' }}</span>
+          <span class="profile-name">{{ userInfo?.username || t('page.user.userDefault') }}</span>
           <span :class="['faka-tag', isAdmin ? 'admin-tag' : 'user-tag']">
-            {{ isAdmin ? '管理员' : '普通会员' }}
+            {{ isAdmin ? t('page.user.adminRole') : t('page.user.normalMember') }}
           </span>
           <span class="faka-tag trust-tag">{{ trustLabel }}</span>
         </div>
         <div class="profile-meta">
-          <span>注册账户: {{ userInfo?.email || '-' }}</span>
+          <span>{{ t('page.user.registerAccount') }} {{ userInfo?.email || '-' }}</span>
           <span class="divider">|</span>
-          <span>加入时间: {{ userInfo?.createdAt ? new Date(userInfo.createdAt).toLocaleDateString('zh-CN') : '-' }}</span>
+          <span>{{ t('page.user.joinTime') }} {{ userInfo?.createdAt ? new Date(userInfo.createdAt).toLocaleDateString('zh-CN') : '-' }}</span>
         </div>
       </div>
     </div>
 
     <!-- 快捷入口 -->
     <div class="faka-card mt-24">
-      <div class="card-header">服务大厅</div>
+      <div class="card-header">{{ t('page.user.serviceHall') }}</div>
       <div class="card-body">
         <div class="service-grid">
           <div 
@@ -63,7 +66,7 @@ const menuItems = [
             @click="router.push(item.path)"
           >
             <div class="service-icon">
-              <img v-if="item.iconImg" :src="item.iconImg" alt="icon" class="service-icon-img" />
+              <img v-if="item.iconImg" :src="item.iconImg" alt="icon" class="service-icon-img" loading="lazy" />
               <span v-else>{{ item.icon }}</span>
             </div>
             <div class="service-text">
@@ -80,11 +83,11 @@ const menuItems = [
     <div v-if="isAdmin" class="faka-card mt-24 admin-panel">
       <div class="admin-flex">
         <div class="admin-meta">
-          <div class="admin-meta-title">系统管理后台</div>
-          <div class="admin-meta-desc">您具有管理员权限，可以进入后台管理商品和订单。</div>
+          <div class="admin-meta-title">{{ t('page.user.systemAdminPanel') }}</div>
+          <div class="admin-meta-desc">{{ t('page.user.adminPanelDesc') }}</div>
         </div>
         <button class="faka-btn primary" @click="router.push('/admin/dashboard')">
-          进入管理后台
+          {{ t('page.user.enterAdminPanel') }}
         </button>
       </div>
     </div>
@@ -92,39 +95,10 @@ const menuItems = [
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
-}
+.faka-container { max-width: 1000px; }
+.breadcrumb { margin-bottom: 20px; }
 
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-.breadcrumb span:hover { color: #1890ff; }
-
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-}
-
-.mt-24 { margin-top: 24px; }
-
-.card-header {
-  padding: 16px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
-}
-
-.card-body {
-  padding: 20px;
-}
+.card-body { padding: 20px; }
 
 /* 个人信息栏 */
 .profile-header-card {
@@ -265,19 +239,14 @@ const menuItems = [
   opacity: 0.8;
 }
 
-.faka-btn {
-  padding: 8px 24px;
-  font-size: 14px;
-  border-radius: 2px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: opacity 0.2s;
-}
+/* Override faka-btn primary for profile admin context */
 .faka-btn.primary {
   background: #faad14;
   color: #fff;
 }
-.faka-btn.primary:hover { opacity: 0.85; }
+.faka-btn {
+  padding: 8px 24px;
+}
 
 @media (max-width: 768px) {
   .service-grid { grid-template-columns: 1fr; }

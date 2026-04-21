@@ -5,11 +5,22 @@
 
 server:
   port: 3000
+  shutdown: graceful
 
 # Spring 配置 / Spring Configuration
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   application:
     name: ldc-shop
+
+  # Flyway 数据库迁移 / Database Migration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
 
   # 数据源配置 / DataSource Configuration
   datasource:
@@ -40,6 +51,16 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # JDK 21 虚拟线程 / JDK 21 Virtual Threads
+  threads:
+    virtual:
+      enabled: true
+
+  # 国际化配置 / i18n Configuration
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+
 # MyBatis-Plus 配置 / MyBatis-Plus Configuration
 mybatis-plus:
   mapper-locations: classpath:mapper/**/*.xml
@@ -61,10 +82,25 @@ sa-token:
   active-timeout: -1
   is-concurrent: true
   is-share: true
-  token-style: uuid
+  token-prefix: Bearer
   is-log: false
-  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:ldc-shop-jwt-secret-key-please-change-in-production}
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:}
   is-read-cookie: false
+
+# Spring Boot Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] %-5level %logger{36} - %msg%n"
 
 # Knife4j 配置 / API Documentation Configuration
 springdoc:
@@ -82,24 +118,18 @@ springdoc:
 # LDC Shop 自定义配置 / LDC Shop Custom Configuration
 # ============================================================
 ldc-shop:
-  # LINUX DO OAuth 配置 / LINUX DO OAuth Configuration
-  oauth:
-    client-id: ${LDC_OAUTH_CLIENT_ID:your-client-id}
-    client-secret: ${LDC_OAUTH_CLIENT_SECRET:your-client-secret}
-    redirect-uri: ${LDC_OAUTH_REDIRECT_URI:http://localhost:3000/auth/callback}
-    authorize-url: ${LDC_OAUTH_AUTHORIZE_URL:https://connect.linux.do/oauth2/authorize}
-    token-url: ${LDC_OAUTH_TOKEN_URL:https://connect.linux.do/oauth2/token}
-    user-info-url: ${LDC_OAUTH_USER_INFO_URL:https://connect.linux.do/api/user}
+  # CORS 跨域配置 / CORS Configuration
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5176}
 
-  # LDC Credit 支付配置（仅作为DB配置的兜底默认值，管理后台配置优先）
-  # LDC Credit Payment Config (fallback defaults only, admin settings take priority)
-  payment:
-    client-id: ${LDC_PAYMENT_CLIENT_ID:}
-    client-secret: ${LDC_PAYMENT_CLIENT_SECRET:}
-    gateway-url: ${LDC_PAYMENT_GATEWAY_URL:https://credit.linux.do/epay}
-    notify-url: ${LDC_PAYMENT_NOTIFY_URL:}
-    return-url: ${LDC_PAYMENT_RETURN_URL:}
+  # 限流配置 / Rate Limit Configuration
+  rate-limit:
+    max-requests: ${RATE_LIMIT_MAX:60}
+    window-seconds: ${RATE_LIMIT_WINDOW:60}
 
-  # 管理员配置 / Admin Configuration
-  admin:
-    initial-usernames: ${LDC_ADMIN_USERNAMES:admin,root}
+  # 订单配置 / Order Configuration
+  order:
+    auto-close-minutes: ${ORDER_AUTO_CLOSE_MINUTES:30}
+
+  # 卡密加密密钥 / Card Content Encryption Secret
+  card-encrypt-secret: ${CARD_ENCRYPT_SECRET:please-change-this-secret-in-production}

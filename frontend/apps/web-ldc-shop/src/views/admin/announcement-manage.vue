@@ -3,13 +3,15 @@ import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
+import type { Announcement, AnnouncementFormData } from '#/api/types';
+import { ANNOUNCEMENT_TYPE_MAP } from '#/api/types';
 import { announcementApi } from '#/api/modules';
 
 const { t } = useI18n();
 const message = useMessage();
 const dialog = useDialog();
 
-const announcements = ref<any[]>([]);
+const announcements = ref<Announcement[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
@@ -18,7 +20,7 @@ const searchForm = ref({ title: '', type: null as number | null, status: null as
 
 const showModal = ref(false);
 const editingId = ref<number | null>(null);
-const form = ref({ title: '', type: 1, content: '', status: 0, isTop: 0 });
+const form = ref<AnnouncementFormData>({ title: '', type: 1, content: '', status: 0, isTop: 0 });
 
 const typeOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
@@ -32,12 +34,6 @@ const statusOptions = computed(() => [
   { label: t('page.admin.published'), value: 1 },
   { label: t('page.admin.draft'), value: 0 },
 ]);
-
-const typeMap = computed(() => ({
-  1: { label: t('page.admin.notice'), type: 'info' as const },
-  2: { label: t('page.admin.update'), type: 'success' as const },
-  3: { label: t('page.admin.activity'), type: 'warning' as const },
-}));
 
 async function loadAnnouncements() {
   loading.value = true;
@@ -112,7 +108,7 @@ const columns = computed(() => [
   {
     title: t('page.admin.announcementType'), key: 'type', width: 90,
     render: (row: any) => {
-      const info = typeMap.value[row.type as keyof typeof typeMap.value] || { label: String(row.type), type: 'default' as const };
+      const info = ANNOUNCEMENT_TYPE_MAP[row.type] || { label: String(row.type), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },

@@ -16,11 +16,11 @@ import java.util.List;
 public class DisputeCreateParams {
 
     /** 订单ID / Order ID */
-    @NotNull(message = "订单ID不能为空 / Order ID is required")
+    @NotNull(message = "{validation.order_id_required}")
     private Long orderId;
 
     /** 争议原因 / Dispute Reason */
-    @NotBlank(message = "争议原因不能为空 / Dispute reason is required")
+    @NotBlank(message = "{validation.dispute_reason_required}")
     private String reason;
 
     /** 证据图片URL列表 / Evidence Image URLs */

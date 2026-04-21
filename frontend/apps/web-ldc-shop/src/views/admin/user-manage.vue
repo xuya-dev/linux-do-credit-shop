@@ -33,8 +33,9 @@ async function loadUsers() {
     });
     users.value = res?.records || [];
     total.value = res?.total || 0;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }

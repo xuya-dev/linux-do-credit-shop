@@ -2,11 +2,14 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 import { announcementApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
 const route = useRoute();
 const router = useRouter();
 const message = useMessage();
+const { t } = useI18n();
 
 const ann = ref<any>(null);
 const loading = ref(true);
@@ -15,7 +18,7 @@ onMounted(async () => {
   try {
     ann.value = await announcementApi.detail(Number(route.params.id));
   } catch {
-    message.error('加载公告失败');
+    message.error(t('page.user.loadAnnouncementFailed'));
   } finally {
     loading.value = false;
   }
@@ -25,7 +28,7 @@ onMounted(async () => {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/announcements')">
-      <span>站点公告</span> &gt; <span>公告详情</span>
+      <span>{{ t('page.user.siteAnnouncements') }}</span> &gt; <span>{{ t('page.user.announcementDetail') }}</span>
     </div>
 
     <div class="faka-card">
@@ -37,7 +40,7 @@ onMounted(async () => {
         <div class="ann-header">
           <h1 class="ann-title">{{ ann.title }}</h1>
           <div class="ann-meta">
-            发布于: {{ ann.createdAt }}
+            {{ t('page.user.publishedAt') }} {{ ann.createdAt }}
           </div>
         </div>
         <div class="ann-content html-content">
@@ -46,36 +49,22 @@ onMounted(async () => {
       </template>
 
       <div v-else class="empty-state">
-        公告不存在
+        {{ t('page.user.announcementNotFound') }}
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
-}
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-.breadcrumb span:hover { color: #1890ff; }
+.faka-container { max-width: 1000px; }
+.breadcrumb { margin-bottom: 20px; }
 
 .faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
   padding: 40px;
 }
 
 .loading-spin { text-align: center; padding: 60px; }
-.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
+.empty-state { padding: 60px; }
 
 .ann-header {
   text-align: center;

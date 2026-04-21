@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useMessage } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
 import { use } from 'echarts/core';
@@ -16,6 +17,7 @@ import VChart from 'vue-echarts';
 import { dashboardApi } from '#/api/modules';
 
 const { t } = useI18n();
+const message = useMessage();
 
 use([
   CanvasRenderer,
@@ -34,8 +36,9 @@ const loading = ref(true);
 onMounted(async () => {
   try {
     dashboard.value = await dashboardApi.getData();
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || '加载仪表盘数据失败');
   } finally {
     loading.value = false;
   }

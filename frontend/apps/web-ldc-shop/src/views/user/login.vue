@@ -33,7 +33,7 @@ async function handleLogin() {
     <div class="login-card">
       <div class="login-brand">
         <div class="brand-logo-img">
-          <img :src="siteLogo" alt="Logo" />
+          <img :src="siteLogo" alt="Logo" loading="lazy" />
         </div>
         <h1 class="brand-title">{{ siteName }}</h1>
         <p class="brand-subtitle">{{ siteDesc }}</p>
@@ -41,15 +41,15 @@ async function handleLogin() {
 
       <div class="login-features">
         <div class="feature-item">
-          <img src="/积分.png" class="feature-img" alt="credits" />
+          <img src="/积分.png" class="feature-img" alt="credits" loading="lazy" />
           <span>{{ t('page.shop.secureTransaction') }}</span>
         </div>
         <div class="feature-item">
-          <img src="/发货.png" class="feature-img" alt="delivery" />
+          <img src="/发货.png" class="feature-img" alt="delivery" loading="lazy" />
           <span>{{ t('page.shop.autoDelivery') }}</span>
         </div>
         <div class="feature-item">
-          <img src="/linuxdo.png" class="feature-img" alt="Linux DO" />
+          <img src="/linuxdo.png" class="feature-img" alt="Linux DO" loading="lazy" />
           <span>{{ t('page.shop.oneClickLogin') }}</span>
         </div>
       </div>

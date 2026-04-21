@@ -1,6 +1,8 @@
 import type {
   Order,
+  OrderAdminListParams,
   OrderCreateParams,
+  OrderDeliveryParams,
   PaginatedResult,
   PaymentSubmitResult,
 } from '#/api/types';
@@ -24,9 +26,9 @@ export const orderApi = {
   pay: (id: number) =>
     requestClient.post<PaymentSubmitResult>(`/user/orders/${id}/pay`),
 
-  adminList: (params: any) => requestClient.get('/admin/orders', { params }),
-  adminDetail: (id: number) => requestClient.get(`/admin/orders/${id}`),
-  adminDeliver: (id: number, data: any) =>
+  adminList: (params: OrderAdminListParams) => requestClient.get<PaginatedResult<Order>>('/admin/orders', { params }),
+  adminDetail: (id: number) => requestClient.get<Order>(`/admin/orders/${id}`),
+  adminDeliver: (id: number, data: OrderDeliveryParams) =>
     requestClient.put(`/admin/orders/${id}/deliver`, data),
   adminRefund: (id: number) =>
     requestClient.put(`/admin/orders/${id}/refund`),

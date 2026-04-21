@@ -1,4 +1,4 @@
-package dev.xuya.ldcshop.util;
+package dev.xuya.ldcshop.common.util;
 
 import cn.dev33.satoken.stp.StpUtil;
 import dev.xuya.ldcshop.common.ResultCode;
@@ -67,5 +67,6 @@ public class UserContextUtil {
         StpUtil.getSession().set("username", user.getUsername());
         StpUtil.getSession().set("role", user.getRole());
         StpUtil.getSession().set("avatar", user.getAvatar());
+        StpUtil.getSession().set("status", user.getStatus());
     }
 }

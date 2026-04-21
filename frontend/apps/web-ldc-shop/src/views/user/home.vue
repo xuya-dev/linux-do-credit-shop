@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@vben/locales';
+import { useMessage } from 'naive-ui';
 import type { Announcement, Product } from '#/api/types';
 import { announcementApi, productApi, categoryApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
 const { t } = useI18n();
 const router = useRouter();
+const message = useMessage();
 
 const products = ref<Product[]>([]);
 const announcements = ref<Announcement[]>([]);
@@ -15,6 +18,12 @@ const loadingProducts = ref(true);
 const loadingAnnouncements = ref(true);
 const searchQuery = ref('');
 const activeCategoryId = ref<number | null>(null);
+
+const filteredProducts = computed(() => {
+  if (!searchQuery.value) return products.value;
+  const q = searchQuery.value.toLowerCase();
+  return products.value.filter(p => p.name.toLowerCase().includes(q));
+});
 
 onMounted(async () => {
   try {
@@ -32,8 +41,9 @@ onMounted(async () => {
     } else {
       await loadProducts();
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.user.loadFailed'));
   } finally {
     loadingAnnouncements.value = false;
   }
@@ -47,8 +57,9 @@ async function loadProducts(categoryId?: number | null) {
     
     const res = await productApi.userList(params);
     products.value = res?.records || [];
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.user.loadProductsFailed'));
   } finally {
     loadingProducts.value = false;
   }
@@ -70,7 +81,7 @@ function goProductDetail(id: number) {
       <!-- 搜索栏区 -->
       <div class="search-bar-wrapper">
         <div class="search-tags">
-          <span class="search-tag active">{{ t('page.shop.allProducts') }}({{ products.length }})</span>
+          <span class="search-tag active">{{ t('page.shop.allProducts') }}({{ filteredProducts.length }})</span>
         </div>
         <div class="search-input">
           <input type="text" v-model="searchQuery" :placeholder="t('page.shop.searchPlaceholder')" />
@@ -120,9 +131,9 @@ function goProductDetail(id: number) {
             <div class="card-body">
               <n-skeleton v-if="loadingProducts" text :repeat="4" />
               
-              <div v-else-if="products.length" class="product-list">
+              <div v-else-if="filteredProducts.length" class="product-list">
                 <div
-                  v-for="p in products"
+                  v-for="p in filteredProducts"
                   :key="p.id"
                   class="product-row"
                   @click="goProductDetail(p.id)"
@@ -160,7 +171,6 @@ function goProductDetail(id: number) {
 
 .faka-container {
   max-width: 1300px;
-  margin: 0 auto;
   padding: 0 24px;
 }
 
@@ -236,28 +246,15 @@ function goProductDetail(id: number) {
   min-width: 0;
 }
 
-/* 卡片通用样式 */
+/* 卡片覆盖：home 使用不同圆角和 overflow */
 .faka-card {
-  background: var(--faka-bg-header, #ffffff);
   border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
   overflow: hidden;
-  color: var(--faka-text-main, #333);
-}
-
-.mt-24 {
-  margin-top: 24px;
 }
 
 .card-header {
-  padding: 16px 20px;
   font-size: 14px;
   color: var(--faka-text-sub, #8c8c8c);
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
-}
-
-.card-body {
-  padding: 8px 0;
 }
 
 .ann-body {
@@ -393,7 +390,6 @@ function goProductDetail(id: number) {
 }
 
 .empty-state {
-  text-align: center;
   padding: 48px;
 }
 .empty-text {

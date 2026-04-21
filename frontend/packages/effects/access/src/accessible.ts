@@ -37,12 +37,6 @@ async function generateAccessible(
   // 动态添加到router实例内
   accessibleRoutes.forEach((route) => {
     if (root && !route.meta?.noBasicLayout) {
-      // 为了兼容之前的版本用法，如果包含子路由，则将component移除，以免出现多层BasicLayout
-      // 如果你的项目已经跟进了本次修改，移除了所有自定义菜单首级的BasicLayout，可以将这段if代码删除
-      if (route.children && route.children.length > 0) {
-        delete route.component;
-      }
-      // 根据router name判断，如果路由已经存在，则不再添加
       if (names?.includes(route.name)) {
         // 找到已存在的路由索引并更新，不更新会造成切换用户时，一级目录未更新，homePath 在二级目录导致的404问题
         const index = root.children?.findIndex(

@@ -1,11 +1,12 @@
 package dev.xuya.ldcshop.common;
 
+import dev.xuya.ldcshop.common.util.I18nUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
  * 响应状态码枚举 / Response Status Code Enum
- * 定义所有API接口的响应状态码及中英文描述
+ * message 字段为 i18n key，由 I18nUtil 根据请求头 Accept-Language 解析为对应语言
  *
  * @author xuya
  */
@@ -13,83 +14,59 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ResultCode {
 
-    // ============================================================
-    // 通用状态码 / Common Status Codes
-    // ============================================================
-    SUCCESS(200, "操作成功 / Success"),
-    FAIL(500, "操作失败 / Operation Failed"),
-    UNAUTHORIZED(401, "未登录或登录已过期 / Unauthorized or Session Expired"),
-    FORBIDDEN(403, "没有访问权限 / Access Denied"),
-    NOT_FOUND(404, "资源不存在 / Resource Not Found"),
-    BAD_REQUEST(400, "请求参数错误 / Bad Request"),
-    TOO_MANY_REQUESTS(429, "请求过于频繁 / Too Many Requests"),
+    SUCCESS(200, "success"),
+    FAIL(500, "fail"),
+    UNAUTHORIZED(401, "unauthorized"),
+    FORBIDDEN(403, "forbidden"),
+    NOT_FOUND(404, "not_found"),
+    BAD_REQUEST(400, "bad_request"),
+    TOO_MANY_REQUESTS(429, "too_many_requests"),
 
-    // ============================================================
-    // 用户模块 / User Module (1xxx)
-    // ============================================================
-    USER_NOT_FOUND(1001, "用户不存在 / User Not Found"),
-    USER_DISABLED(1002, "用户已被禁用 / User Disabled"),
-    USER_ALREADY_EXISTS(1003, "用户已存在 / User Already Exists"),
-    OAUTH_FAIL(1004, "OAuth认证失败 / OAuth Authentication Failed"),
-    OAUTH_TOKEN_ERROR(1005, "OAuth令牌获取失败 / OAuth Token Error"),
-    OAUTH_USER_INFO_ERROR(1006, "OAuth用户信息获取失败 / OAuth User Info Error"),
+    USER_NOT_FOUND(1001, "user.not_found"),
+    USER_DISABLED(1002, "user.disabled"),
+    USER_ALREADY_EXISTS(1003, "user.already_exists"),
+    OAUTH_FAIL(1004, "oauth.fail"),
+    OAUTH_TOKEN_ERROR(1005, "oauth.token_error"),
+    OAUTH_USER_INFO_ERROR(1006, "oauth.user_info_error"),
 
-    // ============================================================
-    // 商品模块 / Product Module (2xxx)
-    // ============================================================
-    PRODUCT_NOT_FOUND(2001, "商品不存在 / Product Not Found"),
-    PRODUCT_OFF_SHELF(2002, "商品已下架 / Product Off Shelf"),
-    PRODUCT_STOCK_INSUFFICIENT(2003, "商品库存不足 / Insufficient Stock"),
-    CATEGORY_NOT_FOUND(2004, "分类不存在 / Category Not Found"),
+    PRODUCT_NOT_FOUND(2001, "product.not_found"),
+    PRODUCT_OFF_SHELF(2002, "product.off_shelf"),
+    PRODUCT_STOCK_INSUFFICIENT(2003, "product.stock_insufficient"),
+    CATEGORY_NOT_FOUND(2004, "category.not_found"),
 
-    // ============================================================
-    // 订单模块 / Order Module (3xxx)
-    // ============================================================
-    ORDER_NOT_FOUND(3001, "订单不存在 / Order Not Found"),
-    ORDER_STATUS_ERROR(3002, "订单状态异常 / Order Status Error"),
-    ORDER_ALREADY_PAID(3003, "订单已支付 / Order Already Paid"),
-    ORDER_CREATE_FAIL(3004, "订单创建失败 / Order Creation Failed"),
-    ORDER_PAY_FAIL(3005, "支付发起失败 / Payment Initiation Failed"),
-    ORDER_REFUND_FAIL(3006, "退款失败 / Refund Failed"),
+    ORDER_NOT_FOUND(3001, "order.not_found"),
+    ORDER_STATUS_ERROR(3002, "order.status_error"),
+    ORDER_ALREADY_PAID(3003, "order.already_paid"),
+    ORDER_CREATE_FAIL(3004, "order.create_fail"),
+    ORDER_PAY_FAIL(3005, "order.pay_fail"),
+    ORDER_REFUND_FAIL(3006, "order.refund_fail"),
 
-    // ============================================================
-    // 卡密模块 / Card Module (4xxx)
-    // ============================================================
-    CARD_NOT_FOUND(4001, "卡密不存在 / Card Not Found"),
-    CARD_STOCK_INSUFFICIENT(4002, "卡密库存不足 / Card Stock Insufficient"),
-    CARD_IMPORT_FAIL(4003, "卡密导入失败 / Card Import Failed"),
+    CARD_NOT_FOUND(4001, "card.not_found"),
+    CARD_STOCK_INSUFFICIENT(4002, "card.stock_insufficient"),
+    CARD_IMPORT_FAIL(4003, "card.import_fail"),
 
-    // ============================================================
-    // 支付模块 / Payment Module (5xxx)
-    // ============================================================
-    PAY_SIGN_ERROR(5001, "签名生成失败 / Signature Generation Failed"),
-    PAY_VERIFY_ERROR(5002, "回调验签失败 / Callback Verification Failed"),
-    PAY_CONFIG_ERROR(5003, "支付配置错误 / Payment Config Error"),
+    PAY_SIGN_ERROR(5001, "pay.sign_error"),
+    PAY_VERIFY_ERROR(5002, "pay.verify_error"),
+    PAY_CONFIG_ERROR(5003, "pay.config_error"),
 
-    // ============================================================
-    // 争议模块 / Dispute Module (6xxx)
-    // ============================================================
-    DISPUTE_NOT_FOUND(6001, "争议不存在 / Dispute Not Found"),
-    DISPUTE_ALREADY_EXISTS(6002, "该订单已存在争议 / Dispute Already Exists for This Order"),
-    DISPUTE_STATUS_ERROR(6003, "争议状态异常 / Dispute Status Error"),
+    DISPUTE_NOT_FOUND(6001, "dispute.not_found"),
+    DISPUTE_ALREADY_EXISTS(6002, "dispute.already_exists"),
+    DISPUTE_STATUS_ERROR(6003, "dispute.status_error"),
 
-    // ============================================================
-    // 公告模块 / Announcement Module (7xxx)
-    // ============================================================
-    ANNOUNCEMENT_NOT_FOUND(7001, "公告不存在 / Announcement Not Found"),
+    ANNOUNCEMENT_NOT_FOUND(7001, "announcement.not_found"),
 
-    // ============================================================
-    // 设置模块 / Settings Module (8xxx)
-    // ============================================================
-    SETTING_NOT_FOUND(8001, "配置项不存在 / Setting Not Found");
+    SETTING_NOT_FOUND(8001, "setting.not_found");
 
-    /**
-     * 状态码 / Status Code
-     */
     private final int code;
+    private final String key;
 
     /**
-     * 提示信息（中英文） / Message (Bilingual)
+     * 获取国际化消息 / Get localized message
+     * 通过 I18nUtil 根据当前请求的 Accept-Language 自动解析
+     *
+     * @return 国际化后的消息文本 / Localized message text
      */
-    private final String message;
+    public String getMessage() {
+        return I18nUtil.get(key);
+    }
 }

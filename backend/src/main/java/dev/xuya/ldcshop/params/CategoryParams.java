@@ -12,7 +12,7 @@ import lombok.Data;
 public class CategoryParams {
 
     /** 分类名称 / Category Name */
-    @NotBlank(message = "分类名称不能为空 / Category name is required")
+    @NotBlank(message = "{validation.category_name_required}")
     private String name;
 
     /** 分类图标URL / Category Icon URL */

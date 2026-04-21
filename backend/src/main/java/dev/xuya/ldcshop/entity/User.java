@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @author xuya
  */
 @Data
-@TableName("user")
+@TableName("ldc_user")
 public class User {
 
     /** 用户ID / User ID */

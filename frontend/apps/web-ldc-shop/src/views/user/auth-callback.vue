@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import { useAuthStore } from '#/store';
 
@@ -9,6 +10,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const message = useMessage();
+const { t } = useI18n();
 
 const error = ref('');
 const loading = ref(true);
@@ -16,7 +18,7 @@ const loading = ref(true);
 onMounted(async () => {
   const code = route.query.code as string;
   if (!code) {
-    error.value = '授权码缺失，请重新登录';
+    error.value = t('page.user.authCodeMissing');
     loading.value = false;
     return;
   }
@@ -25,11 +27,12 @@ onMounted(async () => {
       code,
       window.location.origin + '/auth/callback',
     );
-    message.success('登录成功');
-    const redirect = (route.query.redirect as string) || '/home';
+    message.success(t('page.user.loginSuccess'));
+    const redirectParam = route.query.redirect as string;
+    const redirect = (redirectParam && /^\/[a-zA-Z0-9]/.test(redirectParam) && !redirectParam.startsWith('//')) ? redirectParam : '/home';
     router.push(redirect);
   } catch (e: any) {
-    error.value = e.message || '登录失败，请重试';
+    error.value = e.message || t('page.user.loginFailed');
     loading.value = false;
   }
 });
@@ -41,13 +44,13 @@ onMounted(async () => {
       <div class="error-icon">❌</div>
       <p class="error-text">{{ error }}</p>
       <n-button type="primary" @click="router.push('/auth/login')">
-        返回登录页
+        {{ t('page.user.backToLogin') }}
       </n-button>
     </div>
     <div v-else class="callback-loading">
       <n-spin size="large" />
-      <p class="loading-text">正在登录中...</p>
-      <p class="loading-sub">请稍候，正在验证您的身份</p>
+      <p class="loading-text">{{ t('page.user.loggingIn') }}</p>
+      <p class="loading-sub">{{ t('page.user.verifyingIdentity') }}</p>
     </div>
   </div>
 </template>

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * @author xuya
  */
 @Data
-@TableName("orders")
+@TableName("ldc_order")
 public class Order {
 
     /** 订单ID / Order ID */
@@ -95,6 +95,8 @@ public class Order {
     public static final int PAYMENT_PAID = 1;
     /** 已退款 / Refunded */
     public static final int PAYMENT_REFUNDED = 2;
+    /** 已取消 / Cancelled */
+    public static final int PAYMENT_CANCELLED = 3;
 
     // ============================================================
     // 发货状态常量 / Delivery Status Constants

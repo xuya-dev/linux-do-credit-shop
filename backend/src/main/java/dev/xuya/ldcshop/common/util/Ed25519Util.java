@@ -1,4 +1,4 @@
-package dev.xuya.ldcshop.util;
+package dev.xuya.ldcshop.common.util;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.StrUtil;
@@ -54,9 +54,9 @@ public class Ed25519Util {
     public static String sign(String privateKeyBase64, String data) {
         try {
             byte[] rawDecoded = stripPemAndDecode(privateKeyBase64);
-            log.info("Ed25519私钥解码长度: {} bytes (原始32字节会自动包装为46字节PKCS#8)", rawDecoded.length);
+            log.debug("Ed25519 key decoded length: {} bytes", rawDecoded.length);
             byte[] privateKeyBytes = decodeAndWrapPrivate(privateKeyBase64);
-            log.info("Ed25519私钥最终长度: {} bytes", privateKeyBytes.length);
+            log.debug("Ed25519 key final length: {} bytes", privateKeyBytes.length);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             PrivateKey privateKey = KeyFactory.getInstance(ALGORITHM).generatePrivate(keySpec);
 
@@ -65,7 +65,7 @@ public class Ed25519Util {
             signature.update(data.getBytes(StandardCharsets.UTF_8));
             return Base64.encode(signature.sign());
         } catch (Exception e) {
-            log.error("Ed25519签名失败 / Ed25519 signing failed", e);
+            log.error("Ed25519 signing failed", e);
             throw new BusinessException(ResultCode.PAY_SIGN_ERROR);
         }
     }
@@ -84,11 +84,18 @@ public class Ed25519Util {
             signature.update(data.getBytes(StandardCharsets.UTF_8));
             return signature.verify(Base64.decode(signatureBase64));
         } catch (Exception e) {
-            log.error("Ed25519验签失败 / Ed25519 verification failed", e);
+            log.error("Ed25519 verification failed", e);
             return false;
         }
     }
 
+    /**
+     * 解码并包装 Ed25519 私钥为 PKCS#8 格式 / Decode and wrap Ed25519 private key to PKCS#8 format
+     * 如果密钥为 32 字节原始格式，自动添加 PKCS#8 DER 前缀
+     *
+     * @param keyBase64 Base64 编码的私钥 / Base64 encoded private key
+     * @return PKCS#8 格式的私钥字节 / PKCS#8 formatted private key bytes
+     */
     private static byte[] decodeAndWrapPrivate(String keyBase64) {
         byte[] bytes = stripPemAndDecode(keyBase64);
         if (bytes.length == 32) {
@@ -100,6 +107,13 @@ public class Ed25519Util {
         return bytes;
     }
 
+    /**
+     * 解码并包装 Ed25519 公钥为 X509 格式 / Decode and wrap Ed25519 public key to X509 format
+     * 如果密钥为 32 字节原始格式，自动添加 X509 DER 前缀
+     *
+     * @param keyBase64 Base64 编码的公钥 / Base64 encoded public key
+     * @return X509 格式的公钥字节 / X509 formatted public key bytes
+     */
     private static byte[] decodeAndWrapPublic(String keyBase64) {
         byte[] bytes = stripPemAndDecode(keyBase64);
         if (bytes.length == 32) {
@@ -111,6 +125,12 @@ public class Ed25519Util {
         return bytes;
     }
 
+    /**
+     * 去除 PEM 头尾标记并 Base64 解码 / Strip PEM headers and Base64 decode
+     *
+     * @param keyBase64 PEM 或 Base64 编码的密钥 / PEM or Base64 encoded key
+     * @return 解码后的原始字节 / Decoded raw bytes
+     */
     private static byte[] stripPemAndDecode(String keyBase64) {
         String cleaned = keyBase64
             .replace("-----BEGIN PRIVATE KEY-----", "")

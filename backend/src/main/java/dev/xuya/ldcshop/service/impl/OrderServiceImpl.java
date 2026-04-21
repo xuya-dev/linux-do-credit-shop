@@ -10,7 +10,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import dev.xuya.ldcshop.common.ResultCode;
 import dev.xuya.ldcshop.common.exception.BusinessException;
-import dev.xuya.ldcshop.config.LdcShopProperties;
+import dev.xuya.ldcshop.common.util.AuditLog;
+import dev.xuya.ldcshop.common.util.EntityUtil;
 import dev.xuya.ldcshop.entity.*;
 import dev.xuya.ldcshop.mapper.*;
 import dev.xuya.ldcshop.params.OrderCreateParams;
@@ -20,9 +21,10 @@ import dev.xuya.ldcshop.results.PaymentSubmitResult;
 import dev.xuya.ldcshop.service.OrderService;
 import dev.xuya.ldcshop.service.ProductCardService;
 import dev.xuya.ldcshop.service.ShopSettingService;
-import dev.xuya.ldcshop.util.Ed25519Util;
-import dev.xuya.ldcshop.util.OrderUtil;
-import dev.xuya.ldcshop.util.UserContextUtil;
+import dev.xuya.ldcshop.common.util.CryptoUtil;
+import dev.xuya.ldcshop.common.util.Ed25519Util;
+import dev.xuya.ldcshop.common.util.OrderUtil;
+import dev.xuya.ldcshop.common.util.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,37 +51,31 @@ public class OrderServiceImpl implements OrderService {
     private final OrderCardMapper orderCardMapper;
     private final ProductCardMapper productCardMapper;
     private final ProductCardService productCardService;
-    private final LdcShopProperties properties;
     private final ShopSettingService shopSettingService;
+    private final CryptoUtil cryptoUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderDetailResult createOrder(OrderCreateParams params) {
         Long userId = UserContextUtil.getCurrentUserId();
 
-        // 查询商品 / Query product
-        Product product = productMapper.selectById(params.getProductId());
-        if (product == null) {
-            throw new BusinessException(ResultCode.PRODUCT_NOT_FOUND);
-        }
+        Product product = EntityUtil.requireNonNull(productMapper.selectById(params.getProductId()), ResultCode.PRODUCT_NOT_FOUND);
         if (product.getStatus() != 1) {
             throw new BusinessException(ResultCode.PRODUCT_OFF_SHELF);
         }
 
-        // 检查库存 / Check stock
         if (product.getProductType() == 1) {
-            // 虚拟商品检查卡密库存 / Virtual product check card stock
             int availableCount = productCardService.getAvailableCount(product.getId());
             if (availableCount < params.getQuantity()) {
                 throw new BusinessException(ResultCode.PRODUCT_STOCK_INSUFFICIENT);
             }
         } else {
-            if (product.getStock() < params.getQuantity()) {
+            int rows = productMapper.deductStock(product.getId(), params.getQuantity());
+            if (rows == 0) {
                 throw new BusinessException(ResultCode.PRODUCT_STOCK_INSUFFICIENT);
             }
         }
 
-        // 创建订单 / Create order
         Order order = new Order();
         order.setOrderNo(OrderUtil.generateOrderNo());
         order.setUserId(userId);
@@ -98,46 +94,34 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.insert(order);
 
-        // 扣减实物商品库存 / Deduct physical product stock
-        if (product.getProductType() == 2) {
-            product.setStock(product.getStock() - params.getQuantity());
-            productMapper.updateById(product);
-        }
-
         return convertToDetailResult(order, false);
     }
 
     @Override
     public PaymentSubmitResult initiatePayment(Long orderId) {
-        Order order = orderMapper.selectById(orderId);
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_FOUND);
-        }
+        Order order = EntityUtil.requireNonNull(orderMapper.selectById(orderId), ResultCode.ORDER_NOT_FOUND);
         if (order.getPaymentStatus() != Order.PAYMENT_PENDING) {
             throw new BusinessException(ResultCode.ORDER_ALREADY_PAID);
         }
 
-        // 验证订单归属 / Verify order ownership
         Long currentUserId = UserContextUtil.getCurrentUserId();
         if (!order.getUserId().equals(currentUserId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
-        // 从数据库读取支付配置，YAML 作为兜底
-        Map<String, String> dbSettings = shopSettingService.getAllSettings();
-        String clientId = getSettingOrDefault(dbSettings, "ldc_client_id", properties.getPayment().getClientId());
-        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
-        String privateKey = getSettingOrDefault(dbSettings, "ldc_private_key", null);
-        String gatewayUrl = getSettingOrDefault(dbSettings, "ldc_gateway_url", properties.getPayment().getGatewayUrl());
-        String notifyUrl = getSettingOrDefault(dbSettings, "ldc_notify_url", properties.getPayment().getNotifyUrl());
-        String returnUrl = getSettingOrDefault(dbSettings, "ldc_return_url", properties.getPayment().getReturnUrl());
+        // 从数据库读取支付配置 / Load payment config from DB
+        String clientId = shopSettingService.getSettingOrDefault("ldc_payment_client_id", "");
+        String clientSecret = shopSettingService.getSettingOrDefault("ldc_payment_client_secret", "");
+        String privateKey = shopSettingService.getSettingOrDefault("ldc_payment_private_key", "");
+        String gatewayUrl = shopSettingService.getSettingOrDefault("ldc_payment_gateway_url", "https://credit.linux.do/epay");
+        String notifyUrl = shopSettingService.getSettingOrDefault("ldc_payment_notify_url", "");
+        String returnUrl = shopSettingService.getSettingOrDefault("ldc_payment_return_url", "");
 
         if (StrUtil.isBlank(privateKey)) {
-            log.error("Ed25519商户私钥未配置 / Ed25519 merchant private key not configured");
+            log.error("Ed25519 merchant private key not configured");
             throw new BusinessException(ResultCode.PAY_SIGN_ERROR);
         }
 
-        // 构建支付参数 / Build payment params
         Map<String, Object> payParams = new LinkedHashMap<>();
         payParams.put("client_id", clientId);
         payParams.put("type", "ldcpay");
@@ -147,11 +131,9 @@ public class OrderServiceImpl implements OrderService {
         payParams.put("notify_url", notifyUrl);
         payParams.put("return_url", returnUrl + "?orderNo=" + order.getOrderNo());
 
-        // 生成签名: client_secret追加到签名字符串末尾, privateKey用于Ed25519签名
         String signString = Ed25519Util.buildSignString(payParams, clientSecret);
         payParams.put("sign", Ed25519Util.sign(privateKey, signString));
 
-        // 提交支付请求（不跟随重定向，捕获 LDC 返回的支付页面地址）
         try {
             HttpResponse httpResponse = HttpRequest.post(gatewayUrl + "/pay/submit.php")
                     .form(payParams)
@@ -160,19 +142,17 @@ public class OrderServiceImpl implements OrderService {
 
             int status = httpResponse.getStatus();
             String body = httpResponse.body();
-            log.info("支付请求响应 / Payment response: status={}, body={}", status, body);
+            log.debug("Payment response: status={}, body={}", status, body);
 
             PaymentSubmitResult result = new PaymentSubmitResult();
             result.setOrderNo(order.getOrderNo());
 
             if (status == 302 || status == 301) {
-                // LDC 验签成功，重定向到支付页面
                 result.setPayUrl(httpResponse.header("Location"));
             } else if (status == 200 && StrUtil.isNotBlank(body) && body.contains("error_msg")) {
-                log.error("LDC支付失败 / LDC payment error: {}", body);
+                log.error("LDC payment error: {}", body);
                 throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
             } else {
-                // 兜底：直接构造支付页面 URL（LDC 文档: https://credit.linux.do/paying?order_no=...）
                 String baseUrl = gatewayUrl.replaceAll("/epay$", "");
                 result.setPayUrl(baseUrl + "/paying?order_no=" + order.getLdcOutTradeNo());
             }
@@ -180,27 +160,31 @@ public class OrderServiceImpl implements OrderService {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("支付请求失败 / Payment request failed", e);
+            log.error("Payment request failed", e);
             throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
         }
-    }
-
-    private String getSettingOrDefault(Map<String, String> dbSettings, String key, String defaultValue) {
-        String value = dbSettings.get(key);
-        return StrUtil.isNotBlank(value) ? value : defaultValue;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String handlePaymentNotify(Map<String, String> params) {
-        Map<String, String> dbSettings = shopSettingService.getAllSettings();
-        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
+        String clientSecret = shopSettingService.getSettingOrDefault("ldc_payment_client_secret", "");
 
-        // 验证签名 / Verify signature
+        log.info("Payment callback received: outTradeNo={}", params.get("out_trade_no"));
+
+        String publicKey = shopSettingService.getSettingOrDefault("ldc_payment_public_key", "");
         String sign = params.get("sign");
         String signString = Ed25519Util.buildSignString(params, clientSecret);
-        // 注意：实际生产中需要使用 LDC 平台公钥验签 / Note: In production, use LDC platform public key
-        log.info("收到支付回调 / Payment callback received: params={}", params);
+
+        if (StrUtil.isNotBlank(publicKey) && StrUtil.isNotBlank(sign)) {
+            if (!Ed25519Util.verify(publicKey, signString, sign)) {
+                log.warn("Payment callback signature verification failed: outTradeNo={}", params.get("out_trade_no"));
+                return "fail";
+            }
+        } else {
+            log.error("Payment callback rejected: public key or sign is empty. outTradeNo={}", params.get("out_trade_no"));
+            return "fail";
+        }
 
         String outTradeNo = params.get("out_trade_no");
         String tradeStatus = params.get("trade_status");
@@ -210,54 +194,35 @@ public class OrderServiceImpl implements OrderService {
             return "ignored";
         }
 
-        // 查找订单 / Find order
         Order order = orderMapper.selectOne(
                 new LambdaQueryWrapper<Order>().eq(Order::getLdcOutTradeNo, outTradeNo));
         if (order == null) {
-            log.warn("回调订单不存在 / Callback order not found: outTradeNo={}", outTradeNo);
+            log.warn("Callback order not found: outTradeNo={}", outTradeNo);
             return "ignored";
         }
 
-        if (order.getPaymentStatus() != Order.PAYMENT_PENDING) {
+        int deliveryStatus = order.getProductType() == 1 ? Order.DELIVERY_COMPLETED : Order.DELIVERY_PENDING;
+        LocalDateTime deliveredAt = order.getProductType() == 1 ? LocalDateTime.now() : null;
+
+        int rows = orderMapper.atomicConfirmPayment(outTradeNo, tradeNo, deliveryStatus, deliveredAt);
+        if (rows == 0) {
+            log.info("Payment already processed: outTradeNo={}", outTradeNo);
             return "success";
         }
 
-        // 更新订单状态 / Update order status
-        order.setPaymentStatus(Order.PAYMENT_PAID);
-        order.setLdcTradeNo(tradeNo);
-        order.setPaidAt(LocalDateTime.now());
-
-        // 虚拟商品自动发卡 / Virtual product auto delivery
         if (order.getProductType() == 1) {
             productCardService.allocateCards(order.getId(), order.getProductId(), order.getQuantity());
-            order.setDeliveryStatus(Order.DELIVERY_COMPLETED);
-            order.setDeliveredAt(LocalDateTime.now());
-        } else {
-            order.setDeliveryStatus(Order.DELIVERY_PENDING);
         }
 
-        orderMapper.updateById(order);
+        productMapper.incrementSoldCount(order.getProductId(), order.getQuantity());
 
-        // 更新商品销量 / Update product sold count
-        Product product = productMapper.selectById(order.getProductId());
-        if (product != null) {
-            product.setSoldCount(product.getSoldCount() + order.getQuantity());
-            if (product.getProductType() == 2) {
-                product.setStock(Math.max(0, product.getStock() - order.getQuantity()));
-            }
-            productMapper.updateById(product);
-        }
-
-        log.info("订单支付成功 / Order payment success: orderNo={}", order.getOrderNo());
+        log.info("Order payment success: orderNo={}", order.getOrderNo());
         return "success";
     }
 
     @Override
     public OrderDetailResult getOrderDetail(Long orderId) {
-        Order order = orderMapper.selectById(orderId);
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_FOUND);
-        }
+        Order order = EntityUtil.requireNonNull(orderMapper.selectById(orderId), ResultCode.ORDER_NOT_FOUND);
         boolean showCards = order.getUserId().equals(UserContextUtil.getCurrentUserId())
                 || UserContextUtil.isAdmin();
         return convertToDetailResult(order, showCards);
@@ -265,11 +230,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDetailResult getOrderByOrderNo(String orderNo) {
-        Order order = orderMapper.selectOne(
-                new LambdaQueryWrapper<Order>().eq(Order::getOrderNo, orderNo));
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_FOUND);
-        }
+        Order order = EntityUtil.requireNonNull(orderMapper.selectOne(
+                new LambdaQueryWrapper<Order>().eq(Order::getOrderNo, orderNo)), ResultCode.ORDER_NOT_FOUND);
         boolean showCards = order.getUserId().equals(UserContextUtil.getCurrentUserId())
                 || UserContextUtil.isAdmin();
         return convertToDetailResult(order, showCards);
@@ -289,7 +251,9 @@ public class OrderServiceImpl implements OrderService {
         wrapper.orderByDesc(Order::getCreatedAt);
 
         IPage<Order> orderPage = orderMapper.selectPage(new Page<>(page, size), wrapper);
-        return orderPage.convert(o -> convertToDetailResult(o, true));
+        Page<OrderDetailResult> resultPage = new Page<>(orderPage.getCurrent(), orderPage.getSize(), orderPage.getTotal());
+        resultPage.setRecords(batchConvertToDetailResults(orderPage.getRecords(), true));
+        return resultPage;
     }
 
     @Override
@@ -309,16 +273,15 @@ public class OrderServiceImpl implements OrderService {
         wrapper.orderByDesc(Order::getCreatedAt);
 
         IPage<Order> orderPage = orderMapper.selectPage(new Page<>(page, size), wrapper);
-        return orderPage.convert(o -> convertToDetailResult(o, true));
+        Page<OrderDetailResult> resultPage = new Page<>(orderPage.getCurrent(), orderPage.getSize(), orderPage.getTotal());
+        resultPage.setRecords(batchConvertToDetailResults(orderPage.getRecords(), true));
+        return resultPage;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deliverOrder(Long orderId, OrderDeliveryParams params) {
-        Order order = orderMapper.selectById(orderId);
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_FOUND);
-        }
+        Order order = EntityUtil.requireNonNull(orderMapper.selectById(orderId), ResultCode.ORDER_NOT_FOUND);
         if (order.getPaymentStatus() != Order.PAYMENT_PAID) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
@@ -329,78 +292,97 @@ public class OrderServiceImpl implements OrderService {
             order.setAdminRemark(params.getAdminRemark());
         }
         orderMapper.updateById(order);
-        log.info("订单已发货 / Order delivered: orderId={}", orderId);
+        AuditLog.log("deliverOrder", "orderId=" + orderId);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void refundOrder(Long orderId) {
-        Order order = orderMapper.selectById(orderId);
-        if (order == null) {
-            throw new BusinessException(ResultCode.ORDER_NOT_FOUND);
-        }
+        Order order = EntityUtil.requireNonNull(orderMapper.selectById(orderId), ResultCode.ORDER_NOT_FOUND);
         if (order.getPaymentStatus() != Order.PAYMENT_PAID) {
             throw new BusinessException(ResultCode.ORDER_STATUS_ERROR);
         }
 
-        // 调用 LDC 退款 API / Call LDC refund API
-        Map<String, String> dbSettings = shopSettingService.getAllSettings();
-        String clientId = getSettingOrDefault(dbSettings, "ldc_client_id", properties.getPayment().getClientId());
-        String clientSecret = getSettingOrDefault(dbSettings, "ldc_client_secret", properties.getPayment().getClientSecret());
-        String gatewayUrl = getSettingOrDefault(dbSettings, "ldc_gateway_url", properties.getPayment().getGatewayUrl());
+        callLdcRefundApi(order);
+        doRefundDbOperations(order);
+    }
 
-        if (StrUtil.isNotBlank(order.getLdcTradeNo())) {
-            Map<String, Object> refundParams = new LinkedHashMap<>();
-            refundParams.put("pid", clientId);
-            refundParams.put("key", clientSecret);
-            refundParams.put("trade_no", order.getLdcTradeNo());
-            refundParams.put("money", order.getTotalAmount().setScale(2).toPlainString());
-
-            try {
-                String response = HttpUtil.post(gatewayUrl + "/api.php", refundParams);
-                log.info("LDC退款响应 / LDC refund response: {}", response);
-                // 检查退款结果 / Check refund result
-                if (StrUtil.isNotBlank(response) && !response.contains("\"code\":1")) {
-                    log.error("LDC退款失败 / LDC refund failed: {}", response);
-                    throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
-                }
-            } catch (BusinessException e) {
-                throw e;
-            } catch (Exception e) {
-                log.error("LDC退款请求异常 / LDC refund request error", e);
-                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
-            }
+    private void callLdcRefundApi(Order order) {
+        if (StrUtil.isBlank(order.getLdcTradeNo())) {
+            return;
         }
 
-        // 释放虚拟商品卡密 / Release virtual product cards
+        String clientId = shopSettingService.getSettingOrDefault("ldc_payment_client_id", "");
+        String clientSecret = shopSettingService.getSettingOrDefault("ldc_payment_client_secret", "");
+        String gatewayUrl = shopSettingService.getSettingOrDefault("ldc_payment_gateway_url", "https://credit.linux.do/epay");
+
+        Map<String, Object> refundParams = new LinkedHashMap<>();
+        refundParams.put("pid", clientId);
+        refundParams.put("key", clientSecret);
+        refundParams.put("trade_no", order.getLdcTradeNo());
+        refundParams.put("money", order.getTotalAmount().setScale(2).toPlainString());
+
+        try {
+            String response = HttpUtil.post(gatewayUrl + "/api.php", refundParams);
+            log.info("LDC refund response: {}", response);
+            if (StrUtil.isNotBlank(response) && !response.contains("\"code\":1")) {
+                log.error("LDC refund failed: {}", response);
+                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("LDC refund request error", e);
+            throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void doRefundDbOperations(Order order) {
         if (order.getProductType() == 1) {
             List<OrderCard> orderCards = orderCardMapper.selectList(
                     new LambdaQueryWrapper<OrderCard>().eq(OrderCard::getOrderId, order.getId()));
-            for (OrderCard oc : orderCards) {
-                ProductCard card = productCardMapper.selectById(oc.getCardId());
-                if (card != null && card.getStatus() == 1) {
-                    card.setStatus(0);
-                    card.setOrderId(null);
-                    card.setSoldAt(null);
-                    productCardMapper.updateById(card);
-                }
+            List<Long> cardIds = orderCards.stream().map(OrderCard::getCardId).collect(Collectors.toList());
+            if (!cardIds.isEmpty()) {
+                productCardMapper.batchReleaseCards(cardIds);
             }
             orderCardMapper.delete(new LambdaQueryWrapper<OrderCard>().eq(OrderCard::getOrderId, order.getId()));
         }
 
-        // 恢复实物商品库存 / Restore physical product stock
         if (order.getProductType() == 2) {
-            Product product = productMapper.selectById(order.getProductId());
-            if (product != null) {
-                product.setStock(product.getStock() + order.getQuantity());
-                product.setSoldCount(Math.max(0, product.getSoldCount() - order.getQuantity()));
-                productMapper.updateById(product);
-            }
+            productMapper.restoreStock(order.getProductId(), order.getQuantity());
+            productMapper.decrementSoldCount(order.getProductId(), order.getQuantity());
         }
 
         order.setPaymentStatus(Order.PAYMENT_REFUNDED);
         orderMapper.updateById(order);
-        log.info("订单已退款 / Order refunded: orderId={}", orderId);
+        AuditLog.log("refundOrder", "orderId=" + order.getId());
+    }
+
+    /**
+     * 批量转换订单为详情结果（解决 N+1 查询）/ Batch convert orders to detail results (fixes N+1 queries)
+     */
+    private List<OrderDetailResult> batchConvertToDetailResults(List<Order> orders, boolean showCards) {
+        if (orders.isEmpty()) return List.of();
+
+        Set<Long> userIds = orders.stream().map(Order::getUserId).collect(Collectors.toSet());
+        Set<Long> productIds = orders.stream().map(Order::getProductId).collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+        Map<Long, Product> productMap = productMapper.selectBatchIds(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        return orders.stream().map(order -> {
+            OrderDetailResult result = BeanUtil.copyProperties(order, OrderDetailResult.class);
+
+            User buyer = userMap.get(order.getUserId());
+            if (buyer != null) result.setBuyerName(buyer.getUsername());
+
+            Product product = productMap.get(order.getProductId());
+            if (product != null) result.setProductCoverImage(product.getCoverImage());
+
+            return result;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -409,30 +391,32 @@ public class OrderServiceImpl implements OrderService {
     private OrderDetailResult convertToDetailResult(Order order, boolean showCards) {
         OrderDetailResult result = BeanUtil.copyProperties(order, OrderDetailResult.class);
 
-        // 查询买家信息 / Query buyer info
         User buyer = userMapper.selectById(order.getUserId());
         if (buyer != null) {
             result.setBuyerName(buyer.getUsername());
         }
 
-        // 查询商品封面 / Query product cover
         Product product = productMapper.selectById(order.getProductId());
         if (product != null) {
             result.setProductCoverImage(product.getCoverImage());
         }
 
-        // 虚拟商品展示卡密内容 / Show card content for virtual products
         if (showCards && order.getPaymentStatus() == Order.PAYMENT_PAID && order.getProductType() == 1) {
             List<OrderCard> orderCards = orderCardMapper.selectList(
                     new LambdaQueryWrapper<OrderCard>().eq(OrderCard::getOrderId, order.getId()));
-            List<String> cardContents = orderCards.stream()
-                    .map(oc -> {
-                        ProductCard card = productCardMapper.selectById(oc.getCardId());
-                        return card != null ? card.getCardContent() : null;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            result.setCardContents(cardContents);
+            if (!orderCards.isEmpty()) {
+                List<Long> cardIds = orderCards.stream().map(OrderCard::getCardId).collect(Collectors.toList());
+                Map<Long, ProductCard> cardMap = productCardMapper.selectBatchIds(cardIds).stream()
+                        .collect(Collectors.toMap(ProductCard::getId, c -> c));
+                List<String> cardContents = orderCards.stream()
+                        .map(oc -> {
+                            ProductCard card = cardMap.get(oc.getCardId());
+                            return card != null ? cryptoUtil.decrypt(card.getCardContent()) : null;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                result.setCardContents(cardContents);
+            }
         }
 
         return result;

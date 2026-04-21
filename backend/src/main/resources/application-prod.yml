@@ -1,0 +1,28 @@
+# Production Profile
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=UTF-8&useSSL=true&serverTimezone=Asia/Shanghai
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD:}
+  flyway:
+    enabled: true
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+server:
+  shutdown: graceful
+
+logging:
+  level:
+    dev.xuya.ldcshop: INFO
+
+# 生产环境禁用 Swagger / Disable Swagger in production
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

@@ -26,17 +26,13 @@ const DEFAULT_ENTER_DELAY = 0; // 鼠标进入延迟时间，默认为 0（立�
  */
 export function useHoverToggle(
   refElement: Arrayable<MaybeElementRef> | Ref<HTMLElement[] | null>,
-  delay: (() => number) | HoverDelayOptions | number = DEFAULT_LEAVE_DELAY,
+  delay: HoverDelayOptions = {},
 ) {
-  // 兼容旧版本API
-  const normalizedOptions: HoverDelayOptions =
-    typeof delay === 'number' || isFunction(delay)
-      ? { enterDelay: DEFAULT_ENTER_DELAY, leaveDelay: delay }
-      : {
-          enterDelay: DEFAULT_ENTER_DELAY,
-          leaveDelay: DEFAULT_LEAVE_DELAY,
-          ...delay,
-        };
+  const normalizedOptions: HoverDelayOptions = {
+    enterDelay: DEFAULT_ENTER_DELAY,
+    leaveDelay: DEFAULT_LEAVE_DELAY,
+    ...delay,
+  };
 
   const value = ref(false);
   const enterTimer = ref<ReturnType<typeof setTimeout> | undefined>();

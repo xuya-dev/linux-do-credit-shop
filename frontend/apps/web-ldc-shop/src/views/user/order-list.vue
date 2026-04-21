@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import type { Order } from '#/api/types';
 import {
@@ -9,8 +11,11 @@ import {
 } from '#/api/types';
 
 import { orderApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
 const router = useRouter();
+const message = useMessage();
+const { t } = useI18n();
 
 const orders = ref<Order[]>([]);
 const loading = ref(true);
@@ -19,10 +24,11 @@ const total = ref(0);
 const statusFilter = ref<number | null>(null);
 
 const statusTabs = [
-  { label: '全部订单', value: null },
-  { label: '待支付', value: 0 },
-  { label: '已支付', value: 1 },
-  { label: '已退款', value: 2 },
+  { labelKey: 'page.user.allOrders', value: null },
+  { labelKey: 'page.user.pendingPayment', value: 0 },
+  { labelKey: 'page.user.paid', value: 1 },
+  { labelKey: 'page.user.refunded', value: 2 },
+  { labelKey: 'page.user.cancelled', value: 3 },
 ];
 
 async function loadOrders() {
@@ -35,8 +41,9 @@ async function loadOrders() {
     });
     orders.value = res?.records || [];
     total.value = res?.total || 0;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.user.loadOrdersFailed'));
   } finally {
     loading.value = false;
   }
@@ -65,6 +72,8 @@ function goPay(order: Order) {
       if (res?.payUrl) {
         window.location.href = res.payUrl;
       }
+    }).catch((err) => {
+      message.error(err.message || t('page.user.payInitFailed'));
     });
   }
 }
@@ -73,12 +82,12 @@ function goPay(order: Order) {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/home')">
-      <span>首页</span> &gt; <span>我的订单</span>
+      <span>{{ t('page.user.home') }}</span> &gt; <span>{{ t('page.user.myOrders') }}</span>
     </div>
 
     <!-- 订单查询面板 -->
     <div class="faka-card filter-card">
-      <div class="card-header">订单查询</div>
+      <div class="card-header">{{ t('page.user.orderQuery') }}</div>
       <div class="card-body">
         <div class="filter-tabs">
           <span 
@@ -87,7 +96,7 @@ function goPay(order: Order) {
             :class="['filter-tab', { active: statusFilter === tab.value }]"
             @click="handleTabChange(tab.value)"
           >
-            {{ tab.label }}
+            {{ t(tab.labelKey) }}
           </span>
         </div>
       </div>
@@ -107,12 +116,12 @@ function goPay(order: Order) {
             >
               <div class="order-meta-head">
                 <div class="meta-left">
-                  <span class="order-no">订单号: {{ order.orderNo }}</span>
+                  <span class="order-no">{{ t('page.user.orderNo') }}: {{ order.orderNo }}</span>
                   <span class="order-date">{{ order.createdAt }}</span>
                 </div>
                 <div class="meta-right">
                   <span :class="['faka-status-tag', 'status-' + order.paymentStatus]">
-                    {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
+                    {{ t(PAYMENT_STATUS_MAP[order.paymentStatus]?.i18nKey || '') }}
                   </span>
                 </div>
               </div>
@@ -120,15 +129,15 @@ function goPay(order: Order) {
               <div class="order-content" @click="goDetail(order.id)">
                 <div class="product-info">
                   <div class="product-name">{{ order.productName }}</div>
-                  <div class="product-sku">数量: {{ order.quantity }}件 
+                  <div class="product-sku">{{ t('page.user.quantity') }}: {{ order.quantity }}{{ t('page.user.items') }}
                     <span v-if="order.paymentStatus === 1" class="dlv-tag">
-                      [{{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}]
+                      [{{ t(DELIVERY_STATUS_MAP[order.deliveryStatus]?.i18nKey || '') }}]
                     </span>
                   </div>
                 </div>
                 <div class="order-price">
-                  <span>实付款：</span>
-                  <span class="price-num">{{ order.totalAmount }} 积分</span>
+                  <span>{{ t('page.user.actualPayment') }}</span>
+                  <span class="price-num">{{ order.totalAmount }} {{ t('page.user.credits') }}</span>
                 </div>
               </div>
 
@@ -137,8 +146,8 @@ function goPay(order: Order) {
                   v-if="order.paymentStatus === 0" 
                   class="faka-btn primary"
                   @click.stop="goPay(order)"
-                >去支付</button>
-                <button class="faka-btn plain" @click="goDetail(order.id)">查看详情</button>
+                >{{ t('page.user.goPay') }}</button>
+                <button class="faka-btn plain" @click="goDetail(order.id)">{{ t('page.user.viewDetail') }}</button>
               </div>
             </div>
           </div>
@@ -154,7 +163,7 @@ function goPay(order: Order) {
         </template>
 
         <div v-else class="empty-state">
-          未查询到相关订单记录
+          {{ t('page.user.noOrdersFound') }}
         </div>
       </div>
     </div>
@@ -162,38 +171,6 @@ function goPay(order: Order) {
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 16px;
-  cursor: pointer;
-}
-.breadcrumb span:hover {
-  color: #1890ff;
-}
-
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-}
-
-.mt-24 { margin-top: 24px; }
-
-.card-header {
-  padding: 16px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
-}
-
 .card-body {
   padding: 20px;
 }
@@ -219,12 +196,6 @@ function goPay(order: Order) {
 .filter-tab:hover:not(.active) {
   color: #1890ff;
   border-color: #1890ff;
-}
-
-.loading-spin {
-  display: flex;
-  justify-content: center;
-  padding: 60px;
 }
 
 .order-list {
@@ -263,9 +234,6 @@ function goPay(order: Order) {
   font-size: 12px;
   font-weight: 500;
 }
-.status-0 { color: #faad14; }
-.status-1 { color: #52c41a; }
-.status-2 { color: #f5222d; }
 
 .order-content {
   display: flex;
@@ -308,24 +276,10 @@ function goPay(order: Order) {
   border-top: 1px dashed var(--faka-border, #f0f0f0);
 }
 
+/* Override faka-btn for order list context */
 .faka-btn {
   padding: 4px 16px;
   font-size: 13px;
-  border-radius: 2px;
-  cursor: pointer;
-  border: 1px solid transparent;
 }
-.faka-btn.primary {
-  background: #1890ff;
-  color: #fff;
-}
-.faka-btn.plain {
-  background: transparent;
-  border-color: var(--faka-border, #d9d9d9);
-  color: var(--faka-text-main, #333);
-}
-.faka-btn.plain:hover { color: #1890ff; border-color: #1890ff; }
-
-.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
 .pagination-wrapper { display: flex; justify-content: flex-end; margin-top: 24px; }
 </style>

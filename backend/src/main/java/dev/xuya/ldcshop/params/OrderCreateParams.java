@@ -14,12 +14,13 @@ import lombok.Data;
 public class OrderCreateParams {
 
     /** 商品ID / Product ID */
-    @NotNull(message = "商品ID不能为空 / Product ID is required")
+    @NotNull(message = "{validation.product_id_required}")
     private Long productId;
 
     /** 购买数量 / Quantity */
-    @NotNull(message = "购买数量不能为空 / Quantity is required")
-    @Min(value = 1, message = "购买数量至少为1 / Minimum quantity is 1")
+    @NotNull(message = "{validation.quantity_required}")
+    @Min(value = 1, message = "{validation.quantity_min}")
+    @jakarta.validation.constraints.Max(value = 999, message = "{validation.quantity_max}")
     private Integer quantity;
 
     /** 联系方式 / Contact Info */

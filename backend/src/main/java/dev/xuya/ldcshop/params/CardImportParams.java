@@ -18,10 +18,10 @@ import java.util.List;
 public class CardImportParams {
 
     /** 商品ID / Product ID */
-    @NotNull(message = "商品ID不能为空 / Product ID is required")
+    @NotNull(message = "{validation.product_id_required}")
     private Long productId;
 
     /** 卡密内容列表 / Card Content List */
-    @NotEmpty(message = "卡密内容不能为空 / Card content list is required")
-    private List<@NotBlank(message = "卡密内容不能包含空行 / Card content cannot be blank") String> cards;
+    @NotEmpty(message = "{validation.card_content_required}")
+    private List<@NotBlank(message = "{validation.card_content_no_blank}") String> cards;
 }

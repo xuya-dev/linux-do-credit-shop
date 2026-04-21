@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * @author xuya
  */
 @Data
-@TableName("product")
+@TableName("ldc_product")
 public class Product {
 
     /** 商品ID / Product ID */

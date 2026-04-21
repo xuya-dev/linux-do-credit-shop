@@ -23,6 +23,7 @@ export enum PaymentStatus {
   PENDING = 0,
   PAID = 1,
   REFUNDED = 2,
+  CANCELLED = 3,
 }
 
 /** 发货状态 */
@@ -69,34 +70,48 @@ export enum ProductStatus {
 // 标签映射工具
 // ============================================================
 
-export const PAYMENT_STATUS_MAP: Record<number, { label: string; type: 'default' | 'success' | 'warning' | 'error' }> = {
-  [PaymentStatus.PENDING]: { label: '待支付', type: 'warning' },
-  [PaymentStatus.PAID]: { label: '已支付', type: 'success' },
-  [PaymentStatus.REFUNDED]: { label: '已退款', type: 'default' },
+export const PAYMENT_STATUS_MAP: Record<number, { label: string; i18nKey?: string; type: 'default' | 'success' | 'warning' | 'error' }> = {
+  [PaymentStatus.PENDING]: { label: '待支付', i18nKey: 'page.user.paymentPending', type: 'warning' },
+  [PaymentStatus.PAID]: { label: '已支付', i18nKey: 'page.user.paymentPaid', type: 'success' },
+  [PaymentStatus.REFUNDED]: { label: '已退款', i18nKey: 'page.user.paymentRefunded', type: 'default' },
+  [PaymentStatus.CANCELLED]: { label: '已取消', i18nKey: 'page.user.paymentCancelled', type: 'error' },
 };
 
-export const DELIVERY_STATUS_MAP: Record<number, { label: string; type: 'default' | 'success' | 'info' }> = {
-  [DeliveryStatus.PENDING]: { label: '待发货', type: 'default' },
-  [DeliveryStatus.DELIVERED]: { label: '已发货', type: 'info' },
-  [DeliveryStatus.COMPLETED]: { label: '已完成', type: 'success' },
+export const DELIVERY_STATUS_MAP: Record<number, { label: string; i18nKey?: string; type: 'default' | 'success' | 'info' }> = {
+  [DeliveryStatus.PENDING]: { label: '待发货', i18nKey: 'page.user.deliveryPending', type: 'default' },
+  [DeliveryStatus.DELIVERED]: { label: '已发货', i18nKey: 'page.user.deliveryDelivered', type: 'info' },
+  [DeliveryStatus.COMPLETED]: { label: '已完成', i18nKey: 'page.user.deliveryCompleted', type: 'success' },
 };
 
-export const DISPUTE_STATUS_MAP: Record<number, { label: string; type: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
-  [DisputeStatus.PENDING]: { label: '处理中', type: 'warning' },
-  [DisputeStatus.ACCEPTED]: { label: '已通过', type: 'success' },
-  [DisputeStatus.REJECTED]: { label: '已驳回', type: 'error' },
-  [DisputeStatus.PLATFORM]: { label: '平台介入', type: 'info' },
+export const DISPUTE_STATUS_MAP: Record<number, { label: string; i18nKey?: string; type: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
+  [DisputeStatus.PENDING]: { label: '处理中', i18nKey: 'page.user.disputeProcessing', type: 'warning' },
+  [DisputeStatus.ACCEPTED]: { label: '已通过', i18nKey: 'page.user.disputeAccepted', type: 'success' },
+  [DisputeStatus.REJECTED]: { label: '已驳回', i18nKey: 'page.user.disputeRejected', type: 'error' },
+  [DisputeStatus.PLATFORM]: { label: '平台介入', i18nKey: 'page.user.disputePlatform', type: 'info' },
 };
 
-export const PRODUCT_TYPE_MAP: Record<number, { label: string; type: 'info' | 'success' }> = {
-  [ProductType.VIRTUAL]: { label: '虚拟商品', type: 'info' },
-  [ProductType.PHYSICAL]: { label: '实物商品', type: 'success' },
+export const PRODUCT_TYPE_MAP: Record<number, { label: string; i18nKey?: string; type: 'info' | 'success' }> = {
+  [ProductType.VIRTUAL]: { label: '虚拟商品', i18nKey: 'page.user.virtualProduct', type: 'info' },
+  [ProductType.PHYSICAL]: { label: '实物商品', i18nKey: 'page.user.physicalProduct', type: 'success' },
 };
 
 export const ANNOUNCEMENT_TYPE_MAP: Record<number, { label: string; type: 'default' | 'success' | 'warning' | 'info' }> = {
   [AnnouncementType.NOTICE]: { label: '通知', type: 'success' },
   [AnnouncementType.ACTIVITY]: { label: '活动', type: 'warning' },
   [AnnouncementType.UPDATE]: { label: '更新', type: 'info' },
+};
+
+/** 卡密状态 */
+export enum CardStatus {
+  AVAILABLE = 0,
+  USED = 1,
+  DISABLED = 2,
+}
+
+export const CARD_STATUS_MAP: Record<number, { label: string; type: 'success' | 'warning' | 'error' }> = {
+  [CardStatus.AVAILABLE]: { label: '可用', type: 'success' },
+  [CardStatus.USED]: { label: '已使用', type: 'warning' },
+  [CardStatus.DISABLED]: { label: '已禁用', type: 'error' },
 };
 
 // ============================================================
@@ -292,3 +307,109 @@ export interface CardImportParams {
 // ============================================================
 
 export type ShopSettings = Record<string, string>;
+
+// ============================================================
+// API 查询参数接口
+// ============================================================
+
+export interface ProductListParams {
+  page?: number;
+  size?: number;
+  categoryId?: number;
+  keyword?: string;
+  productType?: number;
+}
+
+export interface ProductAdminListParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  categoryId?: number;
+  status?: number;
+}
+
+export interface ProductFormData {
+  name: string;
+  categoryId?: number;
+  description?: string;
+  coverImage?: string;
+  images?: string[];
+  price: number;
+  productType: number;
+  stock: number;
+  sortOrder?: number;
+  status?: number;
+}
+
+export interface OrderListParams {
+  page?: number;
+  size?: number;
+  paymentStatus?: number;
+  deliveryStatus?: number;
+}
+
+export interface OrderAdminListParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  paymentStatus?: number;
+}
+
+export interface OrderDeliveryParams {
+  deliveryInfo: string;
+  adminRemark?: string;
+}
+
+export interface CardListParams {
+  page?: number;
+  size?: number;
+  productId?: number;
+  status?: number;
+}
+
+export interface CategoryListParams {
+  page?: number;
+  size?: number;
+}
+
+export interface CategoryFormData {
+  name: string;
+  icon?: string;
+  sortOrder?: number;
+  status?: number;
+}
+
+export interface DisputeListParams {
+  page?: number;
+  size?: number;
+  status?: number;
+  orderNo?: string;
+}
+
+export interface DisputeHandleData {
+  status: number;
+  adminNote: string;
+}
+
+export interface AnnouncementListParams {
+  page?: number;
+  size?: number;
+  title?: string;
+  type?: number;
+  status?: number;
+}
+
+export interface AnnouncementFormData {
+  title: string;
+  type: number;
+  content?: string;
+  status: number;
+  isTop: number;
+}
+
+export interface UserListParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  status?: number;
+}

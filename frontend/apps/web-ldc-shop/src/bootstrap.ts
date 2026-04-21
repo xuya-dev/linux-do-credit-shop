@@ -27,6 +27,10 @@ import { router } from './router';
 async function bootstrap(namespace: string) {
   const app = createApp(App);
 
+  app.config.errorHandler = (err, instance, info) => {
+    console.error('[Vue Error]', info, err);
+  };
+
   // 注册前台用户端必须的轻量级 Naive UI 组件
   app.component('NDropdown', NDropdown);
   app.component('NAvatar', NAvatar);
@@ -86,21 +90,26 @@ async function bootstrap(namespace: string) {
         { initSetupVbenForm },
         { registerLoadingDirective },
         { initTippy },
-        {
-          NGrid, NGi, NCard, NDataTable,
-          NForm, NFormItem, NTag, NH3, NText,
-          NSwitch, NSelect, NSpace: NSpaceAdmin,
-          NInput, NInputNumber: NInputNumberAdmin,
-          NButton: NButtonAdmin, NModal: NModalAdmin,
-          NSpin: NSpinAdmin,
-        },
       ] = await Promise.all([
         import('./adapter/component'),
         import('./adapter/form'),
         import('@vben/common-ui'),
         import('@vben/common-ui/es/tippy'),
-        import('naive-ui'),
       ]);
+
+      const { default: NGrid } = await import('naive-ui/es/grid');
+      const { default: NGi } = await import('naive-ui/es/grid/src/Gi');
+      const { default: NCard } = await import('naive-ui/es/card');
+      const { default: NDataTable } = await import('naive-ui/es/data-table');
+      const { default: NForm } = await import('naive-ui/es/form');
+      const { default: NFormItem } = await import('naive-ui/es/form/src/FormItem');
+      const { default: NTag } = await import('naive-ui/es/tag');
+      const { default: NH3 } = await import('naive-ui/es/typography/src/H');
+      const { default: NText } = await import('naive-ui/es/typography/src/Text');
+      const { default: NSwitch } = await import('naive-ui/es/switch');
+      const { default: NSelect } = await import('naive-ui/es/select');
+      const { default: NSpace } = await import('naive-ui/es/space');
+      const { default: NInput } = await import('naive-ui/es/input');
 
       // 注册管理端所需的 Naive UI 组件
       app.component('NGrid', NGrid);
@@ -114,12 +123,8 @@ async function bootstrap(namespace: string) {
       app.component('NText', NText);
       app.component('NSwitch', NSwitch);
       app.component('NSelect', NSelect);
-      app.component('NSpace', NSpaceAdmin);
+      app.component('NSpace', NSpace);
       app.component('NInput', NInput);
-      app.component('NInputNumber', NInputNumberAdmin);
-      app.component('NButton', NButtonAdmin);
-      app.component('NModal', NModalAdmin);
-      app.component('NSpin', NSpinAdmin);
 
       await initComponentAdapter();
       await initSetupVbenForm();

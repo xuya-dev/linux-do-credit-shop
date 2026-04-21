@@ -21,8 +21,9 @@ async function loadCategories() {
   try {
     const res = await categoryApi.adminList({ page: 1, size: 100 });
     categories.value = res?.records || [];
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }

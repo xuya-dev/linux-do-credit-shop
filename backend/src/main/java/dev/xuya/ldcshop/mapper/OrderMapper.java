@@ -5,6 +5,7 @@ import dev.xuya.ldcshop.entity.Order;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 每日销售额列表 / Daily sales list
      */
     @Select("SELECT DATE(created_at) AS date, IFNULL(SUM(total_amount), 0) AS amount " +
-            "FROM orders " +
+            "FROM ldc_order " +
             "WHERE payment_status = 1 AND deleted = 0 " +
             "AND created_at BETWEEN #{startDate} AND #{endDate} " +
             "GROUP BY DATE(created_at) ORDER BY date")
@@ -39,7 +40,7 @@ public interface OrderMapper extends BaseMapper<Order> {
      *
      * @return 各状态数量 / Count by status
      */
-    @Select("SELECT payment_status, COUNT(*) AS count FROM orders WHERE deleted = 0 GROUP BY payment_status")
+    @Select("SELECT payment_status, COUNT(*) AS count FROM ldc_order WHERE deleted = 0 GROUP BY payment_status")
     List<Map<String, Object>> selectPaymentStatusDistribution();
 
     /**
@@ -50,7 +51,7 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 统计结果 / Statistics result
      */
     @Select("SELECT COUNT(*) AS orderCount, IFNULL(SUM(total_amount), 0) AS totalAmount " +
-            "FROM orders " +
+            "FROM ldc_order " +
             "WHERE payment_status = 1 AND deleted = 0 " +
             "AND paid_at BETWEEN #{todayStart} AND #{todayEnd}")
     Map<String, Object> selectTodayStats(@Param("todayStart") LocalDateTime todayStart,
@@ -63,7 +64,7 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 销量排行 / Sales ranking
      */
     @Select("SELECT product_name, SUM(quantity) AS totalQuantity, SUM(total_amount) AS totalAmount " +
-            "FROM orders WHERE payment_status = 1 AND deleted = 0 " +
+            "FROM ldc_order WHERE payment_status = 1 AND deleted = 0 " +
             "GROUP BY product_id, product_name ORDER BY totalQuantity DESC LIMIT #{limit}")
     List<Map<String, Object>> selectProductSalesRank(@Param("limit") int limit);
 
@@ -73,10 +74,47 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 分类销售数据 / Category sales data
      */
     @Select("SELECT c.name AS categoryName, IFNULL(SUM(o.total_amount), 0) AS totalAmount " +
-            "FROM orders o " +
-            "LEFT JOIN product p ON o.product_id = p.id " +
-            "LEFT JOIN category c ON p.category_id = c.id " +
+            "FROM ldc_order o " +
+            "LEFT JOIN ldc_product p ON o.product_id = p.id " +
+            "LEFT JOIN ldc_category c ON p.category_id = c.id " +
             "WHERE o.payment_status = 1 AND o.deleted = 0 " +
             "GROUP BY c.id, c.name ORDER BY totalAmount DESC")
     List<Map<String, Object>> selectCategorySalesDistribution();
+
+    /**
+     * 原子确认支付 / Atomically confirm payment
+     * 仅当订单为未支付状态时才能确认成功
+     *
+     * @param outTradeNo    商户业务单号 / Merchant out trade number
+     * @param tradeNo       LDC平台交易号 / LDC trade number
+     * @param deliveryStatus 发货状态 / Delivery status
+     * @param deliveredAt   发货时间 / Delivered time
+     * @return 影响行数 / Affected rows
+     */
+    @Update("UPDATE ldc_order SET payment_status = 1, ldc_trade_no = #{tradeNo}, paid_at = NOW(), " +
+            "delivery_status = #{deliveryStatus}, delivered_at = #{deliveredAt} " +
+            "WHERE ldc_out_trade_no = #{outTradeNo} AND payment_status = 0 AND deleted = 0")
+    int atomicConfirmPayment(@Param("outTradeNo") String outTradeNo,
+                             @Param("tradeNo") String tradeNo,
+                             @Param("deliveryStatus") int deliveryStatus,
+                             @Param("deliveredAt") LocalDateTime deliveredAt);
+
+    /**
+     * 查询超时未支付订单 / Query expired unpaid orders
+     *
+     * @param deadline 截止时间 / Deadline
+     * @return 超时订单列表 / Expired order list
+     */
+    @Select("SELECT id, order_no, product_id, product_type, quantity FROM ldc_order " +
+            "WHERE payment_status = 0 AND created_at < #{deadline} AND deleted = 0")
+    List<Order> selectExpiredUnpaidOrders(@Param("deadline") LocalDateTime deadline);
+
+    /**
+     * 原子关闭订单(仅未支付可关闭) / Atomically close order (only unpaid can be closed)
+     *
+     * @param id 订单ID / Order ID
+     * @return 影响行数 / Affected rows
+     */
+    @Update("UPDATE ldc_order SET payment_status = 3 WHERE id = #{id} AND payment_status = 0 AND deleted = 0")
+    int atomicCloseOrder(@Param("id") Long id);
 }

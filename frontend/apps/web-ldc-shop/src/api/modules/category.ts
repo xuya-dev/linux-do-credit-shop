@@ -1,15 +1,15 @@
-import type { Category } from '#/api/types';
+import type { Category, CategoryFormData, CategoryListParams, PaginatedResult } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export const categoryApi = {
   userList: () => requestClient.get<Category[]>('/user/categories'),
 
-  adminList: (params: any) =>
-    requestClient.get('/admin/categories', { params }),
-  adminCreate: (data: any) => requestClient.post('/admin/categories', data),
-  adminUpdate: (id: number, data: any) =>
-    requestClient.put(`/admin/categories/${id}`, data),
+  adminList: (params: CategoryListParams) =>
+    requestClient.get<PaginatedResult<Category>>('/admin/categories', { params }),
+  adminCreate: (data: CategoryFormData) => requestClient.post<Category>('/admin/categories', data),
+  adminUpdate: (id: number, data: CategoryFormData) =>
+    requestClient.put<Category>(`/admin/categories/${id}`, data),
   adminDelete: (id: number) =>
     requestClient.delete(`/admin/categories/${id}`),
 };

@@ -1,6 +1,8 @@
 package dev.xuya.ldcshop.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
  * @author xuya
  */
 @Data
-@TableName("order_card")
+@TableName("ldc_order_card")
 public class OrderCard {
 
     /** ID */
@@ -28,5 +30,6 @@ public class OrderCard {
     private Long cardId;
 
     /** 创建时间 / Created Time */
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 }

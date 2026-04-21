@@ -1,4 +1,4 @@
-import type { PaginatedResult, Product } from '#/api/types';
+import type { PaginatedResult, Product, ProductAdminListParams, ProductFormData } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
@@ -13,10 +13,10 @@ export const productApi = {
 
   detail: (id: number) => requestClient.get<Product>(`/user/products/${id}`),
 
-  adminList: (params: any) => requestClient.get('/admin/products', { params }),
-  adminCreate: (data: any) => requestClient.post('/admin/products', data),
-  adminUpdate: (id: number, data: any) =>
-    requestClient.put(`/admin/products/${id}`, data),
+  adminList: (params: ProductAdminListParams) => requestClient.get<PaginatedResult<Product>>('/admin/products', { params }),
+  adminCreate: (data: ProductFormData) => requestClient.post<Product>('/admin/products', data),
+  adminUpdate: (id: number, data: ProductFormData) =>
+    requestClient.put<Product>(`/admin/products/${id}`, data),
   adminDelete: (id: number) => requestClient.delete(`/admin/products/${id}`),
   adminUpdateStatus: (id: number, status: number) =>
     requestClient.put(`/admin/products/${id}/status`, null, {

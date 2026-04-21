@@ -1,4 +1,4 @@
-package dev.xuya.ldcshop.config;
+package dev.xuya.ldcshop.common.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
@@ -25,7 +25,10 @@ public class MyBatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        PaginationInnerInterceptor paginationInterceptor = new PaginationInnerInterceptor(DbType.MYSQL);
+        paginationInterceptor.setMaxLimit(100L);
+        paginationInterceptor.setOverflow(false);
+        interceptor.addInnerInterceptor(paginationInterceptor);
         return interceptor;
     }
 

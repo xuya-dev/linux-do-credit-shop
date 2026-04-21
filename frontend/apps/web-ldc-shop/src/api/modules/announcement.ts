@@ -1,13 +1,9 @@
-import type { Announcement, PaginatedResult } from '#/api/types';
+import type { Announcement, AnnouncementFormData, AnnouncementListParams, PaginatedResult } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export const announcementApi = {
-  userList: (params: {
-    page?: number;
-    size?: number;
-    type?: number;
-  }) =>
+  userList: (params: AnnouncementListParams) =>
     requestClient.get<PaginatedResult<Announcement>>('/user/announcements', {
       params,
     }),
@@ -20,14 +16,14 @@ export const announcementApi = {
       params: { limit },
     }),
 
-  adminList: (params: any) =>
-    requestClient.get('/admin/announcements', { params }),
+  adminList: (params: AnnouncementListParams) =>
+    requestClient.get<PaginatedResult<Announcement>>('/admin/announcements', { params }),
   adminDetail: (id: number) =>
-    requestClient.get(`/admin/announcements/${id}`),
-  adminCreate: (data: any) =>
-    requestClient.post('/admin/announcements', data),
-  adminUpdate: (id: number, data: any) =>
-    requestClient.put(`/admin/announcements/${id}`, data),
+    requestClient.get<Announcement>(`/admin/announcements/${id}`),
+  adminCreate: (data: AnnouncementFormData) =>
+    requestClient.post<Announcement>('/admin/announcements', data),
+  adminUpdate: (id: number, data: AnnouncementFormData) =>
+    requestClient.put<Announcement>(`/admin/announcements/${id}`, data),
   adminDelete: (id: number) =>
     requestClient.delete(`/admin/announcements/${id}`),
   adminPublish: (id: number) =>

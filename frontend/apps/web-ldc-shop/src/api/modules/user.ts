@@ -1,9 +1,9 @@
-import type { PaginatedResult, UserInfo } from '#/api/types';
+import type { PaginatedResult, UserListParams, UserInfo } from '#/api/types';
 
 import { requestClient } from '#/api/request';
 
 export const userApi = {
-  adminList: (params: any) => requestClient.get<PaginatedResult<UserInfo>>('/admin/users', { params }),
+  adminList: (params: UserListParams) => requestClient.get<PaginatedResult<UserInfo>>('/admin/users', { params }),
   adminUpdateStatus: (id: number, status: number) =>
     requestClient.put(`/admin/users/${id}/status`, null, { params: { status } }),
   adminUpdateRole: (id: number, role: string) =>

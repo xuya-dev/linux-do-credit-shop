@@ -5,27 +5,20 @@ import lombok.Getter;
 
 /**
  * 业务异常类 / Business Exception
- * 用于在业务逻辑中抛出可预期的异常
+ * 用于在业务逻辑中抛出可预期的错误，由全局异常处理器统一捕获
  *
  * @author xuya
  */
 @Getter
 public class BusinessException extends RuntimeException {
 
-    /**
-     * 错误状态码 / Error Status Code
-     */
     private final int code;
-
-    /**
-     * 错误信息 / Error Message
-     */
     private final String errorMessage;
 
     /**
-     * 通过 ResultCode 构造 / Construct with ResultCode
+     * 通过结果码构造 / Construct with ResultCode
      *
-     * @param resultCode 结果码 / result code
+     * @param resultCode 结果码 / Result code
      */
     public BusinessException(ResultCode resultCode) {
         super(resultCode.getMessage());
@@ -36,8 +29,8 @@ public class BusinessException extends RuntimeException {
     /**
      * 通过自定义状态码和消息构造 / Construct with custom code and message
      *
-     * @param code    状态码 / status code
-     * @param message 错误信息 / error message
+     * @param code    状态码 / Status code
+     * @param message 错误消息 / Error message
      */
     public BusinessException(int code, String message) {
         super(message);

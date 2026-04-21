@@ -3,15 +3,18 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
 import { useAccessStore } from '@vben/stores';
+import { useI18n } from '@vben/locales';
 
 import type { Product } from '#/api/types';
 import { PRODUCT_TYPE_MAP } from '#/api/types';
 import { orderApi, productApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
 const route = useRoute();
 const router = useRouter();
 const message = useMessage();
 const accessStore = useAccessStore();
+const { t } = useI18n();
 
 const product = ref<Product | null>(null);
 const loading = ref(true);
@@ -26,7 +29,7 @@ async function loadProduct() {
     product.value = await productApi.detail(Number(route.params.id));
     currentImage.value = 0;
   } catch {
-    message.error('加载商品失败');
+    message.error(t('page.user.loadProductFailed'));
   } finally {
     loading.value = false;
   }
@@ -42,7 +45,7 @@ async function handleBuy() {
   
   if (!product.value) return;
   if (!contactInfo.value) {
-    message.warning('请输入联系方式（如邮箱）确保商品送达');
+    message.warning(t('page.user.enterContact'));
     return;
   }
   
@@ -58,11 +61,11 @@ async function handleBuy() {
     if (payRes?.payUrl) {
       window.location.href = payRes.payUrl;
     } else {
-      message.success('订单创建成功');
+      message.success(t('page.user.orderCreated'));
       router.push('/orders');
     }
   } catch (e: any) {
-    message.error(e.message || '购买失败');
+    message.error(e.message || t('page.user.purchaseFailed'));
   } finally {
     buying.value = false;
   }
@@ -82,7 +85,7 @@ const allImages = computed(() => {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/home')">
-      <span>首页</span> &gt; <span>商品详情</span>
+      <span>{{ t('page.user.home') }}</span> &gt; <span>{{ t('page.user.productDetail') }}</span>
     </div>
 
     <n-spin v-if="loading" size="large" class="loading-spin" />
@@ -94,8 +97,8 @@ const allImages = computed(() => {
           <!-- 左侧预览图 -->
           <div class="gallery-col">
             <div class="main-img-box">
-              <img v-if="allImages.length" :src="allImages[currentImage]" :alt="product.name" />
-              <div v-else class="img-placeholder">暂无图片</div>
+              <img v-if="allImages.length" :src="allImages[currentImage]" :alt="product.name" loading="lazy" />
+              <div v-else class="img-placeholder">{{ t('page.user.noImage') }}</div>
             </div>
             <div class="thumb-list" v-if="allImages.length > 1">
               <div
@@ -104,7 +107,7 @@ const allImages = computed(() => {
                 :class="['thumb-item', { active: currentImage === idx }]"
                 @click="currentImage = idx"
               >
-                <img :src="img" />
+                <img :src="img" loading="lazy" />
               </div>
             </div>
           </div>
@@ -115,24 +118,24 @@ const allImages = computed(() => {
             <div class="tag-row">
               <span class="faka-tag" v-if="product.categoryName">{{ product.categoryName }}</span>
               <span class="faka-tag outline" v-if="product.productType">
-                {{ PRODUCT_TYPE_MAP[product.productType]?.label || '普通产品' }}
+                {{ PRODUCT_TYPE_MAP[product.productType]?.i18nKey ? t(PRODUCT_TYPE_MAP[product.productType].i18nKey) : t('page.user.normalProduct') }}
               </span>
             </div>
             
             <div class="price-box">
-              <div class="price-label">售价</div>
+              <div class="price-label">{{ t('page.user.price') }}</div>
               <div class="price-val">
                 <span class="currency">💰</span>
                 {{ product.price }}
-                <span class="currency-unit">积分</span>
+                <span class="currency-unit">{{ t('page.user.credits') }}</span>
               </div>
-              <div class="stock-info">库存: <span>{{ product.stock }}</span></div>
+              <div class="stock-info">{{ t('page.user.stock') }}: <span>{{ product.stock }}</span></div>
             </div>
 
             <!-- 内嵌购买表单 (Faka 标志性特点) -->
             <div class="buy-form" v-if="product.status === 1">
               <div class="form-row">
-                <span class="form-label">购买数量</span>
+                <span class="form-label">{{ t('page.user.buyQuantity') }}</span>
                 <n-input-number
                   v-model:value="quantity"
                   :min="1"
@@ -142,20 +145,20 @@ const allImages = computed(() => {
                 />
               </div>
               <div class="form-row">
-                <span class="form-label">联系方式</span>
+                <span class="form-label">{{ t('page.user.contactInfo') }}</span>
                 <input 
                   type="text" 
                   v-model="contactInfo" 
                   class="faka-input" 
-                  placeholder="请输入您的邮箱/QQ/手机号" 
+                  :placeholder="t('page.user.contactPlaceholder')"
                 />
               </div>
               <div class="form-row align-start">
-                <span class="form-label">备注(选填)</span>
+                <span class="form-label">{{ t('page.user.remarkOptional') }}</span>
                 <textarea 
                   v-model="remark" 
                   class="faka-textarea" 
-                  placeholder="如有特殊要求请填写" 
+                  :placeholder="t('page.user.remarkPlaceholder')"
                 ></textarea>
               </div>
               
@@ -165,15 +168,15 @@ const allImages = computed(() => {
                   :disabled="buying"
                   @click="handleBuy"
                 >
-                  <span v-if="buying">处理中...</span>
-                  <span v-else>立即兑换 ({{ (product.price * quantity) }} 积分)</span>
+                  <span v-if="buying">{{ t('page.user.processing') }}</span>
+                  <span v-else>{{ t('page.user.buyNowCredits', { amount: product.price * quantity }) }}</span>
                 </button>
               </div>
             </div>
 
             <!-- 下架状态 -->
             <div v-else class="offline-box">
-              对不起，该商品已下架或售罄，无法购买！
+              {{ t('page.user.productOffline') }}
             </div>
           </div>
         </div>
@@ -181,32 +184,21 @@ const allImages = computed(() => {
 
       <!-- 详情内容区 -->
       <div class="faka-card mt-24">
-        <div class="card-header">商品介绍</div>
+        <div class="card-header">{{ t('page.user.productIntro') }}</div>
         <div class="card-body html-content">
-          <p class="desc-text">{{ product.description || '店主很懒，没有任何介绍。' }}</p>
+          <p class="desc-text">{{ product.description || t('page.user.noDescription') }}</p>
         </div>
       </div>
 
     </template>
-    <div v-else class="empty-state">未找到商品信息</div>
+    <div v-else class="empty-state">{{ t('page.user.productNotFound') }}</div>
   </div>
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1200px;
-  margin: 0 auto;
+/* 卡片覆盖：detail 页的卡片有额外 padding */
+.faka-card {
   padding: 24px;
-}
-
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 16px;
-  cursor: pointer;
-}
-.breadcrumb span:hover {
-  color: #1890ff;
 }
 
 .loading-spin {
@@ -215,26 +207,9 @@ const allImages = computed(() => {
   padding: 100px;
 }
 
-/* 卡片 */
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-  padding: 24px;
-}
-
-.mt-24 {
-  margin-top: 24px;
-}
-
 .card-header {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--faka-text-main, #333);
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
 }
 
 .card-body.html-content {
@@ -344,7 +319,7 @@ const allImages = computed(() => {
 .price-val {
   font-size: 28px;
   font-weight: 700;
-  color: #f5222d; /* 经典发卡红或蓝 */
+  color: #f5222d;
   display: flex;
   align-items: baseline;
   gap: 4px;
@@ -420,7 +395,7 @@ const allImages = computed(() => {
 
 .action-row {
   margin-top: 12px;
-  padding-left: 86px; /* label 70 + gap 16 */
+  padding-left: 86px;
 }
 .faka-buy-btn {
   background: #1890ff;
@@ -452,7 +427,7 @@ const allImages = computed(() => {
   text-align: center;
 }
 
-.empty-state { text-align: center; padding: 100px; color: var(--faka-text-sub); }
+.empty-state { padding: 100px; }
 
 @media (max-width: 768px) {
   .detail-grid { grid-template-columns: 1fr; }

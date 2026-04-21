@@ -1,7 +1,6 @@
-package dev.xuya.ldcshop.util;
+package dev.xuya.ldcshop.common.util;
 
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

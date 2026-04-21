@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import dev.xuya.ldcshop.entity.ProductCard;
 import dev.xuya.ldcshop.params.CardImportParams;
+import dev.xuya.ldcshop.results.CardListResult;
 
 /**
  * 卡密服务接口 / Product Card Service Interface
@@ -21,7 +22,7 @@ public interface ProductCardService extends IService<ProductCard> {
     int batchImport(CardImportParams params);
 
     /**
-     * 分页查询卡密列表 / Page query card list
+     * 分页查询卡密列表（脱敏）/ Page query card list (masked)
      *
      * @param page      页码 / Page number
      * @param size      每页数量 / Page size
@@ -29,7 +30,7 @@ public interface ProductCardService extends IService<ProductCard> {
      * @param status    状态（可选） / Status (optional)
      * @return 分页结果 / Page result
      */
-    IPage<ProductCard> pageCards(int page, int size, Long productId, Integer status);
+    IPage<CardListResult> pageCards(int page, int size, Long productId, Integer status);
 
     /**
      * 获取商品可用卡密数量 / Get available card count for product

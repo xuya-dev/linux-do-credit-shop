@@ -30,7 +30,7 @@ ENV VITE_GLOB_API_URL=$VITE_GLOB_API_URL
 RUN pnpm run build:shop
 
 # ---- 阶段2: 后端构建 / Stage 2: Backend Build ----
-FROM maven:3.9-eclipse-temurin-17 AS backend-builder
+FROM maven:3.9-eclipse-temurin-21 AS backend-builder
 
 WORKDIR /build/backend
 
@@ -48,7 +48,7 @@ RUN cd target \
     && rm -rf static-inject
 
 # ---- 阶段3: 运行 / Stage 3: Runtime ----
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 LABEL maintainer="xuya <dev@xuya.dev>"
 LABEL description="LDC Shop / LINUX DO Credit 商城 (全栈单容器)"
@@ -69,10 +69,10 @@ RUN addgroup -S ldcshop && adduser -S ldcshop -G ldcshop \
 USER ldcshop
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/api/auth/authorize-url || exit 1
+    CMD curl -f http://localhost:3000/actuator/health || exit 1
 
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError"
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseZGC -XX:+HeapDumpOnOutOfMemoryError"
 
 EXPOSE 3000
 
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} -jar app.jar"]

@@ -47,13 +47,16 @@ services:
       # ---- 支付 ----
       LDC_PAYMENT_CLIENT_ID: ${LDC_PAYMENT_CLIENT_ID:-}
       LDC_PAYMENT_CLIENT_SECRET: ${LDC_PAYMENT_CLIENT_SECRET:-}
+      LDC_PAYMENT_PUBLIC_KEY: ${LDC_PAYMENT_PUBLIC_KEY:-}
       LDC_PAYMENT_GATEWAY_URL: ${LDC_PAYMENT_GATEWAY_URL:-https://credit.linux.do/epay}
       LDC_PAYMENT_NOTIFY_URL: ${LDC_PAYMENT_NOTIFY_URL:-http://localhost/api/order/notify}
       LDC_PAYMENT_RETURN_URL: ${LDC_PAYMENT_RETURN_URL:-http://localhost/order/result}
+      # ---- CORS ----
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       # ---- 管理员 ----
       LDC_ADMIN_USERNAMES: ${LDC_ADMIN_USERNAMES:-admin,root}
       # ---- JVM ----
-      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseG1GC}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseZGC}
       TZ: Asia/Shanghai
     volumes:
       - app_logs:/app/logs

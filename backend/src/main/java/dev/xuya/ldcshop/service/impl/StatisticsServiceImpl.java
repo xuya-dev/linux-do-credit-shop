@@ -1,9 +1,7 @@
 package dev.xuya.ldcshop.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import dev.xuya.ldcshop.common.util.I18nUtil;
 import dev.xuya.ldcshop.entity.User;
 import dev.xuya.ldcshop.mapper.DisputeMapper;
 import dev.xuya.ldcshop.mapper.OrderMapper;
@@ -82,16 +80,17 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // 订单支付状态分布 / Payment status distribution
         List<Map<String, Object>> statusDist = orderMapper.selectPaymentStatusDistribution();
-        Map<Integer, String> statusNames = Map.of(
-                0, "待支付 / Pending",
-                1, "已支付 / Paid",
-                2, "已退款 / Refunded"
+        Map<Integer, String> statusKeys = Map.of(
+                0, "order.status_pending",
+                1, "order.status_paid",
+                2, "order.status_refunded",
+                3, "order.status_cancelled"
         );
         result.setPaymentStatusDistribution(statusDist.stream().map(m -> {
             DashboardResult.StatusDistributionItem item = new DashboardResult.StatusDistributionItem();
             Integer status = ((Number) m.get("payment_status")).intValue();
             item.setStatus(status);
-            item.setStatusName(statusNames.getOrDefault(status, "未知 / Unknown"));
+            item.setStatusName(I18nUtil.get(statusKeys.getOrDefault(status, "order.status_unknown")));
             item.setCount(((Number) m.get("count")).intValue());
             return item;
         }).collect(Collectors.toList()));
@@ -110,7 +109,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<Map<String, Object>> categoryDist = orderMapper.selectCategorySalesDistribution();
         result.setCategorySalesDistribution(categoryDist.stream().map(m -> {
             DashboardResult.CategorySalesItem item = new DashboardResult.CategorySalesItem();
-            item.setCategoryName(m.get("categoryName") != null ? m.get("categoryName").toString() : "未分类 / Uncategorized");
+            item.setCategoryName(m.get("categoryName") != null ? m.get("categoryName").toString() : I18nUtil.get("category.uncategorized"));
             item.setTotalAmount(new BigDecimal(m.get("totalAmount").toString()));
             return item;
         }).collect(Collectors.toList()));

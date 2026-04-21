@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 
 import type { Order } from '#/api/types';
 import {
@@ -11,10 +12,12 @@ import {
 
 import { orderApi } from '#/api/modules';
 import { copyToClipboard } from '#/utils/format';
+import '#/styles/faka-common.css';
 
 const route = useRoute();
 const router = useRouter();
 const message = useMessage();
+const { t } = useI18n();
 
 const order = ref<Order | null>(null);
 const loading = ref(true);
@@ -26,7 +29,7 @@ onMounted(async () => {
   try {
     order.value = await orderApi.detail(Number(route.params.id));
   } catch {
-    message.error('加载订单失败');
+    message.error(t('page.user.loadOrderFailed'));
   } finally {
     loading.value = false;
   }
@@ -35,9 +38,9 @@ onMounted(async () => {
 async function copyCard(text: string) {
   const ok = await copyToClipboard(text);
   if (ok) {
-    message.success('已复制到剪贴板');
+    message.success(t('page.user.copiedToClipboard'));
   } else {
-    message.error('复制失败');
+    message.error(t('page.user.copyFailed'));
   }
 }
 
@@ -50,7 +53,7 @@ function canCreateDispute() {
 
 async function createDispute() {
   if (!disputeReason.value.trim()) {
-    message.warning('请输入争议原因');
+    message.warning(t('page.user.enterDisputeReason'));
     return;
   }
   creatingDispute.value = true;
@@ -60,11 +63,11 @@ async function createDispute() {
       orderId: order.value!.id,
       reason: disputeReason.value,
     });
-    message.success('争议提交成功');
+    message.success(t('page.user.disputeSubmitted'));
     showDisputeModal.value = false;
     router.push('/disputes');
   } catch (e: any) {
-    message.error(e.message || '提交失败');
+    message.error(e.message || t('page.user.submitFailed'));
   } finally {
     creatingDispute.value = false;
   }
@@ -76,6 +79,8 @@ function goPay() {
     if (res?.payUrl) {
       window.location.href = res.payUrl;
     }
+  }).catch((err) => {
+    message.error(err.message || t('page.user.payInitFailed'));
   });
 }
 </script>
@@ -83,7 +88,7 @@ function goPay() {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/orders')">
-      <span>我的订单</span> &gt; <span>订单详情</span>
+      <span>{{ t('page.user.myOrders') }}</span> &gt; <span>{{ t('page.user.orderDetail') }}</span>
     </div>
 
     <div v-if="loading" class="loading-spin">
@@ -94,27 +99,27 @@ function goPay() {
       <!-- 提取结果（发卡核心模块） -->
       <div v-if="order.paymentStatus === 1" class="faka-card highlight-card mb-24">
         <div class="card-header highlight">
-          📝 订单已支付 / 提取卡密
+          📝 {{ t('page.user.orderPaidExtractCard') }}
           <div class="header-tags">
-            <span class="dlv-badge">状态：{{ DELIVERY_STATUS_MAP[order.deliveryStatus]?.label }}</span>
+            <span class="dlv-badge">{{ t('page.user.status') }}{{ t(DELIVERY_STATUS_MAP[order.deliveryStatus]?.i18nKey || '') }}</span>
           </div>
         </div>
         <div class="card-body">
           <div v-if="order.cardContents?.length" class="card-codes">
             <div v-for="(card, i) in order.cardContents" :key="i" class="code-box">
               <span class="code-text">{{ card }}</span>
-              <button class="faka-btn plain sm" @click="copyCard(card)">复制卡密</button>
+              <button class="faka-btn plain sm" @click="copyCard(card)">{{ t('page.user.copyCard') }}</button>
             </div>
             <div class="alert-tip mt-12">
-              💡 提示：请妥善保管您的卡密，切勿泄露给他人。
+              💡 {{ t('page.user.cardTip') }}
             </div>
           </div>
           <div v-else class="empty-code">
             <div v-if="order.deliveryStatus === 0">
-              您的商品正在处理中，请稍后刷新查看...
+              {{ t('page.user.orderProcessing') }}
             </div>
             <div v-else>
-              没有检测到卡密信息。该商品可能属于人工发货或直充类型。
+              {{ t('page.user.noCardInfo') }}
             </div>
           </div>
         </div>
@@ -123,56 +128,56 @@ function goPay() {
       <!-- 订单基础信息 -->
       <div class="faka-card">
         <div class="card-header">
-          订单信息
+          {{ t('page.user.orderInfo') }}
           <span :class="['status-tag-sm', 'status-' + order.paymentStatus]" style="margin-left:8px;">
-            {{ PAYMENT_STATUS_MAP[order.paymentStatus]?.label }}
+            {{ t(PAYMENT_STATUS_MAP[order.paymentStatus]?.i18nKey || '') }}
           </span>
         </div>
         <div class="card-body order-info-grid">
           <div class="info-item">
-            <label>订单编号：</label>
+            <label>{{ t('page.user.orderNumber') }}</label>
             <span>{{ order.orderNo }}</span>
           </div>
           <div class="info-item">
-            <label>商品名称：</label>
+            <label>{{ t('page.user.productName') }}</label>
             <span>{{ order.productName }}</span>
           </div>
           <div class="info-item">
-            <label>购买单价：</label>
-            <span>{{ order.unitPrice }} 积分</span>
+            <label>{{ t('page.user.unitPrice') }}</label>
+            <span>{{ order.unitPrice }} {{ t('page.user.credits') }}</span>
           </div>
           <div class="info-item">
-            <label>购买数量：</label>
+            <label>{{ t('page.user.purchaseQuantity') }}</label>
             <span>{{ order.quantity }}</span>
           </div>
           <div class="info-item">
-            <label>实付金额：</label>
-            <span class="highlight-price">{{ order.totalAmount }} 积分</span>
+            <label>{{ t('page.user.paidAmount') }}</label>
+            <span class="highlight-price">{{ order.totalAmount }} {{ t('page.user.credits') }}</span>
           </div>
           <div class="info-item">
-            <label>下单时间：</label>
+            <label>{{ t('page.user.orderTime') }}</label>
             <span>{{ order.createdAt }}</span>
           </div>
           <div class="info-item" v-if="order.contactInfo">
-            <label>预留联系：</label>
+            <label>{{ t('page.user.reservedContact') }}</label>
             <span>{{ order.contactInfo }}</span>
           </div>
           <div class="info-item" v-if="order.remark">
-            <label>订单备注：</label>
+            <label>{{ t('page.user.orderRemark') }}</label>
             <span>{{ order.remark }}</span>
           </div>
           <div class="info-item" v-if="order.deliveryInfo">
-            <label>发货详情：</label>
+            <label>{{ t('page.user.deliveryDetail') }}</label>
             <span>{{ order.deliveryInfo }}</span>
           </div>
         </div>
         <div class="card-footer actions">
           <button v-if="order.paymentStatus === 0" class="faka-btn primary" @click="goPay">
-            立即支付 ({{ order.totalAmount }} 积分)
+            {{ t('page.user.payNow', { amount: order.totalAmount }) }}
           </button>
-          
+
           <button v-if="canCreateDispute()" class="faka-btn warning outline" @click="showDisputeModal = true">
-            发起售后争议
+            {{ t('page.user.fileDispute') }}
           </button>
         </div>
       </div>
@@ -180,25 +185,25 @@ function goPay() {
     </template>
 
     <div v-else class="empty-state">
-      找不到该订单
+      {{ t('page.user.orderNotFound') }}
     </div>
 
     <!-- 发起争议弹窗 -->
-    <n-modal v-model:show="showDisputeModal" preset="card" title="申请售后" style="max-width: 440px" class="faka-modal">
+    <n-modal v-model:show="showDisputeModal" preset="card" :title="t('page.user.applyAfterSale')" style="max-width: 440px" class="faka-modal">
       <div class="modal-body">
-        <label class="modal-label">争议原因</label>
-        <textarea 
-          v-model="disputeReason" 
-          class="faka-textarea w-full" 
-          placeholder="请详细描述卡密无效或缺失等情况，以便卖家核实。" 
+        <label class="modal-label">{{ t('page.user.disputeReason') }}</label>
+        <textarea
+          v-model="disputeReason"
+          class="faka-textarea w-full"
+          :placeholder="t('page.user.disputeReasonPlaceholder')"
           rows="4"
         ></textarea>
       </div>
       <template #action>
         <div class="modal-actions">
-          <button class="faka-btn plain" @click="showDisputeModal = false">取消</button>
+          <button class="faka-btn plain" @click="showDisputeModal = false">{{ t('page.user.cancel') }}</button>
           <button class="faka-btn warning" @click="createDispute" :disabled="creatingDispute">
-            {{ creatingDispute ? '提交中...' : '提交售后记录' }}
+            {{ creatingDispute ? t('page.user.submitting') : t('page.user.submitAfterSale') }}
           </button>
         </div>
       </template>
@@ -210,36 +215,20 @@ function goPay() {
 <style scoped>
 .faka-container {
   max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
 }
 
 .breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
   margin-bottom: 20px;
-  cursor: pointer;
 }
-.breadcrumb span:hover { color: #1890ff; }
 
 .mb-24 { margin-bottom: 24px; }
 .mt-12 { margin-top: 12px; }
 
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-}
 .highlight-card {
   border: 1px solid #91d5ff;
 }
 
 .card-header {
-  padding: 16px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -331,27 +320,6 @@ function goPay() {
   padding: 2px 6px;
   border-radius: 2px;
 }
-.status-0 { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
-.status-1 { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
-.status-2 { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
-
-/* 按钮通用 */
-.faka-btn {
-  padding: 6px 20px;
-  font-size: 14px;
-  border-radius: 2px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: opacity 0.2s;
-}
-.faka-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.faka-btn:hover:not(:disabled) { opacity: 0.85; }
-
-.faka-btn.sm { font-size: 12px; padding: 4px 12px; }
-.faka-btn.primary { background: #1890ff; color: #fff; }
-.faka-btn.warning { background: #faad14; color: #fff; }
-.faka-btn.warning.outline { background: transparent; color: #faad14; border-color: #faad14; }
-.faka-btn.plain { background: transparent; border-color: var(--faka-border, #d9d9d9); color: var(--faka-text-main, #333); }
 
 /* Modal Elements */
 .modal-label {
@@ -380,7 +348,7 @@ function goPay() {
 }
 
 .loading-spin { padding: 80px; text-align: center; }
-.empty-state { padding: 80px; text-align: center; color: var(--faka-text-sub); }
+.empty-state { padding: 80px; text-align: center; }
 
 @media (max-width: 768px) {
   .order-info-grid { grid-template-columns: 1fr; }

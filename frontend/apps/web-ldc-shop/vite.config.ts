@@ -18,17 +18,23 @@ export default defineConfig(async () => {
         rolldownOptions: {
           output: {
             manualChunks(id: string) {
-              // 将 naive-ui 单独分包
-              if (id.includes('naive-ui')) {
+              if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) {
+                return 'echarts';
+              }
+              if (id.includes('node_modules/naive-ui')) {
                 return 'naive-ui';
               }
-              // 将 vben 核心库分包
-              if (id.includes('@vben/')) {
+              if (id.includes('node_modules/@vben/')) {
                 return 'vben-core';
               }
-              // 将 vue 生态分包
-              if (id.includes('node_modules/vue') || id.includes('node_modules/@vue')) {
+              if (id.includes('node_modules/vue/') || id.includes('node_modules/@vue/')) {
                 return 'vue-vendor';
+              }
+              if (id.includes('node_modules/@vueuse/')) {
+                return 'vueuse';
+              }
+              if (id.includes('node_modules/dayjs/')) {
+                return 'dayjs';
               }
             },
           },
@@ -37,4 +43,3 @@ export default defineConfig(async () => {
     },
   };
 });
-

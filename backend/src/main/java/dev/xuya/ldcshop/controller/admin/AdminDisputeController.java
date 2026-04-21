@@ -8,6 +8,7 @@ import dev.xuya.ldcshop.results.DisputeResult;
 import dev.xuya.ldcshop.service.DisputeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -41,7 +42,7 @@ public class AdminDisputeController {
      * 处理争议 / Handle dispute
      */
     @PutMapping("/{id}/handle")
-    public R<Void> handle(@PathVariable Long id, @RequestBody DisputeHandleParams params) {
+    public R<Void> handle(@PathVariable Long id, @Valid @RequestBody DisputeHandleParams params) {
         disputeService.handleDispute(id, params);
         return R.ok();
     }

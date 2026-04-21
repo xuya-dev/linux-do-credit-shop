@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public R<Void> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        log.warn("业务异常 / Business Exception: {} - URI: {} - Message: {}",
+        log.warn("Business Exception: {} - URI: {} - Message: {}",
                 e.getCode(), request.getRequestURI(), e.getErrorMessage());
         return R.fail(e.getCode(), e.getErrorMessage());
     }
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotLoginException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public R<Void> handleNotLoginException(NotLoginException e, HttpServletRequest request) {
-        log.warn("未登录访问 / Unauthorized Access - URI: {}", request.getRequestURI());
+        log.warn("Unauthorized Access - URI: {}", request.getRequestURI());
         return R.fail(ResultCode.UNAUTHORIZED);
     }
 
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotRoleException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public R<Void> handleNotRoleException(NotRoleException e, HttpServletRequest request) {
-        log.warn("角色权限不足 / Insufficient Role - URI: {} - Required Role: {}",
+        log.warn("Insufficient Role - URI: {} - Required Role: {}",
                 request.getRequestURI(), e.getRole());
         return R.fail(ResultCode.FORBIDDEN);
     }
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotPermissionException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public R<Void> handleNotPermissionException(NotPermissionException e, HttpServletRequest request) {
-        log.warn("权限不足 / Access Denied - URI: {} - Required Permission: {}",
+        log.warn("Access Denied - URI: {} - Required Permission: {}",
                 request.getRequestURI(), e.getPermission());
         return R.fail(ResultCode.FORBIDDEN);
     }
@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
-        log.warn("参数校验失败 / Validation Failed: {}", message);
+        log.warn("Validation Failed: {}", message);
         return R.fail(ResultCode.BAD_REQUEST.getCode(), message);
     }
 
@@ -91,7 +91,7 @@ public class GlobalExceptionHandler {
         String message = e.getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
-        log.warn("参数绑定失败 / Bind Failed: {}", message);
+        log.warn("Bind Failed: {}", message);
         return R.fail(ResultCode.BAD_REQUEST.getCode(), message);
     }
 
@@ -101,7 +101,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public R<Void> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.warn("非法参数 / Illegal Argument: {}", e.getMessage());
+        log.warn("Illegal Argument: {}", e.getMessage());
         return R.fail(ResultCode.BAD_REQUEST.getCode(), e.getMessage());
     }
 
@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public R<Void> handleException(Exception e, HttpServletRequest request) {
-        log.error("系统异常 / System Exception - URI: {}", request.getRequestURI(), e);
+        log.error("System Exception - URI: {}", request.getRequestURI(), e);
         return R.fail(ResultCode.FAIL);
     }
 }

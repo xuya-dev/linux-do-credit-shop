@@ -3,12 +3,14 @@ import { ref, onMounted, h, computed } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
+import type { Dispute, DisputeHandleData } from '#/api/types';
+import { DISPUTE_STATUS_MAP } from '#/api/types';
 import { disputeApi } from '#/api/modules';
 
 const { t } = useI18n();
 const message = useMessage();
 
-const disputes = ref<any[]>([]);
+const disputes = ref<Dispute[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
@@ -16,8 +18,8 @@ const total = ref(0);
 const searchForm = ref({ orderNo: '', status: null as number | null });
 
 const showHandle = ref(false);
-const selectedDispute = ref<any>(null);
-const handleForm = ref({ status: 1, adminNote: '' });
+const selectedDispute = ref<Dispute | null>(null);
+const handleForm = ref<DisputeHandleData>({ status: 1, adminNote: '' });
 
 const statusOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
@@ -26,13 +28,6 @@ const statusOptions = computed(() => [
   { label: t('page.admin.rejected'), value: 2 },
   { label: t('page.admin.platformIntervened'), value: 3 },
 ]);
-
-const disputeStatusMap = computed(() => ({
-  0: { label: t('page.admin.processing'), type: 'warning' as const },
-  1: { label: t('page.admin.accepted'), type: 'success' as const },
-  2: { label: t('page.admin.rejected'), type: 'error' as const },
-  3: { label: t('page.admin.platformIntervened'), type: 'info' as const },
-}));
 
 async function loadDisputes() {
   loading.value = true;
@@ -45,8 +40,9 @@ async function loadDisputes() {
     });
     disputes.value = res?.records || [];
     total.value = res?.total || 0;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.admin.operationFailed'));
   } finally {
     loading.value = false;
   }
@@ -83,7 +79,7 @@ const columns = computed(() => [
   {
     title: t('page.admin.status'), key: 'status', width: 110,
     render: (row: any) => {
-      const info = disputeStatusMap.value[row.status as keyof typeof disputeStatusMap.value] || { label: String(row.status), type: 'default' as const };
+      const info = DISPUTE_STATUS_MAP[row.status] || { label: String(row.status), type: 'default' as const };
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },

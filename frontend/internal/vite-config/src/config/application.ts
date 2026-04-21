@@ -72,7 +72,7 @@ function defineApplicationConfig(userConfigPromise?: DefineApplicationOptions) {
               : false,
           },
         },
-        target: 'es2015',
+        target: 'es2020',
       },
       css: createCssOptions(injectGlobalScss),
       plugins,

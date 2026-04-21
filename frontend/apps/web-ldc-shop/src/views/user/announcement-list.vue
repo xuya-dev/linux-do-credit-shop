@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useMessage } from 'naive-ui';
+import { useI18n } from '@vben/locales';
 import { announcementApi } from '#/api/modules';
+import '#/styles/faka-common.css';
 
 const router = useRouter();
+const message = useMessage();
+const { t } = useI18n();
 
 const announcements = ref<any[]>([]);
 const loading = ref(true);
@@ -12,8 +17,9 @@ onMounted(async () => {
   try {
     const res = await announcementApi.userList({ page: 1, size: 20 });
     announcements.value = res?.records || [];
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
+    message.error(e.message || t('page.user.loadAnnouncementsFailed'));
   } finally {
     loading.value = false;
   }
@@ -23,11 +29,11 @@ onMounted(async () => {
 <template>
   <div class="faka-container">
     <div class="breadcrumb" @click="router.push('/home')">
-      <span>首页</span> &gt; <span>站点公告</span>
+      <span>{{ t('page.user.home') }}</span> &gt; <span>{{ t('page.user.siteAnnouncements') }}</span>
     </div>
 
     <div class="faka-card">
-      <div class="card-header">公告列表</div>
+      <div class="card-header">{{ t('page.user.announcementList') }}</div>
       <div class="card-body">
         <n-spin v-if="loading" size="large" class="loading-spin" />
         
@@ -39,7 +45,7 @@ onMounted(async () => {
             @click="router.push(`/announcement/${ann.id}`)"
           >
             <div class="ann-title">
-              <span class="ann-badge">公告</span>
+              <span class="ann-badge">{{ t('page.user.announcement') }}</span>
               {{ ann.title }}
             </div>
             <div class="ann-date">{{ ann.createdAt }}</div>
@@ -47,7 +53,7 @@ onMounted(async () => {
         </div>
 
         <div v-else class="empty-state">
-          暂无公告信息
+          {{ t('page.user.noAnnouncements') }}
         </div>
       </div>
     </div>
@@ -55,34 +61,8 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.faka-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
-}
-.breadcrumb {
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-.breadcrumb span:hover { color: #1890ff; }
-
-.faka-card {
-  background: var(--faka-bg-header, #ffffff);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  color: var(--faka-text-main, #333);
-}
-.card-header {
-  padding: 16px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--faka-border, #f0f0f0);
-}
-.card-body { padding: 8px 0; }
-.loading-spin { display: flex; justify-content: center; padding: 60px; }
-.empty-state { text-align: center; padding: 60px; color: var(--faka-text-sub); }
+.faka-container { max-width: 1000px; }
+.breadcrumb { margin-bottom: 20px; }
 
 .ann-list {
   display: flex;
