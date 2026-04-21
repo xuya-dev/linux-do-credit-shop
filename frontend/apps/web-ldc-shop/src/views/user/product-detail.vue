@@ -114,35 +114,42 @@ const allImages = computed(() => {
 
           <!-- 右侧信息与购买区 -->
           <div class="info-col">
-            <h1 class="product-title">{{ product.name }}</h1>
-            <div class="tag-row">
-              <span class="faka-tag" v-if="product.categoryName">{{ product.categoryName }}</span>
-              <span class="faka-tag outline" v-if="product.productType">
-                {{ PRODUCT_TYPE_MAP[product.productType]?.i18nKey ? t(PRODUCT_TYPE_MAP[product.productType].i18nKey) : t('page.user.normalProduct') }}
-              </span>
+            <div class="info-header">
+              <h1 class="product-title">{{ product.name }}</h1>
+              <div class="tag-row">
+                <span class="faka-tag category-tag" v-if="product.categoryName">
+                  <span class="tag-icon">🏷️</span>{{ product.categoryName }}
+                </span>
+                <span class="faka-tag type-tag" v-if="product.productType">
+                  <span class="tag-icon">📦</span>{{ PRODUCT_TYPE_MAP[product.productType]?.i18nKey ? t(PRODUCT_TYPE_MAP[product.productType].i18nKey) : t('page.user.normalProduct') }}
+                </span>
+              </div>
             </div>
             
             <div class="price-box">
-              <div class="price-label">{{ t('page.user.price') }}</div>
-              <div class="price-val">
-                <span class="currency">💰</span>
-                {{ product.price }}
-                <span class="currency-unit">{{ t('page.user.credits') }}</span>
+              <div class="price-main">
+                <span class="price-label">{{ t('page.user.price') }}</span>
+                <div class="price-val">
+                  <span class="currency">💰</span>
+                  <span class="price-number">{{ product.price }}</span>
+                  <span class="currency-unit">{{ t('page.user.credits') }}</span>
+                </div>
               </div>
-              <div class="stock-info">{{ t('page.user.stock') }}: <span>{{ product.stock }}</span></div>
+              <div class="stock-info" :class="{ 'low-stock': product.stock <= 10 }">
+                <span class="stock-label">{{ t('page.user.stock') }}</span>
+                <span class="stock-value">{{ product.stock }}</span>
+              </div>
             </div>
 
             <!-- 内嵌购买表单 (Faka 标志性特点) -->
             <div class="buy-form" v-if="product.status === 1">
               <div class="form-row">
                 <span class="form-label">{{ t('page.user.buyQuantity') }}</span>
-                <n-input-number
-                  v-model:value="quantity"
-                  :min="1"
-                  :max="product.stock"
-                  button-placement="both"
-                  class="faka-input-number"
-                />
+                <div class="quantity-selector">
+                  <button class="qty-btn" @click="quantity > 1 && quantity--" :disabled="quantity <= 1">−</button>
+                  <input type="number" v-model.number="quantity" class="qty-input" :min="1" :max="product.stock" />
+                  <button class="qty-btn" @click="quantity < product.stock && quantity++" :disabled="quantity >= product.stock">+</button>
+                </div>
               </div>
               <div class="form-row">
                 <span class="form-label">{{ t('page.user.contactInfo') }}</span>
@@ -223,20 +230,29 @@ const allImages = computed(() => {
 .detail-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
-  gap: 32px;
+  gap: 40px;
+}
+
+/* 详情主卡片增强 */
+.detail-main-card {
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* 左侧图库 */
 .gallery-col {
   width: 100%;
+  padding: 24px 0 24px 24px;
 }
 .main-img-box {
   width: 100%;
   aspect-ratio: 1;
-  border: 1px solid var(--faka-border, #f0f0f0);
-  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
   overflow: hidden;
-  background: var(--faka-tag-bg, #fcfcfc);
+  background: #fafafa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,67 +295,131 @@ const allImages = computed(() => {
 .info-col {
   display: flex;
   flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0;
 }
+
+.info-header {
+  padding: 24px 24px 0;
+}
+
 .product-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  line-height: 1.4;
+  color: var(--faka-text-main, #1a1a1a);
 }
+
 .tag-row {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-}
-.faka-tag {
-  background: #e6f7ff;
-  color: #1890ff;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 2px;
-}
-.faka-tag.outline {
-  background: transparent;
-  border: 1px solid #1890ff;
+  flex-wrap: wrap;
 }
 
-/* 发卡价格大区块 */
+.faka-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.faka-tag .tag-icon {
+  font-size: 11px;
+}
+
+.faka-tag.category-tag {
+  background: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #bae7ff;
+}
+
+.faka-tag.type-tag {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+/* 价格大区块 - 美化 */
 .price-box {
-  background: var(--faka-tag-bg, #f8f8f8);
-  padding: 16px 20px;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #fff5f0 0%, #fff8f5 100%);
+  padding: 20px 24px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 32px;
+  justify-content: space-between;
+  margin: 0 24px 24px;
+  border: 1px solid #ffd8bf;
 }
+
+.price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .price-label {
   font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
+  color: #595959;
+  font-weight: 500;
 }
+
 .price-val {
-  font-size: 28px;
-  font-weight: 700;
-  color: #f5222d;
   display: flex;
   align-items: baseline;
   gap: 4px;
 }
-.currency { font-size: 18px; }
-.currency-unit { font-size: 14px; font-weight: 400; color: #f5222d; }
-.stock-info {
-  margin-left: auto;
-  font-size: 13px;
-  color: var(--faka-text-sub, #8c8c8c);
+
+.price-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #f5222d;
+  letter-spacing: -1px;
 }
-.stock-info span { color: var(--faka-text-main, #333); font-weight: 600; }
+
+.currency { font-size: 20px; }
+.currency-unit { font-size: 14px; font-weight: 500; color: #f5222d; }
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.stock-label {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.stock-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stock-info.low-stock .stock-value {
+  color: #f5222d;
+}
+
+.stock-info.low-stock .stock-label {
+  color: #f5222d;
+}
 
 /* 购买表单结构 */
 .buy-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed var(--faka-border, #f0f0f0);
+  padding: 24px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+  border-radius: 0 0 8px 8px;
 }
 .form-row {
   display: flex;
@@ -352,37 +432,82 @@ const allImages = computed(() => {
 .form-label {
   width: 70px;
   font-size: 13px;
-  color: var(--faka-text-sub, #595959);
+  color: #595959;
   text-align: right;
   flex-shrink: 0;
 }
 
-.faka-input-number {
-  width: 180px;
-}
-
-/* 修复 NInputNumber 在 flex 容器中的对齐 */
-.faka-input-number :deep(.n-input__prefix),
-.faka-input-number :deep(.n-input__suffix) {
+/* 自定义数量选择器 */
+.quantity-selector {
   display: flex;
   align-items: center;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 140px;
+  background: #fff;
 }
 
-.faka-input-number :deep(.n-input__input-el) {
+.qty-btn {
+  width: 36px;
+  height: 32px;
+  border: none;
+  background: #fafafa;
+  color: #595959;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.qty-btn:hover {
+  background: #e6e6e6;
+  color: #1890ff;
+}
+
+.qty-btn:disabled {
+  color: #d9d9d9;
+  cursor: not-allowed;
+  background: #fafafa;
+}
+
+.qty-input {
+  flex: 1;
+  height: 32px;
+  border: none;
+  border-left: 1px solid #d9d9d9;
+  border-right: 1px solid #d9d9d9;
   text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  outline: none;
+  background: #fff;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .faka-input {
   flex: 1;
   max-width: 320px;
-  height: 36px;
-  border: 1px solid var(--faka-border, #d9d9d9);
-  border-radius: 2px;
+  height: 38px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
   padding: 0 12px;
-  background: var(--faka-bg-header, #fff);
-  color: var(--faka-text-main, #333);
+  background: #fff;
+  color: #333;
   font-size: 13px;
   outline: none;
+  transition: all 0.2s;
 }
 .faka-input:focus {
   border-color: #1890ff;
@@ -393,39 +518,50 @@ const allImages = computed(() => {
   flex: 1;
   max-width: 320px;
   height: 60px;
-  border: 1px solid var(--faka-border, #d9d9d9);
-  border-radius: 2px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
   padding: 6px 12px;
-  background: var(--faka-bg-header, #fff);
-  color: var(--faka-text-main, #333);
+  background: #fff;
+  color: #333;
   font-size: 13px;
   outline: none;
   resize: vertical;
+  transition: all 0.2s;
 }
-.faka-textarea:focus { border-color: #1890ff; }
+.faka-textarea:focus { 
+  border-color: #1890ff; 
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
 
 .action-row {
-  margin-top: 12px;
+  margin-top: 8px;
   padding-left: 86px;
 }
 .faka-buy-btn {
-  background: #1890ff;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
   color: #fff;
   border: none;
-  padding: 0 32px;
-  height: 40px;
+  padding: 0 40px;
+  height: 44px;
   font-size: 16px;
-  font-weight: 500;
-  border-radius: 2px;
+  font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
 }
 .faka-buy-btn:hover {
-  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+}
+.faka-buy-btn:active {
+  transform: translateY(0);
 }
 .faka-buy-btn:disabled {
   background: #d9d9d9;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .offline-box {
@@ -433,16 +569,20 @@ const allImages = computed(() => {
   background: #fffbe6;
   border: 1px solid #ffe58f;
   color: #faad14;
-  margin-top: 24px;
-  border-radius: 2px;
+  margin: 24px;
+  border-radius: 8px;
   text-align: center;
+  font-weight: 500;
 }
 
 .empty-state { padding: 100px; }
 
 @media (max-width: 768px) {
-  .detail-grid { grid-template-columns: 1fr; }
-  .gallery-col { max-width: 360px; margin: 0 auto; }
+  .detail-grid { grid-template-columns: 1fr; gap: 24px; }
+  .gallery-col { max-width: 360px; margin: 0 auto; padding: 16px; }
+  .info-header { padding: 20px 20px 0; }
+  .price-box { margin: 0 20px 20px; padding: 16px 20px; }
+  .buy-form { padding: 20px; }
   .action-row { padding-left: 0; }
   .faka-input, .faka-textarea { max-width: 100%; }
 }
