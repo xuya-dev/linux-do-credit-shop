@@ -90,41 +90,29 @@ async function bootstrap(namespace: string) {
         { initSetupVbenForm },
         { registerLoadingDirective },
         { initTippy },
+        naiveUI,
       ] = await Promise.all([
         import('./adapter/component'),
         import('./adapter/form'),
         import('@vben/common-ui'),
         import('@vben/common-ui/es/tippy'),
+        import('naive-ui'),
       ]);
 
-      const { default: NGrid } = await import('naive-ui/es/grid');
-      const { default: NGi } = await import('naive-ui/es/grid/src/GridItem');
-      const { default: NCard } = await import('naive-ui/es/card');
-      const { default: NDataTable } = await import('naive-ui/es/data-table');
-      const { default: NForm } = await import('naive-ui/es/form');
-      const { default: NFormItem } = await import('naive-ui/es/form/src/FormItem');
-      const { default: NTag } = await import('naive-ui/es/tag');
-      const { NH3 } = await import('naive-ui/es/typography');
-      const { default: NText } = await import('naive-ui/es/typography/src/text');
-      const { default: NSwitch } = await import('naive-ui/es/switch');
-      const { default: NSelect } = await import('naive-ui/es/select');
-      const { default: NSpace } = await import('naive-ui/es/space');
-      const { default: NInput } = await import('naive-ui/es/input');
-
       // 注册管理端所需的 Naive UI 组件
-      app.component('NGrid', NGrid);
-      app.component('NGi', NGi);
-      app.component('NCard', NCard);
-      app.component('NDataTable', NDataTable);
-      app.component('NForm', NForm);
-      app.component('NFormItem', NFormItem);
-      app.component('NTag', NTag);
-      app.component('NH3', NH3);
-      app.component('NText', NText);
-      app.component('NSwitch', NSwitch);
-      app.component('NSelect', NSelect);
-      app.component('NSpace', NSpace);
-      app.component('NInput', NInput);
+      // 必须从 naive-ui 统一导入，确保注入上下文与 NConfigProvider 一致
+      app.component('NGrid', naiveUI.NGrid);
+      app.component('NGi', naiveUI.NGi);
+      app.component('NCard', naiveUI.NCard);
+      app.component('NDataTable', naiveUI.NDataTable);
+      app.component('NForm', naiveUI.NForm);
+      app.component('NFormItem', naiveUI.NFormItem);
+      app.component('NTag', naiveUI.NTag);
+      app.component('NText', naiveUI.NText);
+      app.component('NSwitch', naiveUI.NSwitch);
+      app.component('NSelect', naiveUI.NSelect);
+      app.component('NSpace', naiveUI.NSpace);
+      app.component('NInput', naiveUI.NInput);
 
       await initComponentAdapter();
       await initSetupVbenForm();
