@@ -35,4 +35,15 @@ public class SettingsResult {
     private String ldcPaymentNotifyUrl;
     /** 同步跳转URL / Payment Return URL */
     private String ldcPaymentReturnUrl;
+
+    /** OAuth Client ID */
+    private String ldcOAuthClientId;
+    /** OAuth Client Secret（脱敏）/ OAuth Client Secret (masked) */
+    private String ldcOAuthClientSecret;
+    /** OAuth 回调地址 / OAuth Redirect URI */
+    private String ldcOAuthRedirectUri;
+    /** OAuth 授权地址 / OAuth Authorize URL */
+    private String ldcOAuthAuthorizeUrl;
+    /** OAuth Token地址 / OAuth Token URL */
+    private String ldcOAuthTokenUrl;
 }

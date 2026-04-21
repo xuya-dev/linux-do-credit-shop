@@ -22,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ShopSettingServiceImpl implements ShopSettingService {
 
     private static final Set<String> SENSITIVE_KEYS = Set.of(
-            "ldc_payment_client_secret", "ldc_payment_private_key"
+            "ldc_payment_client_secret", "ldc_payment_private_key",
+            "ldc_oauth_client_secret"
     );
 
     private final ShopSettingMapper shopSettingMapper;
