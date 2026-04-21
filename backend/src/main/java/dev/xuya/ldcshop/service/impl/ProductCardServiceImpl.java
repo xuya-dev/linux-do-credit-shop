@@ -82,7 +82,11 @@ public class ProductCardServiceImpl extends ServiceImpl<ProductCardMapper, Produ
         }
         wrapper.orderByDesc(ProductCard::getCreatedAt);
         IPage<ProductCard> cardPage = productCardMapper.selectPage(new Page<>(page, size), wrapper);
-        return cardPage.convert(card -> BeanUtil.copyProperties(card, CardListResult.class));
+        return cardPage.convert(card -> {
+            CardListResult result = BeanUtil.copyProperties(card, CardListResult.class);
+            result.setCardContent(cryptoUtil.decrypt(card.getCardContent()));
+            return result;
+        });
     }
 
     /**

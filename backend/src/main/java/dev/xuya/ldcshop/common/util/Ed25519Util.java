@@ -127,18 +127,25 @@ public class Ed25519Util {
 
     /**
      * 去除 PEM 头尾标记并 Base64 解码 / Strip PEM headers and Base64 decode
+     * 支持 PEM 格式、裸 Base64、以及裸 32 字节原始种子
      *
      * @param keyBase64 PEM 或 Base64 编码的密钥 / PEM or Base64 encoded key
      * @return 解码后的原始字节 / Decoded raw bytes
      */
     private static byte[] stripPemAndDecode(String keyBase64) {
-        String cleaned = keyBase64
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replace("-----END PRIVATE KEY-----", "")
-            .replace("-----BEGIN PUBLIC KEY-----", "")
-            .replace("-----END PUBLIC KEY-----", "")
-            .replaceAll("\\s", "");
-        return Base64.decode(cleaned);
+        String trimmed = keyBase64.trim();
+        // PEM 格式：先去除头尾标记，再解码中间内容
+        if (trimmed.contains("-----BEGIN")) {
+            String cleaned = trimmed
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+            return Base64.decode(cleaned);
+        }
+        // 裸 Base64（可能是原始种子或 DER）
+        return Base64.decode(trimmed);
     }
 
     /**
