@@ -136,7 +136,7 @@ const columns = computed(() => [
       return h(NTag, { type: info.type, size: 'small' }, { default: () => info.label });
     },
   },
-  { title: t('page.admin.buyer'), key: 'username', width: 100 },
+  { title: t('page.admin.buyer'), key: 'buyerName', width: 100, render: (row: any) => h('span', {}, row.buyerName || '-') },
   {
     title: t('page.admin.contactInfoCol'), key: 'contactInfo', width: 140, ellipsis: { tooltip: true },
     render: (row: any) => h('span', { style: 'color:#666' }, row.contactInfo || '-'),
@@ -207,43 +207,83 @@ onMounted(loadOrders);
       </template>
     </n-modal>
 
-    <n-modal v-model:show="showDetail" :title="t('page.admin.orderDetail')" preset="card" style="width:600px">
+    <n-modal v-model:show="showDetail" :title="t('page.admin.orderDetail')" preset="card" style="width:640px">
       <n-spin :show="detailLoading">
         <template v-if="detailOrder">
-          <n-descriptions :column="2" bordered label-placement="left" size="small">
-            <n-descriptions-item :label="t('page.admin.orderNo')">
-              <span style="font-family:monospace">{{ detailOrder.orderNo }}</span>
-            </n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.buyer')">{{ detailOrder.buyerName || '-' }}</n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.productNameCol')">{{ detailOrder.productName }}</n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.quantityCol')">{{ detailOrder.quantity }}</n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.amount')">
-              <span style="font-weight:600;color:#2563eb">{{ detailOrder.totalAmount }}</span>
-            </n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.paymentStatus')">
-              <n-tag :type="(PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.type || 'default') as any" size="small">
-                {{ PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.label || detailOrder.paymentStatus }}
-              </n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.deliveryStatus')">
-              <n-tag :type="(DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.type || 'default') as any" size="small">
-                {{ DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.label || detailOrder.deliveryStatus }}
-              </n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.createdAt')">{{ detailOrder.createdAt }}</n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.contactInfoCol')" :span="2">{{ detailOrder.contactInfo || '-' }}</n-descriptions-item>
-            <n-descriptions-item :label="t('page.admin.remarkCol')" :span="2">{{ detailOrder.remark || '-' }}</n-descriptions-item>
-            <n-descriptions-item v-if="detailOrder.deliveryInfo" :label="t('page.admin.deliveryInfo')" :span="2">{{ detailOrder.deliveryInfo }}</n-descriptions-item>
-            <n-descriptions-item v-if="detailOrder.adminRemark" :label="t('page.admin.adminRemark')" :span="2">{{ detailOrder.adminRemark }}</n-descriptions-item>
-            <n-descriptions-item v-if="detailOrder.paidAt" :label="t('page.admin.paidAt')">{{ detailOrder.paidAt }}</n-descriptions-item>
-            <n-descriptions-item v-if="detailOrder.deliveredAt" :label="t('page.admin.deliveredAt')">{{ detailOrder.deliveredAt }}</n-descriptions-item>
-          </n-descriptions>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.orderNo') }}</span>
+              <span class="detail-value" style="font-family:monospace">{{ detailOrder.orderNo }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.buyer') }}</span>
+              <span class="detail-value">{{ detailOrder.buyerName || '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.productNameCol') }}</span>
+              <span class="detail-value">{{ detailOrder.productName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.quantityCol') }}</span>
+              <span class="detail-value">{{ detailOrder.quantity }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.amount') }}</span>
+              <span class="detail-value" style="font-weight:600;color:#2563eb">{{ detailOrder.totalAmount }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.paymentStatus') }}</span>
+              <span class="detail-value">
+                <n-tag :type="(PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.type || 'default') as any" size="small">
+                  {{ PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.label || detailOrder.paymentStatus }}
+                </n-tag>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.deliveryStatus') }}</span>
+              <span class="detail-value">
+                <n-tag :type="(DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.type || 'default') as any" size="small">
+                  {{ DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.label || detailOrder.deliveryStatus }}
+                </n-tag>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">{{ t('page.admin.createdAt') }}</span>
+              <span class="detail-value">{{ detailOrder.createdAt }}</span>
+            </div>
+            <div v-if="detailOrder.paidAt" class="detail-item">
+              <span class="detail-label">{{ t('page.admin.paidAt') }}</span>
+              <span class="detail-value">{{ detailOrder.paidAt }}</span>
+            </div>
+            <div v-if="detailOrder.deliveredAt" class="detail-item">
+              <span class="detail-label">{{ t('page.admin.deliveredAt') }}</span>
+              <span class="detail-value">{{ detailOrder.deliveredAt }}</span>
+            </div>
+          </div>
 
-          <div v-if="detailOrder.cardContents?.length" style="margin-top:16px">
-            <div style="font-weight:600;margin-bottom:8px">{{ t('page.admin.cardContents') }}</div>
-            <div v-for="(card, i) in detailOrder.cardContents" :key="i"
-              style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fafafa;border:1px dashed #d9d9d9;border-radius:4px;margin-bottom:6px">
-              <span style="font-family:monospace;word-break:break-all">{{ card }}</span>
+          <div v-if="detailOrder.contactInfo || detailOrder.remark || detailOrder.deliveryInfo || detailOrder.adminRemark" class="detail-section">
+            <div v-if="detailOrder.contactInfo" class="detail-row">
+              <span class="detail-label">{{ t('page.admin.contactInfoCol') }}</span>
+              <span class="detail-value">{{ detailOrder.contactInfo }}</span>
+            </div>
+            <div v-if="detailOrder.remark" class="detail-row">
+              <span class="detail-label">{{ t('page.admin.remarkCol') }}</span>
+              <span class="detail-value">{{ detailOrder.remark }}</span>
+            </div>
+            <div v-if="detailOrder.deliveryInfo" class="detail-row">
+              <span class="detail-label">{{ t('page.admin.deliveryInfo') }}</span>
+              <span class="detail-value">{{ detailOrder.deliveryInfo }}</span>
+            </div>
+            <div v-if="detailOrder.adminRemark" class="detail-row">
+              <span class="detail-label">{{ t('page.admin.adminRemark') }}</span>
+              <span class="detail-value">{{ detailOrder.adminRemark }}</span>
+            </div>
+          </div>
+
+          <div v-if="detailOrder.cardContents?.length" class="detail-section">
+            <div class="detail-label" style="margin-bottom:8px;font-weight:600">{{ t('page.admin.cardContents') }}</div>
+            <div v-for="(card, i) in detailOrder.cardContents" :key="i" class="card-row">
+              <span class="card-text">{{ card }}</span>
               <n-button size="tiny" @click="copyCard(card)">{{ t('page.admin.copy') }}</n-button>
             </div>
           </div>
@@ -252,3 +292,63 @@ onMounted(loadOrders);
     </n-modal>
   </div>
 </template>
+
+<style scoped>
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail-label {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+.detail-value {
+  font-size: 14px;
+  color: #333;
+  word-break: break-all;
+}
+.detail-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.detail-row {
+  display: flex;
+  gap: 12px;
+}
+.detail-row .detail-label {
+  width: 80px;
+  flex-shrink: 0;
+  line-height: 22px;
+}
+.detail-row .detail-value {
+  flex: 1;
+  line-height: 22px;
+}
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #fafafa;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+.card-text {
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+  flex: 1;
+  margin-right: 12px;
+}
+</style>
