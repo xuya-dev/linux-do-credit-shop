@@ -89,6 +89,8 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
+      # ---- Spring Profile ----
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       # ---- MySQL ----
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306

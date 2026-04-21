@@ -24,6 +24,8 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
+      # ---- Spring Profile ----
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       # ---- MySQL (外部) / MySQL (external) ----
       MYSQL_HOST: ${MYSQL_HOST:?请配置 MYSQL_HOST / Please set MYSQL_HOST}
       MYSQL_PORT: ${MYSQL_PORT:-3306}
