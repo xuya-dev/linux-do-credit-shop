@@ -16,6 +16,8 @@ public class CardListResult {
     private Long id;
     /** 商品ID / Product ID */
     private Long productId;
+    /** 商品名称 / Product name */
+    private String productName;
     /** 卡密内容 / Card content */
     private String cardContent;
     /** 卡密状态 / Card status */

@@ -23,6 +23,8 @@
     "logout": "退出登录",
     "adminPanel": "管理后台",
     "featuredProducts": "热门商品",
+    "listView": "列表视图",
+    "gridView": "卡片视图",
     "latestAnnouncements": "最新公告",
     "noProducts": "暂无商品",
     "noAnnouncements": "暂无公告",
@@ -386,6 +388,17 @@
     "productRank": "商品销售排行",
     "categoryDistribution": "分类销售分布",
     "quantity": "数量",
-    "totalSales": "总销售额"
+    "totalSales": "总销售额",
+    "contactInfoCol": "联系方式",
+    "remarkCol": "买家备注",
+    "orderDetail": "订单详情",
+    "viewDetail": "查看详情",
+    "cardContents": "卡密内容",
+    "copy": "复制",
+    "copied": "已复制",
+    "copyFailed": "复制失败",
+    "quantityCol": "数量",
+    "paidAt": "支付时间",
+    "deliveredAt": "发货时间"
   }
 }

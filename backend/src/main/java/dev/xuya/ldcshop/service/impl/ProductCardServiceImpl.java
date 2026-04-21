@@ -27,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 卡密服务实现 / Product Card Service Implementation
@@ -82,9 +85,16 @@ public class ProductCardServiceImpl extends ServiceImpl<ProductCardMapper, Produ
         }
         wrapper.orderByDesc(ProductCard::getCreatedAt);
         IPage<ProductCard> cardPage = productCardMapper.selectPage(new Page<>(page, size), wrapper);
+
+        Set<Long> productIds = cardPage.getRecords().stream()
+                .map(ProductCard::getProductId).collect(Collectors.toSet());
+        Map<Long, String> productNameMap = productMapper.selectBatchIds(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Product::getName));
+
         return cardPage.convert(card -> {
             CardListResult result = BeanUtil.copyProperties(card, CardListResult.class);
             result.setCardContent(cryptoUtil.decrypt(card.getCardContent()));
+            result.setProductName(productNameMap.get(card.getProductId()));
             return result;
         });
     }

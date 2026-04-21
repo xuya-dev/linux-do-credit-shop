@@ -23,6 +23,8 @@
     "logout": "Logout",
     "adminPanel": "Admin Panel",
     "featuredProducts": "Featured Products",
+    "listView": "List View",
+    "gridView": "Grid View",
     "latestAnnouncements": "Latest Announcements",
     "noProducts": "No products yet",
     "noAnnouncements": "No announcements yet",
@@ -386,6 +388,17 @@
     "productRank": "Product Sales Rank",
     "categoryDistribution": "Category Distribution",
     "quantity": "Quantity",
-    "totalSales": "Total Sales"
+    "totalSales": "Total Sales",
+    "contactInfoCol": "Contact",
+    "remarkCol": "Buyer Remark",
+    "orderDetail": "Order Detail",
+    "viewDetail": "Detail",
+    "cardContents": "Card Contents",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Copy Failed",
+    "quantityCol": "Qty",
+    "paidAt": "Paid At",
+    "deliveredAt": "Delivered At"
   }
 }

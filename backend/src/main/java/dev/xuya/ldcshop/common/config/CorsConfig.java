@@ -35,6 +35,7 @@ public class CorsConfig {
         config.addAllowedHeader("Authorization");
         config.addAllowedHeader("Content-Type");
         config.addAllowedHeader("Accept");
+        config.addAllowedHeader("Accept-Language");
 
         config.addAllowedMethod("GET");
         config.addAllowedMethod("POST");

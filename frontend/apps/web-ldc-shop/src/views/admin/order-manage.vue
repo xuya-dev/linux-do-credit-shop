@@ -22,6 +22,10 @@ const showDeliver = ref(false);
 const selectedOrder = ref<Order | null>(null);
 const deliverForm = ref<OrderDeliveryParams>({ deliveryInfo: '', adminRemark: '' });
 
+const showDetail = ref(false);
+const detailOrder = ref<Order | null>(null);
+const detailLoading = ref(false);
+
 const paymentStatusOptions = computed(() => [
   { label: t('page.admin.all'), value: null },
   { label: t('page.admin.pending'), value: 0 },
@@ -87,6 +91,27 @@ function handleRefund(id: number) {
   });
 }
 
+async function openDetail(row: any) {
+  detailLoading.value = true;
+  showDetail.value = true;
+  try {
+    detailOrder.value = await orderApi.adminDetail(row.id);
+  } catch (e: any) {
+    message.error(e.message || t('page.admin.operationFailed'));
+    showDetail.value = false;
+  } finally {
+    detailLoading.value = false;
+  }
+}
+
+function copyCard(text: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    message.success(t('page.admin.copied'));
+  }).catch(() => {
+    message.error(t('page.admin.copyFailed'));
+  });
+}
+
 const columns = computed(() => [
   {
     title: t('page.admin.orderNo'), key: 'orderNo', width: 180,
@@ -112,11 +137,16 @@ const columns = computed(() => [
     },
   },
   { title: t('page.admin.buyer'), key: 'username', width: 100 },
+  {
+    title: t('page.admin.contactInfoCol'), key: 'contactInfo', width: 140, ellipsis: { tooltip: true },
+    render: (row: any) => h('span', { style: 'color:#666' }, row.contactInfo || '-'),
+  },
   { title: t('page.admin.createdAt'), key: 'createdAt', width: 160 },
   {
-    title: t('page.admin.actions'), key: 'actions', width: 160,
+    title: t('page.admin.actions'), key: 'actions', width: 220,
     render: (row: any) => {
       const btns: any[] = [];
+      btns.push(h(NButton, { size: 'small', onClick: () => openDetail(row) }, { default: () => t('page.admin.viewDetail') }));
       if (row.paymentStatus === 1 && row.productType === 2 && row.deliveryStatus === 0) {
         btns.push(h(NButton, { size: 'small', type: 'primary', onClick: () => openDeliver(row) }, { default: () => t('page.admin.confirmDelivery') }));
       }
@@ -175,6 +205,50 @@ onMounted(loadOrders);
           <n-button type="primary" @click="handleDeliver">{{ t('page.admin.confirmDelivery') }}</n-button>
         </n-space>
       </template>
+    </n-modal>
+
+    <n-modal v-model:show="showDetail" :title="t('page.admin.orderDetail')" preset="card" style="width:600px">
+      <n-spin :show="detailLoading">
+        <template v-if="detailOrder">
+          <n-descriptions :column="2" bordered label-placement="left" size="small">
+            <n-descriptions-item :label="t('page.admin.orderNo')">
+              <span style="font-family:monospace">{{ detailOrder.orderNo }}</span>
+            </n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.buyer')">{{ detailOrder.buyerName || '-' }}</n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.productNameCol')">{{ detailOrder.productName }}</n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.quantityCol')">{{ detailOrder.quantity }}</n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.amount')">
+              <span style="font-weight:600;color:#2563eb">{{ detailOrder.totalAmount }}</span>
+            </n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.paymentStatus')">
+              <n-tag :type="(PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.type || 'default') as any" size="small">
+                {{ PAYMENT_STATUS_MAP[detailOrder.paymentStatus]?.label || detailOrder.paymentStatus }}
+              </n-tag>
+            </n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.deliveryStatus')">
+              <n-tag :type="(DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.type || 'default') as any" size="small">
+                {{ DELIVERY_STATUS_MAP[detailOrder.deliveryStatus]?.label || detailOrder.deliveryStatus }}
+              </n-tag>
+            </n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.createdAt')">{{ detailOrder.createdAt }}</n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.contactInfoCol')" :span="2">{{ detailOrder.contactInfo || '-' }}</n-descriptions-item>
+            <n-descriptions-item :label="t('page.admin.remarkCol')" :span="2">{{ detailOrder.remark || '-' }}</n-descriptions-item>
+            <n-descriptions-item v-if="detailOrder.deliveryInfo" :label="t('page.admin.deliveryInfo')" :span="2">{{ detailOrder.deliveryInfo }}</n-descriptions-item>
+            <n-descriptions-item v-if="detailOrder.adminRemark" :label="t('page.admin.adminRemark')" :span="2">{{ detailOrder.adminRemark }}</n-descriptions-item>
+            <n-descriptions-item v-if="detailOrder.paidAt" :label="t('page.admin.paidAt')">{{ detailOrder.paidAt }}</n-descriptions-item>
+            <n-descriptions-item v-if="detailOrder.deliveredAt" :label="t('page.admin.deliveredAt')">{{ detailOrder.deliveredAt }}</n-descriptions-item>
+          </n-descriptions>
+
+          <div v-if="detailOrder.cardContents?.length" style="margin-top:16px">
+            <div style="font-weight:600;margin-bottom:8px">{{ t('page.admin.cardContents') }}</div>
+            <div v-for="(card, i) in detailOrder.cardContents" :key="i"
+              style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fafafa;border:1px dashed #d9d9d9;border-radius:4px;margin-bottom:6px">
+              <span style="font-family:monospace;word-break:break-all">{{ card }}</span>
+              <n-button size="tiny" @click="copyCard(card)">{{ t('page.admin.copy') }}</n-button>
+            </div>
+          </div>
+        </template>
+      </n-spin>
     </n-modal>
   </div>
 </template>

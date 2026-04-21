@@ -20,6 +20,7 @@ const loadingProducts = ref(true);
 const loadingAnnouncements = ref(true);
 const searchQuery = ref('');
 const activeCategoryId = ref<number | null>(null);
+const viewMode = ref<'list' | 'grid'>('grid');
 
 const displayNotice = computed(() => {
   return shopSettingsStore.shopNotice || '';
@@ -79,6 +80,10 @@ function handleCategoryClick(catId: number) {
 function goProductDetail(id: number) {
   router.push(`/product/${id}`);
 }
+
+function getProductImage(p: Product) {
+  return p.coverImage || '/placeholder-product.png';
+}
 </script>
 
 <template>
@@ -137,31 +142,75 @@ function goProductDetail(id: number) {
 
           <!-- 商品列表区 -->
           <div class="faka-card mt-24">
-            <div class="card-header">{{ t('page.shop.featuredProducts') }}</div>
+            <div class="card-header-with-actions">
+              <span class="card-header">{{ t('page.shop.featuredProducts') }}</span>
+              <div class="view-toggle">
+                <button
+                  :class="['toggle-btn', { active: viewMode === 'list' }]"
+                  @click="viewMode = 'list'"
+                  :title="t('page.shop.listView')"
+                >☰</button>
+                <button
+                  :class="['toggle-btn', { active: viewMode === 'grid' }]"
+                  @click="viewMode = 'grid'"
+                  :title="t('page.shop.gridView')"
+                >⊞</button>
+              </div>
+            </div>
             <div class="card-body">
               <n-skeleton v-if="loadingProducts" text :repeat="4" />
               
-              <div v-else-if="filteredProducts.length" class="product-list">
-                <div
-                  v-for="p in filteredProducts"
-                  :key="p.id"
-                  class="product-row"
-                  @click="goProductDetail(p.id)"
-                >
-                  <div class="product-name">
-                    {{ p.name }}
-                    <span v-if="p.isHot" class="hot-badge">HOT</span>
-                  </div>
-                  <div class="product-info-right">
-                    <span class="product-price">{{ p.price }} {{ t('page.shop.credits') }}</span>
-                    <span class="product-stock">{{ t('page.shop.stock') }}: {{ p.stock || 0 }}</span>
+              <template v-else-if="filteredProducts.length">
+                <!-- 列表模式 -->
+                <div v-if="viewMode === 'list'" class="product-list">
+                  <div
+                    v-for="p in filteredProducts"
+                    :key="p.id"
+                    class="product-row"
+                    @click="goProductDetail(p.id)"
+                  >
+                    <div class="product-row-left">
+                      <img class="product-thumb" :src="getProductImage(p)" :alt="p.name" />
+                      <div class="product-name">
+                        {{ p.name }}
+                        <span v-if="p.isHot" class="hot-badge">HOT</span>
+                      </div>
+                    </div>
+                    <div class="product-info-right">
+                      <span class="product-price">{{ p.price }} {{ t('page.shop.credits') }}</span>
+                      <span class="product-stock">{{ t('page.shop.stock') }}: {{ p.stock || 0 }}</span>
+                    </div>
                   </div>
                 </div>
-                
+
+                <!-- 卡片模式 -->
+                <div v-else class="product-grid">
+                  <div
+                    v-for="p in filteredProducts"
+                    :key="p.id"
+                    class="product-card"
+                    @click="goProductDetail(p.id)"
+                  >
+                    <div class="product-card-img">
+                      <img :src="getProductImage(p)" :alt="p.name" />
+                    </div>
+                    <div class="product-card-body">
+                      <div class="product-card-name">
+                        {{ p.name }}
+                        <span v-if="p.isHot" class="hot-badge">HOT</span>
+                      </div>
+                      <div class="product-card-footer">
+                        <span class="product-price">{{ p.price }} {{ t('page.shop.credits') }}</span>
+                        <span class="product-stock">{{ t('page.shop.stock') }}: {{ p.stock || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="load-more">
                   <span>{{ t('page.shop.loadMore') }}</span>
                 </div>
-              </div>
+              </template>
 
               <div v-else class="empty-state">
                 <p class="empty-text">{{ t('page.shop.noProducts') }}</p>
@@ -267,6 +316,44 @@ function goProductDetail(id: number) {
   color: var(--faka-text-sub, #8c8c8c);
 }
 
+.card-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.toggle-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--faka-border, #d9d9d9);
+  border-radius: 4px;
+  background: var(--faka-bg-header, #fff);
+  color: var(--faka-text-sub, #8c8c8c);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  border-color: var(--faka-primary-color);
+  color: var(--faka-primary-color);
+}
+
+.toggle-btn.active {
+  background: var(--faka-primary-color);
+  border-color: var(--faka-primary-color);
+  color: #fff;
+}
+
 .ann-body {
   padding: 16px 20px;
   color: var(--faka-text-sub, #595959);
@@ -335,7 +422,7 @@ function goProductDetail(id: number) {
   white-space: pre-wrap;
 }
 
-/* 商品列表（核心） */
+/* ========== 列表模式 ========== */
 .product-list {
   display: flex;
   flex-direction: column;
@@ -345,7 +432,7 @@ function goProductDetail(id: number) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-bottom: 1px dashed var(--faka-border, #f0f0f0);
   cursor: pointer;
   transition: background 0.2s;
@@ -359,12 +446,32 @@ function goProductDetail(id: number) {
   background: var(--faka-hover-bg);
 }
 
+.product-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.product-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--faka-tag-bg, #f5f5f5);
+}
+
 .product-name {
   font-size: 14px;
   color: var(--faka-text-main, #333);
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hot-badge {
@@ -397,6 +504,79 @@ function goProductDetail(id: number) {
   font-size: 12px;
   min-width: 80px;
   text-align: center;
+}
+
+/* ========== 卡片模式 ========== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.product-card {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--faka-bg-header, #fff);
+  border: 1px solid var(--faka-border, #f0f0f0);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.product-card:hover {
+  border-color: var(--faka-primary-color);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+.product-card-img {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--faka-tag-bg, #f5f5f5);
+}
+
+.product-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.product-card:hover .product-card-img img {
+  transform: scale(1.05);
+}
+
+.product-card-body {
+  padding: 12px;
+}
+
+.product-card-name {
+  font-size: 14px;
+  color: var(--faka-text-main, #333);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-card-footer .product-price {
+  font-size: 14px;
+}
+
+.product-card-footer .product-stock {
+  font-size: 11px;
+  min-width: auto;
+  padding: 1px 6px;
 }
 
 .load-more {
@@ -434,6 +614,10 @@ function goProductDetail(id: number) {
     width: 100%;
   }
   .product-info-right {
+    gap: 12px;
+  }
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
   }
 }

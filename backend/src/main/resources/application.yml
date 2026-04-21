@@ -60,6 +60,9 @@ spring:
   messages:
     basename: i18n/messages
     encoding: UTF-8
+  web:
+    locale: zh_CN
+    locale-resolver: accept-header
 
 # MyBatis-Plus 配置 / MyBatis-Plus Configuration
 mybatis-plus:

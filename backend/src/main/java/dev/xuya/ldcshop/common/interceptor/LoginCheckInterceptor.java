@@ -3,6 +3,7 @@ package dev.xuya.ldcshop.common.interceptor;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.json.JSONUtil;
 import dev.xuya.ldcshop.common.R;
+import dev.xuya.ldcshop.common.ResultCode;
 import dev.xuya.ldcshop.entity.User;
 import dev.xuya.ldcshop.mapper.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,7 +57,7 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(JSONUtil.toJsonStr(R.fail(401, "User disabled or not found")));
+            response.getWriter().write(JSONUtil.toJsonStr(R.fail(ResultCode.USER_DISABLED)));
             return false;
         }
 
