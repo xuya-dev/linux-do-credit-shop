@@ -72,7 +72,6 @@ services:
 
   # ============================================================
   # LDC Shop 应用 (前端+后端 单容器) / Application
-  # Spring Boot 提供后端 API + 前端静态文件
   # ============================================================
   app:
     build:
@@ -102,20 +101,19 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-ldc_shop_redis_2024}
       # ---- Sa-Token ----
       SA_TOKEN_JWT_SECRET: ${SA_TOKEN_JWT_SECRET:-please-change-this-secret-in-production}
-      # ---- OAuth ----
+      # ---- OAuth (登录前必须有) / OAuth (required before login) ----
       LDC_OAUTH_CLIENT_ID: ${LDC_OAUTH_CLIENT_ID:-}
       LDC_OAUTH_CLIENT_SECRET: ${LDC_OAUTH_CLIENT_SECRET:-}
       LDC_OAUTH_REDIRECT_URI: ${LDC_OAUTH_REDIRECT_URI:-http://localhost/auth/callback}
-      # ---- 支付 ----
-      LDC_PAYMENT_CLIENT_ID: ${LDC_PAYMENT_CLIENT_ID:-}
-      LDC_PAYMENT_CLIENT_SECRET: ${LDC_PAYMENT_CLIENT_SECRET:-}
-      LDC_PAYMENT_PUBLIC_KEY: ${LDC_PAYMENT_PUBLIC_KEY:-}
-      LDC_PAYMENT_NOTIFY_URL: ${LDC_PAYMENT_NOTIFY_URL:-http://localhost/api/order/notify}
-      LDC_PAYMENT_RETURN_URL: ${LDC_PAYMENT_RETURN_URL:-http://localhost/order/result}
+      LDC_OAUTH_AUTHORIZE_URL: ${LDC_OAUTH_AUTHORIZE_URL:-https://connect.linux.do/oauth2/authorize}
+      LDC_OAUTH_TOKEN_URL: ${LDC_OAUTH_TOKEN_URL:-https://connect.linux.do/oauth2/token}
+      LDC_OAUTH_USER_INFO_URL: ${LDC_OAUTH_USER_INFO_URL:-https://connect.linux.do/api/user}
+      # ---- 管理员 (登录时判断角色) / Admin (role check at login) ----
+      LDC_ADMIN_USERNAMES: ${LDC_ADMIN_USERNAMES:-admin,root}
+      # ---- 卡密加密 / Card Encryption ----
+      CARD_ENCRYPT_SECRET: ${CARD_ENCRYPT_SECRET:-please-change-this-secret-in-production}
       # ---- CORS ----
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
-      # ---- 管理员 ----
-      LDC_ADMIN_USERNAMES: ${LDC_ADMIN_USERNAMES:-admin,root}
       # ---- JVM ----
       JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseZGC}
       TZ: Asia/Shanghai
