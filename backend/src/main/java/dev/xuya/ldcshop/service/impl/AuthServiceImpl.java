@@ -6,6 +6,7 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import dev.xuya.ldcshop.common.ResultCode;
+import dev.xuya.ldcshop.common.config.LdcShopProperties;
 import dev.xuya.ldcshop.common.exception.BusinessException;
 import dev.xuya.ldcshop.common.util.AuditLog;
 import dev.xuya.ldcshop.entity.User;
@@ -15,7 +16,6 @@ import dev.xuya.ldcshop.results.LoginResult;
 import dev.xuya.ldcshop.results.UserInfoResult;
 import dev.xuya.ldcshop.service.AuthService;
 import dev.xuya.ldcshop.service.UserService;
-import dev.xuya.ldcshop.service.ShopSettingService;
 import dev.xuya.ldcshop.common.util.UserContextUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ import java.util.Map;
 
 /**
  * 认证服务实现 / Authentication Service Implementation
- * 处理 LINUX DO OAuth2.0 登录流程
+ * 处理 LINUX DO OAuth2.0 登录流程，OAuth 配置从 ENV/YAML 读取（登录前必须可用）
  *
  * @author xuya
  */
@@ -39,27 +39,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    private final LdcShopProperties properties;
     private final UserMapper userMapper;
     private final UserService userService;
-    private final ShopSettingService shopSettingService;
 
     /**
      * 获取 OAuth 授权地址 / Get OAuth authorize URL
      */
     @Override
     public String getAuthorizeUrl(String redirectUri) {
-        String clientId = shopSettingService.getSettingOrDefault("ldc_oauth_client_id", "");
-        String baseRedirectUri = shopSettingService.getSettingOrDefault("ldc_oauth_redirect_uri", "");
-        String authorizeUrl = shopSettingService.getSettingOrDefault("ldc_oauth_authorize_url", "https://connect.linux.do/oauth2/authorize");
-
-        String redirect = baseRedirectUri;
-        if (StrUtil.isNotBlank(redirectUri) && redirectUri.startsWith(baseRedirectUri)) {
+        LdcShopProperties.OAuth oauth = properties.getOauth();
+        String redirect = oauth.getRedirectUri();
+        if (StrUtil.isNotBlank(redirectUri) && redirectUri.startsWith(oauth.getRedirectUri())) {
             redirect = redirectUri;
         }
 
-        return authorizeUrl
+        return oauth.getAuthorizeUrl()
                 + "?response_type=code"
-                + "&client_id=" + clientId
+                + "&client_id=" + oauth.getClientId()
                 + "&redirect_uri=" + URLEncoder.encode(redirect, StandardCharsets.UTF_8)
                 + "&scope=read";
     }
@@ -69,13 +66,14 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public LoginResult handleCallback(OAuthCallbackParams params) {
-        String accessToken = exchangeToken(params.getCode(), params.getRedirectUri());
+        LdcShopProperties.OAuth oauth = properties.getOauth();
+
+        String accessToken = exchangeToken(params.getCode(), params.getRedirectUri(), oauth);
         if (StrUtil.isBlank(accessToken)) {
             throw new BusinessException(ResultCode.OAUTH_TOKEN_ERROR);
         }
 
-        String userInfoUrl = shopSettingService.getSettingOrDefault("ldc_oauth_user_info_url", "https://connect.linux.do/api/user");
-        JSONObject userInfo = fetchUserInfo(accessToken, userInfoUrl);
+        JSONObject userInfo = fetchUserInfo(accessToken, oauth);
         if (userInfo == null) {
             throw new BusinessException(ResultCode.OAUTH_USER_INFO_ERROR);
         }
@@ -115,23 +113,18 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 使用授权码换取 Access Token / Exchange authorization code for access token
      */
-    private String exchangeToken(String code, String redirectUri) {
-        String clientId = shopSettingService.getSettingOrDefault("ldc_oauth_client_id", "");
-        String clientSecret = shopSettingService.getSettingOrDefault("ldc_oauth_client_secret", "");
-        String baseRedirectUri = shopSettingService.getSettingOrDefault("ldc_oauth_redirect_uri", "");
-        String tokenUrl = shopSettingService.getSettingOrDefault("ldc_oauth_token_url", "https://connect.linux.do/oauth2/token");
-
-        String redirect = StrUtil.isNotBlank(redirectUri) ? redirectUri : baseRedirectUri;
+    private String exchangeToken(String code, String redirectUri, LdcShopProperties.OAuth oauth) {
+        String redirect = StrUtil.isNotBlank(redirectUri) ? redirectUri : oauth.getRedirectUri();
 
         Map<String, Object> tokenParams = new HashMap<>();
         tokenParams.put("grant_type", "authorization_code");
         tokenParams.put("code", code);
-        tokenParams.put("client_id", clientId);
-        tokenParams.put("client_secret", clientSecret);
+        tokenParams.put("client_id", oauth.getClientId());
+        tokenParams.put("client_secret", oauth.getClientSecret());
         tokenParams.put("redirect_uri", redirect);
 
         try {
-            String response = HttpUtil.post(tokenUrl, tokenParams);
+            String response = HttpUtil.post(oauth.getTokenUrl(), tokenParams);
             JSONObject json = JSONUtil.parseObj(response);
             return json.getStr("access_token");
         } catch (Exception e) {
@@ -143,9 +136,9 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 获取 LINUX DO 用户信息 / Fetch LINUX DO user info
      */
-    private JSONObject fetchUserInfo(String accessToken, String userInfoUrl) {
+    private JSONObject fetchUserInfo(String accessToken, LdcShopProperties.OAuth oauth) {
         try {
-            String response = HttpUtil.createGet(userInfoUrl)
+            String response = HttpUtil.createGet(oauth.getUserInfoUrl())
                     .header("Authorization", "Bearer " + accessToken)
                     .execute()
                     .body();
@@ -193,7 +186,7 @@ public class AuthServiceImpl implements AuthService {
      * 判断用户角色 / Determine user role
      */
     private String determineRole(String username) {
-        String adminUsernames = shopSettingService.getSettingOrDefault("ldc_admin_usernames", "admin");
+        String adminUsernames = properties.getAdmin().getInitialUsernames();
         if (StrUtil.isNotBlank(adminUsernames)) {
             for (String adminName : adminUsernames.split(",")) {
                 if (username.equalsIgnoreCase(adminName.trim())) {

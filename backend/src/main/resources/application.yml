@@ -122,6 +122,19 @@ ldc-shop:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5176}
 
+  # LINUX DO OAuth 配置（登录前必须可用，不可放DB）/ LINUX DO OAuth Config (required before login, cannot be DB-only)
+  oauth:
+    client-id: ${LDC_OAUTH_CLIENT_ID:}
+    client-secret: ${LDC_OAUTH_CLIENT_SECRET:}
+    redirect-uri: ${LDC_OAUTH_REDIRECT_URI:}
+    authorize-url: ${LDC_OAUTH_AUTHORIZE_URL:https://connect.linux.do/oauth2/authorize}
+    token-url: ${LDC_OAUTH_TOKEN_URL:https://connect.linux.do/oauth2/token}
+    user-info-url: ${LDC_OAUTH_USER_INFO_URL:https://connect.linux.do/api/user}
+
+  # 管理员配置（登录时判断角色）/ Admin Config (used during login to determine role)
+  admin:
+    initial-usernames: ${LDC_ADMIN_USERNAMES:admin,root}
+
   # 限流配置 / Rate Limit Configuration
   rate-limit:
     max-requests: ${RATE_LIMIT_MAX:60}

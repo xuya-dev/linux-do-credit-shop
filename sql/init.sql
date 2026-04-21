@@ -233,11 +233,4 @@ INSERT INTO `ldc_setting` (`config_key`, `config_value`, `description`) VALUES
 ('ldc_payment_public_key', '', 'LDC平台公钥(Base64) / LDC Platform Public Key(Base64)'),
 ('ldc_payment_gateway_url', 'https://credit.linux.do/epay', 'LDC网关地址 / LDC Gateway URL'),
 ('ldc_payment_notify_url', '', 'LDC异步通知地址 / LDC Notify URL'),
-('ldc_payment_return_url', '', 'LDC同步跳转地址 / LDC Return URL'),
-('ldc_oauth_client_id', '', 'OAuth Client ID'),
-('ldc_oauth_client_secret', '', 'OAuth Client Secret'),
-('ldc_oauth_redirect_uri', '', 'OAuth 回调地址 / OAuth Redirect URI'),
-('ldc_oauth_authorize_url', 'https://connect.linux.do/oauth2/authorize', 'OAuth 授权地址 / OAuth Authorize URL'),
-('ldc_oauth_token_url', 'https://connect.linux.do/oauth2/token', 'OAuth 令牌地址 / OAuth Token URL'),
-('ldc_oauth_user_info_url', 'https://connect.linux.do/api/user', 'OAuth 用户信息地址 / OAuth User Info URL'),
-('ldc_admin_usernames', 'admin', '管理员用户名(逗号分隔) / Admin Usernames(comma separated)');
+('ldc_payment_return_url', '', 'LDC同步跳转地址 / LDC Return URL');

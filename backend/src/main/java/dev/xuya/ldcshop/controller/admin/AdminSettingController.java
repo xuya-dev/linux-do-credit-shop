@@ -15,6 +15,8 @@ import java.util.Set;
 
 /**
  * 管理端-系统设置控制器 / Admin Settings Controller
+ * 仅管理数据库中的业务配置（商店信息、支付配置）
+ * OAuth 和管理员配置通过 ENV 环境变量管理（登录前所需）
  *
  * @author xuya
  */
@@ -28,18 +30,13 @@ public class AdminSettingController {
     private static final Set<String> ALLOWED_KEYS = Set.of(
             "shop_name", "shop_description", "shop_logo", "shop_notice",
             "ldc_payment_client_id", "ldc_payment_client_secret", "ldc_payment_private_key", "ldc_payment_public_key",
-            "ldc_payment_gateway_url", "ldc_payment_notify_url", "ldc_payment_return_url",
-            "ldc_oauth_client_id", "ldc_oauth_client_secret", "ldc_oauth_redirect_uri",
-            "ldc_oauth_authorize_url", "ldc_oauth_token_url",
-            "ldc_admin_usernames"
+            "ldc_payment_gateway_url", "ldc_payment_notify_url", "ldc_payment_return_url"
     );
 
     private final ShopSettingService shopSettingService;
 
     /**
      * 获取所有配置 / Get all settings
-     * 返回所有系统配置项（敏感值已脱敏），映射为类型化的 SettingsResult
-     * Returns all system settings (sensitive values masked), mapped to a typed SettingsResult
      */
     @GetMapping
     public R<SettingsResult> getAll() {
@@ -48,8 +45,6 @@ public class AdminSettingController {
 
     /**
      * 批量更新配置 / Batch update settings
-     * 只更新白名单内的配置键，防止非法字段写入
-     * Only updates whitelisted setting keys to prevent illegal field writes
      */
     @PutMapping
     public R<Void> batchUpdate(@Valid @RequestBody AdminSettingsUpdateParams params) {
@@ -75,12 +70,6 @@ public class AdminSettingController {
         result.setLdcPaymentGatewayUrl(map.get("ldc_payment_gateway_url"));
         result.setLdcPaymentNotifyUrl(map.get("ldc_payment_notify_url"));
         result.setLdcPaymentReturnUrl(map.get("ldc_payment_return_url"));
-        result.setLdcOAuthClientId(map.get("ldc_oauth_client_id"));
-        result.setLdcOAuthClientSecret(map.get("ldc_oauth_client_secret"));
-        result.setLdcOAuthRedirectUri(map.get("ldc_oauth_redirect_uri"));
-        result.setLdcOAuthAuthorizeUrl(map.get("ldc_oauth_authorize_url"));
-        result.setLdcOAuthTokenUrl(map.get("ldc_oauth_token_url"));
-        result.setLdcAdminUsernames(map.get("ldc_admin_usernames"));
         return result;
     }
 }

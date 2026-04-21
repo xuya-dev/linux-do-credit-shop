@@ -4,7 +4,8 @@ import lombok.Data;
 
 /**
  * 管理端设置结果 / Admin Settings Result
- * 所有配置项（敏感值已脱敏）
+ * 仅包含数据库管理的业务配置（商店信息、支付配置）
+ * OAuth 和管理员配置通过 ENV 环境变量管理，不在此返回
  *
  * @author xuya
  */
@@ -34,18 +35,4 @@ public class SettingsResult {
     private String ldcPaymentNotifyUrl;
     /** 同步跳转URL / Payment Return URL */
     private String ldcPaymentReturnUrl;
-
-    /** OAuth客户端ID / OAuth Client ID */
-    private String ldcOAuthClientId;
-    /** OAuth客户端密钥（脱敏）/ OAuth Client Secret (masked) */
-    private String ldcOAuthClientSecret;
-    /** OAuth回调地址 / OAuth Redirect URI */
-    private String ldcOAuthRedirectUri;
-    /** OAuth授权地址 / OAuth Authorize URL */
-    private String ldcOAuthAuthorizeUrl;
-    /** OAuth令牌地址 / OAuth Token URL */
-    private String ldcOAuthTokenUrl;
-
-    /** 管理员用户名列表 / Admin Usernames */
-    private String ldcAdminUsernames;
 }
