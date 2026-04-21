@@ -406,17 +406,17 @@ function getProductImage(p: Product) {
   gap: 8px;
 }
 
-.ann-type { color: #faad14; }
+.ann-type { color: var(--faka-warning-text, #faad14); }
 .ann-title { flex: 1; color: var(--faka-text-main, #595959); }
 .ann-date { color: var(--faka-hint-color); font-size: 12px; }
 
 .shop-notice {
   padding: 10px 14px;
   margin-bottom: 10px;
-  background: var(--faka-tag-bg, #fffbe6);
-  border: 1px solid #ffe58f;
+  background: var(--faka-warning-bg, #fffbe6);
+  border: 1px solid var(--faka-warning-border, #ffe58f);
   border-radius: 4px;
-  color: var(--faka-text-sub, #595959);
+  color: var(--faka-warning-text, #595959);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -475,12 +475,12 @@ function getProductImage(p: Product) {
 }
 
 .hot-badge {
-  background: #fff1f0;
-  color: #f5222d;
+  background: var(--faka-error-bg, #fff1f0);
+  color: var(--faka-error-text, #f5222d);
   font-size: 12px;
   padding: 0 4px;
   border-radius: 2px;
-  border: 1px solid #ffa39e;
+  border: 1px solid var(--faka-error-border, #ffa39e);
 }
 
 .product-info-right {

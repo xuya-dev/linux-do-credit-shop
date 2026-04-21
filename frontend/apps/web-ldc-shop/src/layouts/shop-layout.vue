@@ -182,6 +182,10 @@ onMounted(() => {
   --faka-warning-bg: #fff7e6;
   --faka-warning-border: #ffd591;
   --faka-warning-text: #fa8c16;
+  /* 错误/危险 */
+  --faka-error-bg: #fff1f0;
+  --faka-error-border: #ffa39e;
+  --faka-error-text: #f5222d;
 }
 :global(.dark) .faka-theme, :root.dark .faka-theme {
   --faka-bg-body: #000000;
@@ -204,6 +208,10 @@ onMounted(() => {
   --faka-warning-bg: rgba(250, 173, 22, 0.15);
   --faka-warning-border: rgba(250, 173, 22, 0.4);
   --faka-warning-text: #ffc53d;
+  /* 错误/危险 - 夜间模式 */
+  --faka-error-bg: rgba(245, 34, 45, 0.15);
+  --faka-error-border: rgba(245, 34, 45, 0.4);
+  --faka-error-text: #ff7875;
 }
 
 /* 发卡网经典底色 */
