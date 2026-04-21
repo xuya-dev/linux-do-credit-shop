@@ -117,9 +117,17 @@ public class OrderServiceImpl implements OrderService {
         String notifyUrl = shopSettingService.getSettingOrDefault("ldc_payment_notify_url", "");
         String returnUrl = shopSettingService.getSettingOrDefault("ldc_payment_return_url", "");
 
+        if (StrUtil.isBlank(clientId)) {
+            log.error("LDC payment client_id not configured");
+            throw new BusinessException(ResultCode.PAY_CONFIG_ERROR);
+        }
+        if (StrUtil.isBlank(clientSecret)) {
+            log.error("LDC payment client_secret not configured");
+            throw new BusinessException(ResultCode.PAY_CONFIG_ERROR);
+        }
         if (StrUtil.isBlank(privateKey)) {
-            log.error("Ed25519 merchant private key not configured");
-            throw new BusinessException(ResultCode.PAY_SIGN_ERROR);
+            log.error("LDC payment private_key not configured");
+            throw new BusinessException(ResultCode.PAY_CONFIG_ERROR);
         }
 
         Map<String, Object> payParams = new LinkedHashMap<>();
@@ -136,6 +144,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         String signString = Ed25519Util.buildSignString(payParams, clientSecret);
+        log.info("LDC payment sign string: {}", signString);
         payParams.put("sign", Ed25519Util.sign(privateKey, signString));
 
         try {
