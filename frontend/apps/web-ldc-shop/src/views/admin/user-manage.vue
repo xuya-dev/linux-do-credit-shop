@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue';
+import { ref, onMounted, h, computed, reactive } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace, NAvatar } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
@@ -13,6 +13,17 @@ const users = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  onUpdatePage: (p: number) => {
+    page.value = p;
+    pagination.page = p;
+    loadUsers();
+  },
+});
 
 const searchForm = ref({ keyword: '', role: null as string | null });
 
@@ -33,6 +44,8 @@ async function loadUsers() {
     });
     users.value = res?.records || [];
     total.value = res?.total || 0;
+    pagination.itemCount = res?.total || 0;
+    pagination.page = page.value;
   } catch (e: any) {
     console.error(e);
     message.error(e.message || t('page.admin.operationFailed'));
@@ -41,8 +54,8 @@ async function loadUsers() {
   }
 }
 
-function handleSearch() { page.value = 1; loadUsers(); }
-function resetSearch() { searchForm.value = { keyword: '', role: null }; page.value = 1; loadUsers(); }
+function handleSearch() { page.value = 1; pagination.page = 1; loadUsers(); }
+function resetSearch() { searchForm.value = { keyword: '', role: null }; page.value = 1; pagination.page = 1; loadUsers(); }
 
 async function toggleUserStatus(id: number, currentStatus: number) {
   try {
@@ -117,7 +130,7 @@ onMounted(loadUsers);
         <span style="font-size:15px;font-weight:600">{{ t('page.admin.users') }}</span>
       </div>
       <n-data-table :columns="columns" :data="users" :loading="loading"
-        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadUsers() } }"
+        :pagination="pagination"
         :bordered="false" />
     </n-card>
   </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue';
+import { ref, onMounted, h, computed, reactive } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
@@ -13,6 +13,17 @@ const products = ref<any[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  onUpdatePage: (p: number) => {
+    page.value = p;
+    pagination.page = p;
+    loadProducts();
+  },
+});
 
 const searchForm = ref({ keyword: '', productType: null as number | null, status: null as number | null });
 
@@ -44,6 +55,8 @@ async function loadProducts() {
     });
     products.value = res?.records || [];
     total.value = res?.total || 0;
+    pagination.itemCount = res?.total || 0;
+    pagination.page = page.value;
   } catch (e: any) {
     console.error(e);
     message.error(e.message || t('page.admin.operationFailed'));
@@ -52,8 +65,8 @@ async function loadProducts() {
   }
 }
 
-function handleSearch() { page.value = 1; loadProducts(); }
-function resetSearch() { searchForm.value = { keyword: '', productType: null, status: null }; page.value = 1; loadProducts(); }
+function handleSearch() { page.value = 1; pagination.page = 1; loadProducts(); }
+function resetSearch() { searchForm.value = { keyword: '', productType: null, status: null }; page.value = 1; pagination.page = 1; loadProducts(); }
 
 async function toggleStatus(id: number, currentStatus: number) {
   try {
@@ -186,7 +199,7 @@ onMounted(async () => {
         <n-button type="primary" @click="openCreate">+ {{ t('page.admin.createProduct') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="products" :loading="loading"
-        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadProducts() } }"
+        :pagination="pagination"
         :bordered="false" />
     </n-card>
 

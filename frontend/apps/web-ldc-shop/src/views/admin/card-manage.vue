@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue';
+import { ref, onMounted, h, computed, reactive } from 'vue';
 import { useMessage, useDialog, NTag, NButton } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
@@ -15,6 +15,17 @@ const cards = ref<ProductCard[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 20,
+  itemCount: 0,
+  onUpdatePage: (p: number) => {
+    page.value = p;
+    pagination.page = p;
+    loadCards();
+  },
+});
 
 const searchForm = ref({ productId: null as number | null, status: null as number | null });
 
@@ -40,6 +51,8 @@ async function loadCards() {
     });
     cards.value = res?.records || [];
     total.value = res?.total || 0;
+    pagination.itemCount = res?.total || 0;
+    pagination.page = page.value;
   } catch (e: any) {
     console.error(e);
     message.error(e.message || t('page.admin.operationFailed'));
@@ -48,8 +61,8 @@ async function loadCards() {
   }
 }
 
-function handleSearch() { page.value = 1; loadCards(); }
-function resetSearch() { searchForm.value = { productId: null, status: null }; page.value = 1; loadCards(); }
+function handleSearch() { page.value = 1; pagination.page = 1; loadCards(); }
+function resetSearch() { searchForm.value = { productId: null, status: null }; page.value = 1; pagination.page = 1; loadCards(); }
 
 async function handleImport() {
   if (!importForm.value.productId || !importForm.value.cards.trim()) {
@@ -148,7 +161,7 @@ onMounted(async () => {
         <n-button type="primary" @click="showImport = true">+ {{ t('page.admin.batchImport') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="cards" :loading="loading"
-        :pagination="{ page, itemCount: total, pageSize: 20, onChange: (p: number) => { page = p; loadCards() } }"
+        :pagination="pagination"
         :bordered="false" />
     </n-card>
 

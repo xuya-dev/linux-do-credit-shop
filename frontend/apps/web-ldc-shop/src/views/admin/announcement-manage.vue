@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue';
+import { ref, onMounted, h, computed, reactive } from 'vue';
 import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
 import { useI18n } from '@vben/locales';
 
@@ -15,6 +15,17 @@ const announcements = ref<Announcement[]>([]);
 const loading = ref(true);
 const page = ref(1);
 const total = ref(0);
+
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  itemCount: 0,
+  onUpdatePage: (p: number) => {
+    page.value = p;
+    pagination.page = p;
+    loadAnnouncements();
+  },
+});
 
 const searchForm = ref({ title: '', type: null as number | null, status: null as number | null });
 
@@ -47,6 +58,8 @@ async function loadAnnouncements() {
     });
     announcements.value = res?.records || [];
     total.value = res?.total || 0;
+    pagination.itemCount = res?.total || 0;
+    pagination.page = page.value;
   } catch (e) {
     console.error(e);
   } finally {
@@ -54,8 +67,8 @@ async function loadAnnouncements() {
   }
 }
 
-function handleSearch() { page.value = 1; loadAnnouncements(); }
-function resetSearch() { searchForm.value = { title: '', type: null, status: null }; page.value = 1; loadAnnouncements(); }
+function handleSearch() { page.value = 1; pagination.page = 1; loadAnnouncements(); }
+function resetSearch() { searchForm.value = { title: '', type: null, status: null }; page.value = 1; pagination.page = 1; loadAnnouncements(); }
 
 function openCreate() {
   editingId.value = null;
@@ -167,7 +180,7 @@ onMounted(loadAnnouncements);
         <n-button type="primary" @click="openCreate">+ {{ t('page.admin.create') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="announcements" :loading="loading"
-        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadAnnouncements() } }"
+        :pagination="pagination"
         :bordered="false" />
     </n-card>
 
