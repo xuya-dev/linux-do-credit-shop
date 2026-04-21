@@ -180,6 +180,7 @@ onMounted(loadAnnouncements);
         <n-button type="primary" @click="openCreate">+ {{ t('page.admin.create') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="announcements" :loading="loading"
+        :remote="true"
         :pagination="pagination"
         :bordered="false" />
     </n-card>

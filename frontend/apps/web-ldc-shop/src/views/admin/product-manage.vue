@@ -199,6 +199,7 @@ onMounted(async () => {
         <n-button type="primary" @click="openCreate">+ {{ t('page.admin.createProduct') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="products" :loading="loading"
+        :remote="true"
         :pagination="pagination"
         :bordered="false" />
     </n-card>

@@ -205,6 +205,7 @@ onMounted(loadOrders);
         <span style="font-size:15px;font-weight:600">{{ t('page.admin.orders') }}</span>
       </div>
       <n-data-table :columns="columns" :data="orders" :loading="loading"
+        :remote="true"
         :pagination="pagination"
         :bordered="false" />
     </n-card>

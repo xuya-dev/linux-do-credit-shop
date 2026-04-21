@@ -161,6 +161,7 @@ onMounted(async () => {
         <n-button type="primary" @click="showImport = true">+ {{ t('page.admin.batchImport') }}</n-button>
       </div>
       <n-data-table :columns="columns" :data="cards" :loading="loading"
+        :remote="true"
         :pagination="pagination"
         :bordered="false" />
     </n-card>
