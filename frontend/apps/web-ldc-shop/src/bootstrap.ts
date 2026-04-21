@@ -98,14 +98,14 @@ async function bootstrap(namespace: string) {
       ]);
 
       const { default: NGrid } = await import('naive-ui/es/grid');
-      const { default: NGi } = await import('naive-ui/es/grid/src/Gi');
+      const { default: NGi } = await import('naive-ui/es/grid/src/GridItem');
       const { default: NCard } = await import('naive-ui/es/card');
       const { default: NDataTable } = await import('naive-ui/es/data-table');
       const { default: NForm } = await import('naive-ui/es/form');
       const { default: NFormItem } = await import('naive-ui/es/form/src/FormItem');
       const { default: NTag } = await import('naive-ui/es/tag');
-      const { default: NH3 } = await import('naive-ui/es/typography/src/H');
-      const { default: NText } = await import('naive-ui/es/typography/src/Text');
+      const { NH3 } = await import('naive-ui/es/typography');
+      const { default: NText } = await import('naive-ui/es/typography/src/text');
       const { default: NSwitch } = await import('naive-ui/es/switch');
       const { default: NSelect } = await import('naive-ui/es/select');
       const { default: NSpace } = await import('naive-ui/es/space');
