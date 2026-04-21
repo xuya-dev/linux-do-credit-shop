@@ -34,6 +34,16 @@ const paymentStatusOptions = computed(() => [
   { label: t('page.admin.cancelled'), value: 3 },
 ]);
 
+const pagination = computed(() => ({
+  page: page.value,
+  itemCount: total.value,
+  pageSize: 10,
+  onUpdatePage: (p: number) => {
+    page.value = p;
+    loadOrders();
+  },
+}));
+
 async function loadOrders() {
   loading.value = true;
   try {
@@ -190,7 +200,7 @@ onMounted(loadOrders);
         <span style="font-size:15px;font-weight:600">{{ t('page.admin.orders') }}</span>
       </div>
       <n-data-table :columns="columns" :data="orders" :loading="loading"
-        :pagination="{ page, itemCount: total, pageSize: 10, onChange: (p: number) => { page = p; loadOrders() } }"
+        :pagination="pagination"
         :bordered="false" />
     </n-card>
 
