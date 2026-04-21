@@ -358,7 +358,18 @@ const allImages = computed(() => {
 }
 
 .faka-input-number {
-  width: 140px;
+  width: 180px;
+}
+
+/* 修复 NInputNumber 在 flex 容器中的对齐 */
+.faka-input-number :deep(.n-input__prefix),
+.faka-input-number :deep(.n-input__suffix) {
+  display: flex;
+  align-items: center;
+}
+
+.faka-input-number :deep(.n-input__input-el) {
+  text-align: center;
 }
 
 .faka-input {
