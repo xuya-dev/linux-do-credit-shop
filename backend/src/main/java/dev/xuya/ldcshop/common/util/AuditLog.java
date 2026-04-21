@@ -1,5 +1,6 @@
 package dev.xuya.ldcshop.common.util;
 
+import cn.dev33.satoken.stp.StpUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,6 +21,10 @@ public final class AuditLog {
      * @param target 操作目标描述 / Target description
      */
     public static void log(String action, String target) {
-        log.info("[AUDIT] {} performed by userId={}, {}", action, UserContextUtil.getCurrentUserId(), target);
+        Long userId = null;
+        try {
+            userId = StpUtil.getLoginIdAsLong();
+        } catch (Exception ignored) {}
+        log.info("[AUDIT] {} performed by userId={}, {}", action, userId, target);
     }
 }
