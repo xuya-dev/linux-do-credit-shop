@@ -127,3 +127,58 @@
   padding: 2px 8px;
   border-radius: 2px;
 }
+
+/* ===== Dark Mode Adaptation ===== */
+/* 状态标签在夜间模式下的适配 - 其他样式通过 CSS 变量自动切换 */
+.dark .status-0,
+[data-theme="dark"] .status-0 {
+  background: rgba(250, 173, 22, 0.15);
+  color: #ffc53d;
+  border-color: rgba(250, 173, 22, 0.4);
+}
+
+.dark .status-1,
+[data-theme="dark"] .status-1 {
+  background: rgba(82, 196, 26, 0.15);
+  color: #73d13d;
+  border-color: rgba(82, 196, 26, 0.4);
+}
+
+.dark .status-2,
+[data-theme="dark"] .status-2 {
+  background: rgba(245, 34, 45, 0.15);
+  color: #ff7875;
+  border-color: rgba(245, 34, 45, 0.4);
+}
+
+.dark .status-3,
+[data-theme="dark"] .status-3 {
+  background: rgba(255, 255, 255, 0.08);
+  color: #999;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 按钮在夜间模式下的适配 */
+.dark .faka-btn.warning,
+[data-theme="dark"] .faka-btn.warning {
+  color: #1a1a1a;
+}
+
+.dark .faka-btn.warning.outline,
+[data-theme="dark"] .faka-btn.warning.outline {
+  background: transparent;
+  color: #ffc53d;
+  border-color: #ffc53d;
+}
+
+.dark .faka-btn.plain:hover,
+[data-theme="dark"] .faka-btn.plain:hover {
+  color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* 面包屑在夜间模式下的悬停效果 */
+.dark .breadcrumb span:hover,
+[data-theme="dark"] .breadcrumb span:hover {
+  color: #40a9ff;
+}

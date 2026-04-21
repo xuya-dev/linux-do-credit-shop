@@ -225,7 +225,7 @@ function goPay() {
 .mt-12 { margin-top: 12px; }
 
 .highlight-card {
-  border: 1px solid #91d5ff;
+  border: 1px solid var(--faka-highlight-border, #91d5ff);
 }
 
 .card-header {
@@ -234,16 +234,17 @@ function goPay() {
   justify-content: space-between;
 }
 .card-header.highlight {
-  background: #e6f7ff;
-  border-bottom-color: #91d5ff;
-  color: #096dd9;
+  background: var(--faka-highlight-bg, #e6f7ff);
+  border-bottom-color: var(--faka-highlight-border, #91d5ff);
+  color: var(--faka-highlight-text, #096dd9);
 }
 
 .dlv-badge {
   font-size: 12px;
-  background: rgba(24, 144, 255, 0.1);
+  background: var(--faka-highlight-badge-bg, rgba(24, 144, 255, 0.1));
   padding: 2px 8px;
   border-radius: 2px;
+  color: var(--faka-highlight-text, #096dd9);
 }
 
 .card-body {
@@ -285,10 +286,11 @@ function goPay() {
 }
 .alert-tip {
   font-size: 12px;
-  color: #fa8c16;
-  background: #fff7e6;
+  color: var(--faka-warning-text, #fa8c16);
+  background: var(--faka-warning-bg, #fff7e6);
   padding: 8px 12px;
   border-radius: 2px;
+  border: 1px solid var(--faka-warning-border, #ffd591);
 }
 
 /* 订单明细 */

@@ -173,6 +173,15 @@ onMounted(() => {
   --faka-primary-color: #1890ff;
   --faka-hover-bg: #fafafa;
   --faka-hint-color: #bfbfbf;
+  /* 高亮区域 */
+  --faka-highlight-bg: #e6f7ff;
+  --faka-highlight-border: #91d5ff;
+  --faka-highlight-text: #096dd9;
+  --faka-highlight-badge-bg: rgba(24, 144, 255, 0.1);
+  /* 警告提示 */
+  --faka-warning-bg: #fff7e6;
+  --faka-warning-border: #ffd591;
+  --faka-warning-text: #fa8c16;
 }
 :global(.dark) .faka-theme, :root.dark .faka-theme {
   --faka-bg-body: #000000;
@@ -186,6 +195,15 @@ onMounted(() => {
   --faka-primary-color: #177ddc;
   --faka-hover-bg: #262626;
   --faka-hint-color: #666666;
+  /* 高亮区域 - 夜间模式 */
+  --faka-highlight-bg: rgba(24, 144, 255, 0.15);
+  --faka-highlight-border: rgba(24, 144, 255, 0.4);
+  --faka-highlight-text: #40a9ff;
+  --faka-highlight-badge-bg: rgba(24, 144, 255, 0.2);
+  /* 警告提示 - 夜间模式 */
+  --faka-warning-bg: rgba(250, 173, 22, 0.15);
+  --faka-warning-border: rgba(250, 173, 22, 0.4);
+  --faka-warning-text: #ffc53d;
 }
 
 /* 发卡网经典底色 */
