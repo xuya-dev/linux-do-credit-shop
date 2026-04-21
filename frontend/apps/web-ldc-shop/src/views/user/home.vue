@@ -5,11 +5,13 @@ import { useI18n } from '@vben/locales';
 import { useMessage } from 'naive-ui';
 import type { Announcement, Product } from '#/api/types';
 import { announcementApi, productApi, categoryApi } from '#/api/modules';
+import { useShopSettingsStore } from '#/store';
 import '#/styles/faka-common.css';
 
 const { t } = useI18n();
 const router = useRouter();
 const message = useMessage();
+const shopSettingsStore = useShopSettingsStore();
 
 const products = ref<Product[]>([]);
 const announcements = ref<Announcement[]>([]);
@@ -18,6 +20,10 @@ const loadingProducts = ref(true);
 const loadingAnnouncements = ref(true);
 const searchQuery = ref('');
 const activeCategoryId = ref<number | null>(null);
+
+const displayNotice = computed(() => {
+  return shopSettingsStore.shopNotice || '';
+});
 
 const filteredProducts = computed(() => {
   if (!searchQuery.value) return products.value;
@@ -114,13 +120,17 @@ function goProductDetail(id: number) {
             <div class="card-header">{{ t('page.shop.announcements') }}</div>
             <div class="card-body ann-body">
               <n-skeleton v-if="loadingAnnouncements" text :repeat="2" />
-              <div v-else-if="announcements.length" class="ann-list">
-                <div v-for="ann in announcements" :key="ann.id" class="ann-item">
-                  <span class="ann-type">[{{ ann.typeName }}]</span>
-                  <span class="ann-title">{{ ann.title }}</span>
-                  <span class="ann-date">{{ ann.publishedAt }}</span>
+              <template v-else-if="announcements.length">
+                <div v-if="displayNotice" class="shop-notice">{{ displayNotice }}</div>
+                <div class="ann-list">
+                  <div v-for="ann in announcements" :key="ann.id" class="ann-item">
+                    <span class="ann-type">[{{ ann.typeName }}]</span>
+                    <span class="ann-title">{{ ann.title }}</span>
+                    <span class="ann-date">{{ ann.publishedAt }}</span>
+                  </div>
                 </div>
-              </div>
+              </template>
+              <div v-else-if="displayNotice" class="shop-notice">{{ displayNotice }}</div>
               <p v-else class="empty-text">{{ t('page.shop.welcomeMessage') }}</p>
             </div>
           </div>
@@ -312,6 +322,18 @@ function goProductDetail(id: number) {
 .ann-type { color: #faad14; }
 .ann-title { flex: 1; color: var(--faka-text-main, #595959); }
 .ann-date { color: var(--faka-hint-color); font-size: 12px; }
+
+.shop-notice {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: var(--faka-tag-bg, #fffbe6);
+  border: 1px solid #ffe58f;
+  border-radius: 4px;
+  color: var(--faka-text-sub, #595959);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
 
 /* 商品列表（核心） */
 .product-list {

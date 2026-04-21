@@ -128,8 +128,12 @@ public class OrderServiceImpl implements OrderService {
         payParams.put("out_trade_no", order.getLdcOutTradeNo());
         payParams.put("money", order.getTotalAmount().setScale(2).toPlainString());
         payParams.put("order_name", order.getProductName());
-        payParams.put("notify_url", notifyUrl);
-        payParams.put("return_url", returnUrl + "?orderNo=" + order.getOrderNo());
+        if (StrUtil.isNotBlank(notifyUrl)) {
+            payParams.put("notify_url", notifyUrl);
+        }
+        if (StrUtil.isNotBlank(returnUrl)) {
+            payParams.put("return_url", returnUrl + "?orderNo=" + order.getOrderNo());
+        }
 
         String signString = Ed25519Util.buildSignString(payParams, clientSecret);
         payParams.put("sign", Ed25519Util.sign(privateKey, signString));
@@ -142,19 +146,16 @@ public class OrderServiceImpl implements OrderService {
 
             int status = httpResponse.getStatus();
             String body = httpResponse.body();
-            log.debug("Payment response: status={}, body={}", status, body);
+            log.info("Payment response: status={}, body={}", status, body);
 
             PaymentSubmitResult result = new PaymentSubmitResult();
             result.setOrderNo(order.getOrderNo());
 
             if (status == 302 || status == 301) {
                 result.setPayUrl(httpResponse.header("Location"));
-            } else if (status == 200 && StrUtil.isNotBlank(body) && body.contains("error_msg")) {
-                log.error("LDC payment error: {}", body);
-                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
             } else {
-                String baseUrl = gatewayUrl.replaceAll("/epay$", "");
-                result.setPayUrl(baseUrl + "/paying?order_no=" + order.getLdcOutTradeNo());
+                log.error("LDC payment error: status={}, body={}", status, body);
+                throw new BusinessException(ResultCode.ORDER_PAY_FAIL);
             }
             return result;
         } catch (BusinessException e) {

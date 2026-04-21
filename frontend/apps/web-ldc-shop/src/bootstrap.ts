@@ -19,6 +19,7 @@ import {
 import { useTitle } from '@vueuse/core';
 
 import { $t, setupI18n } from '#/locales';
+import { setAdminApp } from '#/store/admin-init';
 import { useShopSettingsStore } from '#/store';
 
 import App from './app.vue';
@@ -31,7 +32,6 @@ async function bootstrap(namespace: string) {
     console.error('[Vue Error]', info, err);
   };
 
-  // 注册前台用户端必须的轻量级 Naive UI 组件
   app.component('NDropdown', NDropdown);
   app.component('NAvatar', NAvatar);
   app.component('NSpin', NSpin);
@@ -41,23 +41,19 @@ async function bootstrap(namespace: string) {
   app.component('NInputNumber', NInputNumber);
   app.component('NButton', NButton);
 
-  // 国际化 i18n 配置
+  setAdminApp(app);
+
   await setupI18n(app);
 
-  // 配置 pinia-store
   await initStores(app, { namespace });
 
-  // 安装权限指令
   registerAccessDirective(app);
 
-  // 配置路由及路由守卫
   app.use(router);
 
-  // 配置Motion插件
   const { MotionPlugin } = await import('@vben/plugins/motion');
   app.use(MotionPlugin);
 
-  // 获取公共设置并更新应用标题和 logo
   const shopSettingsStore = useShopSettingsStore();
   await shopSettingsStore.fetchPublicSettings();
   const updates: Record<string, any> = {};
@@ -71,7 +67,6 @@ async function bootstrap(namespace: string) {
     updatePreferences(updates);
   }
 
-  // 动态更新标题
   watchEffect(() => {
     if (preferences.app.dynamicTitle) {
       const routeTitle = router.currentRoute.value.meta?.title;
@@ -80,54 +75,6 @@ async function bootstrap(namespace: string) {
       useTitle(pageTitle);
     }
   });
-
-  // ========== 按需懒加载重量级后台组件 ==========
-  let adminInitialized = false;
-  router.beforeEach(async (to) => {
-    if (to.path.startsWith('/admin') && !adminInitialized) {
-      const [
-        { initComponentAdapter },
-        { initSetupVbenForm },
-        { registerLoadingDirective },
-        { initTippy },
-        naiveUI,
-      ] = await Promise.all([
-        import('./adapter/component'),
-        import('./adapter/form'),
-        import('@vben/common-ui'),
-        import('@vben/common-ui/es/tippy'),
-        import('naive-ui'),
-      ]);
-
-      // 注册管理端所需的 Naive UI 组件
-      // 必须从 naive-ui 统一导入，确保注入上下文与 NConfigProvider 一致
-      app.component('NGrid', naiveUI.NGrid);
-      app.component('NGi', naiveUI.NGi);
-      app.component('NCard', naiveUI.NCard);
-      app.component('NDataTable', naiveUI.NDataTable);
-      app.component('NForm', naiveUI.NForm);
-      app.component('NFormItem', naiveUI.NFormItem);
-      app.component('NTag', naiveUI.NTag);
-      app.component('NText', naiveUI.NText);
-      app.component('NSwitch', naiveUI.NSwitch);
-      app.component('NSelect', naiveUI.NSelect);
-      app.component('NSpace', naiveUI.NSpace);
-      app.component('NInput', naiveUI.NInput);
-
-      await initComponentAdapter();
-      await initSetupVbenForm();
-
-      registerLoadingDirective(app, {
-        loading: 'loading',
-        spinning: 'spinning',
-      });
-      initTippy(app);
-
-      adminInitialized = true;
-    }
-    return true;
-  });
-  // ===========================================
 
   app.mount('#app');
 }

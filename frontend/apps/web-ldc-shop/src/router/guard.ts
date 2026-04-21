@@ -7,6 +7,7 @@ import { startProgress, stopProgress } from '@vben/utils';
 
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
+import { ensureAdminComponents } from '#/store/admin-init';
 
 import { generateAccess } from './access';
 
@@ -36,6 +37,10 @@ function setupAccessGuard(router: Router) {
     const accessStore = useAccessStore();
     const userStore = useUserStore();
     const authStore = useAuthStore();
+
+    if (to.path.startsWith('/admin')) {
+      await ensureAdminComponents();
+    }
 
     if (coreRouteNames.includes(to.name as string)) {
       if (to.meta.requiresAuth && !accessStore.accessToken) {

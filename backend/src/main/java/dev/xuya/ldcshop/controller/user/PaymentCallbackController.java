@@ -29,7 +29,7 @@ public class PaymentCallbackController {
      * 该接口不需要登录验证，由 LDC 平台调用
      * 仅接受 POST 请求，防止 CSRF 类攻击
      */
-    @PostMapping("/notify")
+    @GetMapping("/notify")
     public String handleNotify(@RequestParam Map<String, String> params) {
         log.info("Received LDC payment callback: outTradeNo={}", params.get("out_trade_no"));
         try {

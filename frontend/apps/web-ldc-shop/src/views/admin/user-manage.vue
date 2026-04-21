@@ -59,7 +59,7 @@ const columns = computed(() => [
   {
     title: t('page.shop.nickname'), key: 'username', width: 160,
     render: (row: any) => h(NSpace, { align: 'center', size: 'small' }, { default: () => [
-      h(NAvatar, { src: row.avatarUrl, size: 28, round: true, fallbackSrc: '/logo.png' }),
+      h(NAvatar, { src: row.avatar, size: 28, round: true }),
       h('span', {}, row.username),
     ]}),
   },
